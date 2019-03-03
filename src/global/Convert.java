@@ -151,6 +151,32 @@ public class Convert{
       value = instr.readChar();
       return value;
     }
+
+  /**
+   * reads 2 bytes from the given byte array at the specified position
+   * convert it to a character Interval
+   * @param       data            a byte array
+   * @param       position        the position in data[]
+   * @exception   java.io.IOException I/O errors
+   * @return      the Interval
+   */
+  public static IntervalType getIntervalValue (int position, byte []data)
+          throws java.io.IOException, ClassNotFoundException {
+    InputStream in;
+    ObjectInputStream objectInputStream;
+    IntervalType value;
+    byte tmp[] = new byte[2];
+    // copy the value from data array out to a tmp byte array
+    System.arraycopy (data, position, tmp, 0, 2);
+
+    /* creates a new data input stream to read data from the
+     * specified input stream
+     */
+    in = new ByteArrayInputStream(tmp);
+    objectInputStream = new ObjectInputStream(in);
+    value = (IntervalType) objectInputStream.readObject();
+    return value;
+  }
   
   
   /**
@@ -287,19 +313,50 @@ public class Convert{
       /* creates a new data output stream to write data to
        * underlying output stream
        */
-      
+
       OutputStream out = new ByteArrayOutputStream();
       DataOutputStream outstr = new DataOutputStream (out);
-      
+
       // write the value to the output stream
-      outstr.writeChar(value);  
-      
+      outstr.writeChar(value);
+
       // creates a byte array with this output stream size and the
       // valid contents of the buffer have been copied into it
       byte []B = ((ByteArrayOutputStream) out).toByteArray();
-      
+
       // copies contents of this byte array into data[]
       System.arraycopy (B, 0, data, position, 2);
-      
+
+    }
+
+    /**
+     * Insert or update a string in the given byte array at the specified
+     * position.
+     * @param       data            a byte array
+     * @param       value           the value to be copied into data[]
+     * @param       position        the position of tht value in data[]
+     * @exception   java.io.IOException I/O errors
+     */
+    public static void setIntervalValue (IntervalType value, int position, byte []data)
+            throws java.io.IOException
+    {
+        /* creates a new data output stream to write data to
+         * underlying output stream
+         */
+
+        OutputStream out = new ByteArrayOutputStream();
+        ObjectOutputStream outstr = new ObjectOutputStream (out);
+
+        // write the value to the output stream
+
+        outstr.writeObject(value);
+        // creates a byte array with this output stream size and the
+        // valid contents of the buffer have been copied into it
+        byte []B = ((ByteArrayOutputStream) out).toByteArray();
+
+        int sz =((ByteArrayOutputStream) out).toByteArray().length;
+        // copies the contents of this byte array into data[]
+        System.arraycopy (B, 0, data, position, sz);
+
     }
 }
