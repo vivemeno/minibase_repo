@@ -61,8 +61,7 @@ public class BT  implements GlobalConst{
       
       else { throw new  KeyNotMatchException(null, "key types do not match");}
     } 
-  //random comment
-  
+
   /** It gets the length of the key
    *@param key  specify the key whose length will be calculated.
    * Input parameter.
