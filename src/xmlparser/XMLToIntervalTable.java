@@ -86,11 +86,11 @@ public class XMLToIntervalTable implements GlobalConst {
 
     private final static List<NodeTable> createNdeTblFrmXMLTree(XMLTree root) {
         List<NodeTable> finalResult = new ArrayList<>();
-        preOrder(root, finalResult, 0);
+        preOrder(root, finalResult, 0, 1);
         return finalResult;
     }
 
-    private final static int preOrder(XMLTree root, List<NodeTable> result, int intrvlCounter) {
+    private final static int preOrder(XMLTree root, List<NodeTable> result, int intrvlCounter, int level) {
         if (root == null)
             return intrvlCounter;
         NodeTable nt = new NodeTable();
@@ -98,9 +98,10 @@ public class XMLToIntervalTable implements GlobalConst {
         intrvlCounter++;
         nt.nodeIntLabel = new IntervalType();
         nt.nodeIntLabel.s = intrvlCounter;
+        nt.level = level;
         if(root.children!=null) {
             for (XMLTree node : root.children)
-                intrvlCounter = preOrder(node, result, intrvlCounter);
+                intrvlCounter = preOrder(node, result, intrvlCounter, level+1);
         }
         intrvlCounter++;
         nt.nodeIntLabel.e = intrvlCounter;
