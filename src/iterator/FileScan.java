@@ -122,21 +122,22 @@ public class FileScan extends  Iterator
 	   UnknowAttrType,
 	   FieldNumberOutOfBoundException,
 	   WrongPermat
-    {     
-      RID rid = new RID();;
-      
-      while(true) {
-	if((tuple1 =  scan.getNext(rid)) == null) {
-	  return null;
+	{
+		RID rid = new RID();
+		;
+
+		while (true) {
+			if ((tuple1 = scan.getNext(rid)) == null) {
+				return null;
+			}
+
+			tuple1.setHdr(in1_len, _in1, s_sizes);
+			if (PredEval.Eval(OutputFilter, tuple1, null, _in1, null) == true) {
+				Projection.Project(tuple1, _in1, Jtuple, perm_mat, nOutFlds);
+				return Jtuple;
+			}
+		}
 	}
-	
-	tuple1.setHdr(in1_len, _in1, s_sizes);
-	if (PredEval.Eval(OutputFilter, tuple1, null, _in1, null) == true){
-	  Projection.Project(tuple1, _in1,  Jtuple, perm_mat, nOutFlds); 
-	  return  Jtuple;
-	}        
-      }
-    }
 
   /**
    *implement the abstract method close() from super class Iterator

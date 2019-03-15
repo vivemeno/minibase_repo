@@ -128,13 +128,25 @@ public class PredEval
 				switch (temp_ptr.op.attrOperator) {
 				case AttrOperator.aopEQ:
 					if (comparison_type.attrType == AttrType.attrInterval) {
-						if (temp_ptr.flag == 0) {
+						if (temp_ptr.flag == 0) { // equal intervals
 							if(comp_res == 4) {
-								return true;
+								op_res = true;
 							}
-						}
+						} else if (temp_ptr.flag == 1 || temp_ptr.flag == 2) { //check for containment
+							if(comp_res == 1) {
+								if(temp_ptr.flag == 1) { // Ancestor-descendent relationship
+									op_res = true;
+								} else if (temp_ptr.flag == 2) { // Parent - child relationship
+									IntervalType i1 = tuple1.getIntervalField(fld1);
+									IntervalType i2 = tuple1.getIntervalField(fld2);
+									if (i2.l == i1.l +1) {
+										op_res = true;
+									}
+								}
+							}
+						} 
 					}
-					if (comp_res == 1)
+					else if(comp_res == 0)
 						op_res = true;
 					break;
 				case AttrOperator.aopLT:
@@ -174,7 +186,6 @@ public class PredEval
 
 			col_res = col_res && row_res;
 			if (col_res == false) {
-
 				return false;
 			}
 			row_res = false; // Starting next row.

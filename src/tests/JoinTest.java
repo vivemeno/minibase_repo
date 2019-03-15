@@ -133,13 +133,13 @@ class JoinsDriver implements GlobalConst {
 		reserves.addElement(new Reserves(57, 2, "05/10/95"));
 		reserves.addElement(new Reserves(35, 3, "05/15/95"));
 
-		nodes.addElement(new NodeTable("A", new IntervalType(1, 14)));
-		nodes.addElement(new NodeTable("B", new IntervalType(2, 7)));
-		nodes.addElement(new NodeTable("C", new IntervalType(3, 4)));
-		nodes.addElement(new NodeTable("D", new IntervalType(5, 6)));
-		nodes.addElement(new NodeTable("E", new IntervalType(8, 13)));
-		nodes.addElement(new NodeTable("F", new IntervalType(9, 12)));
-		nodes.addElement(new NodeTable("G", new IntervalType(10, 11)));
+		nodes.addElement(new NodeTable("A", new IntervalType(1, 14, 1)));
+		nodes.addElement(new NodeTable("B", new IntervalType(2, 7, 2)));
+		nodes.addElement(new NodeTable("C", new IntervalType(3, 4, 3)));
+		nodes.addElement(new NodeTable("D", new IntervalType(5, 6, 2)));
+		nodes.addElement(new NodeTable("E", new IntervalType(8, 13, 2)));
+		nodes.addElement(new NodeTable("F", new IntervalType(9, 12, 3)));
+		nodes.addElement(new NodeTable("G", new IntervalType(10, 11, 4)));
 
 		boolean status = OK;
 		int numsailors = 25;
@@ -598,7 +598,31 @@ class JoinsDriver implements GlobalConst {
 		expr[0].operand1.symbol = new FldSpec(new RelSpec(RelSpec.outer), 1);
 		expr[0].operand2.symbol = new FldSpec(new RelSpec(RelSpec.innerRel), 1);
 		expr[0].flag = 1;
-		expr[1] = null;
+		
+		expr[1].next = null;
+		expr[1].op    = new AttrOperator(AttrOperator.aopEQ);
+	    expr[1].type1 = new AttrType(AttrType.attrSymbol);
+	    expr[1].operand1.symbol = new FldSpec (new RelSpec(RelSpec.outer),2);
+	    expr[1].type2 = new AttrType(AttrType.attrString);
+	    expr[1].operand2.string = "A";
+	    
+	    CondExpr orExpr = new CondExpr();
+	    expr[2].next = orExpr;
+		expr[2].op    = new AttrOperator(AttrOperator.aopEQ);
+	    expr[2].type1 = new AttrType(AttrType.attrSymbol);
+	    expr[2].operand1.symbol = new FldSpec (new RelSpec(RelSpec.innerRel),2);
+	    expr[2].type2 = new AttrType(AttrType.attrString);
+	    expr[2].operand2.string = "E";
+	    
+	    
+	    orExpr.next = null;
+	    orExpr.op    = new AttrOperator(AttrOperator.aopEQ);
+	    orExpr.type1 = new AttrType(AttrType.attrSymbol);
+	    orExpr.operand1.symbol = new FldSpec (new RelSpec(RelSpec.innerRel),2);
+	    orExpr.type2 = new AttrType(AttrType.attrString);
+	    orExpr.operand2.string = "B";
+	    
+		expr[3] = null;
 
 	}
 
@@ -1334,172 +1358,128 @@ class JoinsDriver implements GlobalConst {
     }
  }
 
-   public void Query5() {
-   System.out.print("**********************Query5 strating *********************\n");  
-    boolean status = OK;
-        // Sailors, Boats, Reserves Queries.
- 
-    System.out.print 
-      ("Query: Find the names of old sailors or sailors with "
-       + "a rating less\n       than 7, who have reserved a boat, "
-       + "(perhaps to increase the\n       amount they have to "
-       + "pay to make a reservation).\n\n"
-       + "  SELECT S.sname, S.rating, S.age\n"
-       + "  FROM   Sailors S, Reserves R\n"
-       + "  WHERE  S.sid = R.sid and (S.age > 40 || S.rating < 7)\n\n"
-       + "(Tests FileScan, Multiple Selection, Projection, "
-       + "and Sort-Merge Join.)\n\n");
+	public void Query5() {
+		System.out.print("**********************Query5 strating *********************\n");
+		boolean status = OK;
+		// Sailors, Boats, Reserves Queries.
 
-   
-    CondExpr [] outFilter;
-    outFilter = Query5_CondExpr();
- 
-    Tuple t = new Tuple();
-    t = null;
- 
-    AttrType Stypes[] = {
-      new AttrType(AttrType.attrInteger),
-      new AttrType(AttrType.attrString),
-      new AttrType(AttrType.attrInteger),
-      new AttrType(AttrType.attrReal)
-    };
-    short []   Ssizes = new short[1];
-    Ssizes[0] = 30;
+		System.out.print("Query: Find the names of old sailors or sailors with "
+				+ "a rating less\n       than 7, who have reserved a boat, "
+				+ "(perhaps to increase the\n       amount they have to " + "pay to make a reservation).\n\n"
+				+ "  SELECT S.sname, S.rating, S.age\n" + "  FROM   Sailors S, Reserves R\n"
+				+ "  WHERE  S.sid = R.sid and (S.age > 40 || S.rating < 7)\n\n"
+				+ "(Tests FileScan, Multiple Selection, Projection, " + "and Sort-Merge Join.)\n\n");
 
-    AttrType [] Rtypes = {
-      new AttrType(AttrType.attrInteger),
-      new AttrType(AttrType.attrInteger),
-      new AttrType(AttrType.attrString),
-    };
-    short  []  Rsizes = new short[1];
-    Rsizes[0] = 15;
+		CondExpr[] outFilter;
+		outFilter = Query5_CondExpr();
 
-    FldSpec [] Sprojection = {
-      new FldSpec(new RelSpec(RelSpec.outer), 1),
-      new FldSpec(new RelSpec(RelSpec.outer), 2),
-      new FldSpec(new RelSpec(RelSpec.outer), 3),
-      new FldSpec(new RelSpec(RelSpec.outer), 4)
-    };
-    
-    CondExpr[] selects = new CondExpr [1];
-    selects[0] = null;
- 
-    FldSpec [] proj_list = {
-      new FldSpec(new RelSpec(RelSpec.outer), 2),
-      new FldSpec(new RelSpec(RelSpec.outer), 3),
-      new FldSpec(new RelSpec(RelSpec.outer), 4)
-    };
+		Tuple t = new Tuple();
+		t = null;
 
-    FldSpec [] Rprojection = {
-      new FldSpec(new RelSpec(RelSpec.outer), 1),
-      new FldSpec(new RelSpec(RelSpec.outer), 2),
-      new FldSpec(new RelSpec(RelSpec.outer), 3)
-    };
-  
-    AttrType [] jtype     = { 
-      new AttrType(AttrType.attrString), 
-      new AttrType(AttrType.attrInteger), 
-      new AttrType(AttrType.attrReal)
-    };
+		AttrType Stypes[] = { new AttrType(AttrType.attrInteger), new AttrType(AttrType.attrString),
+				new AttrType(AttrType.attrInteger), new AttrType(AttrType.attrReal) };
+		short[] Ssizes = new short[1];
+		Ssizes[0] = 30;
 
+		AttrType[] Rtypes = { new AttrType(AttrType.attrInteger), new AttrType(AttrType.attrInteger),
+				new AttrType(AttrType.attrString), };
+		short[] Rsizes = new short[1];
+		Rsizes[0] = 15;
 
-    iterator.Iterator am = null;
-    try {
-      am  = new FileScan("sailors.in", Stypes, Ssizes, 
-				  (short)4, (short)4,
-				  Sprojection, null);
-    }
-    catch (Exception e) {
-      status = FAIL;
-      System.err.println (""+e);
-    }
-    
-    if (status != OK) {
-      //bail out
-      System.err.println ("*** Error setting up scan for sailors");
-      Runtime.getRuntime().exit(1);
-    }
+		FldSpec[] Sprojection = { new FldSpec(new RelSpec(RelSpec.outer), 1),
+				new FldSpec(new RelSpec(RelSpec.outer), 2), new FldSpec(new RelSpec(RelSpec.outer), 3),
+				new FldSpec(new RelSpec(RelSpec.outer), 4) };
 
-    iterator.Iterator am2 = null;
-    try {
-      am2 = new FileScan("reserves.in", Rtypes, Rsizes, 
-			 (short)3, (short)3,
-			 Rprojection, null);
-    }
-    catch (Exception e) {
-      status = FAIL;
-      System.err.println (""+e);
-    }
- 
-    if (status != OK) {
-      //bail out
-      System.err.println ("*** Error setting up scan for reserves");
-      Runtime.getRuntime().exit(1);
-    }
- 
-    TupleOrder ascending = new TupleOrder(TupleOrder.Ascending);
-    SortMerge sm = null;
-    try {
-      sm = new SortMerge(Stypes, 4, Ssizes,
-			 Rtypes, 3, Rsizes,
-			 1, 4,
-			 1, 4,
-			 10,
-			 am, am2,
-			 false, false, ascending,
-			 outFilter, proj_list, 3);
-    }
-    catch (Exception e) {
-      status = FAIL;
-      System.err.println (""+e);
-    }
- 
-    if (status != OK) {
-      //bail out
-      System.err.println ("*** Error constructing SortMerge");
-      Runtime.getRuntime().exit(1);
-    }
+		CondExpr[] selects = new CondExpr[1];
+		selects[0] = null;
 
-    QueryCheck qcheck5 = new QueryCheck(5);
-    //Tuple t = new Tuple();
-    t = null;
- 
-    try {
-      while ((t = sm.get_next()) != null) {
-        t.print(jtype);
-        qcheck5.Check(t);
-      }
-    }
-    catch (Exception e) {
-      System.err.println (""+e);
-      Runtime.getRuntime().exit(1);
-    }
-    
-    qcheck5.report(5);
-    try {
-      sm.close();
-    }
-    catch (Exception e) {
-      status = FAIL;
-      e.printStackTrace();
-    }
-    System.out.println ("\n"); 
-    if (status != OK) {
-      //bail out
-      System.err.println ("*** Error close for sortmerge");
-      Runtime.getRuntime().exit(1);
-    }
- }
+		FldSpec[] proj_list = { new FldSpec(new RelSpec(RelSpec.outer), 2), new FldSpec(new RelSpec(RelSpec.outer), 3),
+				new FldSpec(new RelSpec(RelSpec.outer), 4) };
+
+		FldSpec[] Rprojection = { new FldSpec(new RelSpec(RelSpec.outer), 1),
+				new FldSpec(new RelSpec(RelSpec.outer), 2), new FldSpec(new RelSpec(RelSpec.outer), 3) };
+
+		AttrType[] jtype = { new AttrType(AttrType.attrString), new AttrType(AttrType.attrInteger),
+				new AttrType(AttrType.attrReal) };
+
+		iterator.Iterator am = null;
+		try {
+			am = new FileScan("sailors.in", Stypes, Ssizes, (short) 4, (short) 4, Sprojection, null);
+		} catch (Exception e) {
+			status = FAIL;
+			System.err.println("" + e);
+		}
+
+		if (status != OK) {
+			// bail out
+			System.err.println("*** Error setting up scan for sailors");
+			Runtime.getRuntime().exit(1);
+		}
+
+		iterator.Iterator am2 = null;
+		try {
+			am2 = new FileScan("reserves.in", Rtypes, Rsizes, (short) 3, (short) 3, Rprojection, null);
+		} catch (Exception e) {
+			status = FAIL;
+			System.err.println("" + e);
+		}
+
+		if (status != OK) {
+			// bail out
+			System.err.println("*** Error setting up scan for reserves");
+			Runtime.getRuntime().exit(1);
+		}
+
+		TupleOrder ascending = new TupleOrder(TupleOrder.Ascending);
+		SortMerge sm = null;
+		try {
+			sm = new SortMerge(Stypes, 4, Ssizes, Rtypes, 3, Rsizes, 1, 4, 1, 4, 10, am, am2, false, false, ascending,
+					outFilter, proj_list, 3);
+		} catch (Exception e) {
+			status = FAIL;
+			System.err.println("" + e);
+		}
+
+		if (status != OK) {
+			// bail out
+			System.err.println("*** Error constructing SortMerge");
+			Runtime.getRuntime().exit(1);
+		}
+
+		QueryCheck qcheck5 = new QueryCheck(5);
+		// Tuple t = new Tuple();
+		t = null;
+
+		try {
+			while ((t = sm.get_next()) != null) {
+				t.print(jtype);
+				qcheck5.Check(t);
+			}
+		} catch (Exception e) {
+			System.err.println("" + e);
+			Runtime.getRuntime().exit(1);
+		}
+
+		qcheck5.report(5);
+		try {
+			sm.close();
+		} catch (Exception e) {
+			status = FAIL;
+			e.printStackTrace();
+		}
+		System.out.println("\n");
+		if (status != OK) {
+			// bail out
+			System.err.println("*** Error close for sortmerge");
+			Runtime.getRuntime().exit(1);
+		}
+	}
 
 	public void Project() {
 		boolean status = OK;
 		AttrType[] Ntypes = { new AttrType(AttrType.attrInterval), new AttrType(AttrType.attrString) };
 		short[] Nsizes = new short[1];
 		Nsizes[0] = 1;
-
-		AttrType[] Ntypes2 = { new AttrType(AttrType.attrInterval), new AttrType(AttrType.attrString) };
-		short[] Nsizes2 = new short[1];
-		Nsizes2[0] = 1;
 
 		FldSpec[] Nprojection = { new FldSpec(new RelSpec(RelSpec.outer), 1),
 				new FldSpec(new RelSpec(RelSpec.outer), 2) };
@@ -1511,15 +1491,17 @@ class JoinsDriver implements GlobalConst {
 			System.err.println("" + e);
 			e.printStackTrace();
 		}
-		CondExpr[] outFilter = new CondExpr[3];
-		outFilter[0] = new CondExpr();
-		outFilter[1] = new CondExpr();
+		CondExpr[] outFilter = new CondExpr[4];
+		outFilter[0] = new CondExpr();		
+		outFilter[1] = new CondExpr();		
+		outFilter[2] = new CondExpr();
+		//outFilter[3] = new CondExpr();
 		Proj_CondExpr(outFilter);
-		FldSpec[] proj = { new FldSpec(new RelSpec(RelSpec.outer), 2), new FldSpec(new RelSpec(RelSpec.innerRel), 2),
-				new FldSpec(new RelSpec(RelSpec.outer), 1), new FldSpec(new RelSpec(RelSpec.innerRel), 1) }; // S.sname,
+		FldSpec[] proj = { new FldSpec(new RelSpec(RelSpec.outer), 2), new FldSpec(new RelSpec(RelSpec.outer), 1),
+				new FldSpec(new RelSpec(RelSpec.innerRel), 2), new FldSpec(new RelSpec(RelSpec.innerRel), 1) }; // S.sname,
 		NestedLoopsJoins inl = null;
 		try {
-			inl = new NestedLoopsJoins(Ntypes2, 2, Nsizes2, Ntypes2, 2, Nsizes2, 10, am, "nodes.in", outFilter, null,
+			inl = new NestedLoopsJoins(Ntypes, 2, Nsizes, Ntypes, 2, Nsizes, 10, am, "nodes.in", outFilter, null,
 					proj, 4);
 		} catch (Exception e) {
 			System.err.println("*** Error preparing for nested_loop_join");
@@ -1532,8 +1514,8 @@ class JoinsDriver implements GlobalConst {
 		AttrType[] jtype = new AttrType[4];
 		
 		jtype[0] = new AttrType(AttrType.attrString);
-		jtype[1] = new AttrType(AttrType.attrString);
-		jtype[2] = new AttrType(AttrType.attrInterval);
+		jtype[1] = new AttrType(AttrType.attrInterval);
+		jtype[2] = new AttrType(AttrType.attrString);
 		jtype[3] = new AttrType(AttrType.attrInterval);
 		try {
 			while ((t = inl.get_next()) != null) {
