@@ -295,7 +295,7 @@ public class Tuple implements GlobalConst {
 	 */
 
 	public IntervalType getIntervalField(int fldNo)
-			throws IOException, FieldNumberOutOfBoundException, ClassNotFoundException {
+			throws IOException, FieldNumberOutOfBoundException {
 		IntervalType val;
 		if ((fldNo > 0) && (fldNo <= fldCnt)) {
 			val = Convert.getIntervalValue(fldOffset[fldNo - 1], data);
@@ -439,6 +439,10 @@ public class Tuple implements GlobalConst {
 			case AttrType.attrReal:
 				incr = 4;
 				break;
+			
+			case AttrType.attrInterval:
+				incr = 8;
+				break;
 
 			case AttrType.attrString:
 				incr = (short) (strSizes[strCount] + 2); // strlen in bytes = strlen +2
@@ -461,6 +465,10 @@ public class Tuple implements GlobalConst {
 
 		case AttrType.attrReal:
 			incr = 4;
+			break;
+		
+		case AttrType.attrInterval:
+			incr = 8;
 			break;
 
 		case AttrType.attrString:
@@ -512,12 +520,14 @@ public class Tuple implements GlobalConst {
 	 * 
 	 * @param type
 	 *            the types in the tuple
+	 * @throws ClassNotFoundException 
 	 * @Exception IOException I/O exception
 	 */
-	public void print(AttrType type[]) throws IOException {
+	public void print(AttrType type[]) throws IOException, ClassNotFoundException {
 		int i, val;
 		float fval;
 		String sval;
+		IntervalType ival;
 
 		System.out.print("[");
 		for (i = 0; i < fldCnt - 1; i++) {
@@ -536,6 +546,11 @@ public class Tuple implements GlobalConst {
 			case AttrType.attrString:
 				sval = Convert.getStrValue(fldOffset[i], data, fldOffset[i + 1] - fldOffset[i]);
 				System.out.print(sval);
+				break;
+			
+			case AttrType.attrInterval:
+				ival = Convert.getIntervalValue(fldOffset[i], data);
+				System.out.print("Start" + ival.s + " End:" + ival.e);
 				break;
 
 			case AttrType.attrNull:
@@ -560,6 +575,11 @@ public class Tuple implements GlobalConst {
 		case AttrType.attrString:
 			sval = Convert.getStrValue(fldOffset[i], data, fldOffset[i + 1] - fldOffset[i]);
 			System.out.print(sval);
+			break;
+		
+		case AttrType.attrInterval:
+			ival = Convert.getIntervalValue(fldOffset[i], data);
+			System.out.print("Start" + ival.s + " End:" + ival.e);
 			break;
 
 		case AttrType.attrNull:

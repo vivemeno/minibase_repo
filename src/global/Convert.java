@@ -161,22 +161,41 @@ public class Convert{
    * @return      the Interval
    */
   public static IntervalType getIntervalValue (int position, byte []data)
-          throws java.io.IOException, ClassNotFoundException {
-    InputStream in;
-    ObjectInputStream objectInputStream;
-    IntervalType value;
-    byte tmp[] = new byte[2];
-    // copy the value from data array out to a tmp byte array
-    System.arraycopy (data, position, tmp, 0, 2);
+			throws java.io.IOException {
+		// InputStream in;
+		// ObjectInputStream objectInputStream;
+		// IntervalType value;
+		// byte tmp[] = new byte[2];
+		// // copy the value from data array out to a tmp byte array
+		// System.arraycopy (data, position, tmp, 0, 2);
+		//
+		// /* creates a new data input stream to read data from the
+		// * specified input stream
+		// */
+		// in = new ByteArrayInputStream(tmp);
+		// objectInputStream = new ObjectInputStream(in);
+		// value = (IntervalType) objectInputStream.readObject();
+		//
+		//
+		InputStream in;
+		DataInputStream instr;
+		int startInterval;
+		int endInterval;
+		byte tmp[] = new byte[8];
 
-    /* creates a new data input stream to read data from the
-     * specified input stream
-     */
-    in = new ByteArrayInputStream(tmp);
-    objectInputStream = new ObjectInputStream(in);
-    value = (IntervalType) objectInputStream.readObject();
-    return value;
-  }
+		// copy the value from data array out to a tmp byte array
+		System.arraycopy(data, position, tmp, 0, 8);
+
+		/*
+		 * creates a new data input stream to read data from the specified input stream
+		 */
+		in = new ByteArrayInputStream(tmp);
+		instr = new DataInputStream(in);
+		startInterval = instr.readInt();
+		endInterval = instr.readInt();
+		IntervalType interval = new IntervalType(startInterval, endInterval);
+		return interval;
+	}
   
   
   /**
@@ -346,17 +365,19 @@ public class Convert{
 
         OutputStream out = new ByteArrayOutputStream();
         ObjectOutputStream outstr = new ObjectOutputStream (out);
-
+    
+        outstr.writeInt(value.s);
+        outstr.writeInt(value.e);
+        
         // write the value to the output stream
-
         outstr.writeObject(value);
         // creates a byte array with this output stream size and the
         // valid contents of the buffer have been copied into it
         byte []B = ((ByteArrayOutputStream) out).toByteArray();
-
-        int sz =((ByteArrayOutputStream) out).toByteArray().length;
+        
+      //  int sz =((ByteArrayOutputStream) out).toByteArray().length;
         // copies the contents of this byte array into data[]
-        System.arraycopy (B, 0, data, position, sz);
+        System.arraycopy (B, 0, data, position, 8);
 
     }
 }

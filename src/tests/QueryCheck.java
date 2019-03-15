@@ -125,237 +125,219 @@ public class QueryCheck {
 
   /** Constructor
    */
-  public QueryCheck(int q_index) {
+	public QueryCheck(int q_index) {
 
-    types = new AttrType[10];    
-    sizes = new short[10];// sizes of attributes in answer tuple
-    mygroup = new Group[Max_group_num];
-    gmark = new int[Max_group_num];    
-    T_O_flag = new int[Max_group_num];  
-    missing = new TupleList();
-    extra = new TupleList();
-    
-    Q1result.addElement (new S1("Mike Carey", "05/10/95"));
-    Q1result.addElement (new S1("David Dewitt", "05/11/95"));
-    Q1result.addElement (new S1("Jeff Naughton", "05/12/95"));
-    
-   
-    Q2result.addElement (new S2("David Dewitt"));
-    Q2result.addElement (new S2("Mike Carey"));
-    Q2result.addElement (new S2("Raghu Ramakrishnan"));
-    Q2result.addElement (new S2("Yannis Ioannidis"));
+		types = new AttrType[10];
+		sizes = new short[10];// sizes of attributes in answer tuple
+		mygroup = new Group[Max_group_num];
+		gmark = new int[Max_group_num];
+		T_O_flag = new int[Max_group_num];
+		missing = new TupleList();
+		extra = new TupleList();
 
-   
-    Q3result.addElement (new S2("Mike Carey"));
-    Q3result.addElement (new S2("Mike Carey"));
-    Q3result.addElement (new S2("Mike Carey"));    
-    Q3result.addElement (new S2("David Dewitt"));
-    Q3result.addElement (new S2("David Dewitt"));
-    Q3result.addElement (new S2("Jeff Naughton"));
-    Q3result.addElement (new S2("Miron Livny"));
-    Q3result.addElement (new S2("Yannis Ioannidis"));
-    Q3result.addElement (new S2("Raghu Ramakrishnan"));
-    Q3result.addElement (new S2("Raghu Ramakrishnan"));
+		Q1result.addElement(new S1("Mike Carey", "05/10/95"));
+		Q1result.addElement(new S1("David Dewitt", "05/11/95"));
+		Q1result.addElement(new S1("Jeff Naughton", "05/12/95"));
 
-  
-    Q4result.addElement (new S2("David Dewitt"));
-    Q4result.addElement (new S2("Jeff Naughton"));
-    Q4result.addElement (new S2("Mike Carey"));
-    Q4result.addElement (new S2("Miron Livny"));
-    Q4result.addElement (new S2("Raghu Ramakrishnan"));
-    Q4result.addElement (new S2("Yannis Ioannidis"));
+		Q2result.addElement(new S2("David Dewitt"));
+		Q2result.addElement(new S2("Mike Carey"));
+		Q2result.addElement(new S2("Raghu Ramakrishnan"));
+		Q2result.addElement(new S2("Yannis Ioannidis"));
 
-   
-    Q5result.addElement (new S5("Mike Carey", 9, (float)40.3));
-    Q5result.addElement (new S5("Mike Carey", 9, (float)40.3));
-    Q5result.addElement (new S5("Mike Carey", 9, (float)40.3));
-    Q5result.addElement (new S5("David Dewitt",10, (float)47.2));
-    Q5result.addElement (new S5("David Dewitt",10, (float)47.2));
-    Q5result.addElement (new S5("Jeff Naughton", 5,(float) 35.0));
-    Q5result.addElement (new S5("Yannis Ioannidis", 8, (float)40.2));
+		Q3result.addElement(new S2("Mike Carey"));
+		Q3result.addElement(new S2("Mike Carey"));
+		Q3result.addElement(new S2("Mike Carey"));
+		Q3result.addElement(new S2("David Dewitt"));
+		Q3result.addElement(new S2("David Dewitt"));
+		Q3result.addElement(new S2("Jeff Naughton"));
+		Q3result.addElement(new S2("Miron Livny"));
+		Q3result.addElement(new S2("Yannis Ioannidis"));
+		Q3result.addElement(new S2("Raghu Ramakrishnan"));
+		Q3result.addElement(new S2("Raghu Ramakrishnan"));
 
-    Q6result.addElement (new S2("David Dewitt"));
-    Q6result.addElement (new S2("Mike Carey"));
-    Q6result.addElement (new S2("Raghu Ramakrishnan"));
-    Q6result.addElement (new S2("Yannis Ioannidis"));
-   
-    
-   
-   
+		Q4result.addElement(new S2("David Dewitt"));
+		Q4result.addElement(new S2("Jeff Naughton"));
+		Q4result.addElement(new S2("Mike Carey"));
+		Q4result.addElement(new S2("Miron Livny"));
+		Q4result.addElement(new S2("Raghu Ramakrishnan"));
+		Q4result.addElement(new S2("Yannis Ioannidis"));
 
-    //more initializing
-    for (int i = 0; i < Max_group_num; i++) {
-      mygroup[i] = new Group();
-    }
-    
-    //NOW the checking part
-    switch(q_index) {
-      
-    case 1:
-      types[0] = new AttrType(AttrType.attrString);    // atrrtype array.
-      types[1] = new AttrType(AttrType.attrString);
-      sizes[0] = (short)25 ;                  // string length. 
-      sizes[1] = (short)10;
-      columnum = (short)2;                    // colum number.
-      groupnum = 1;                    // group number.
-      tuplenum = 3;                     // the total number of answer.
-      grouporder = new Order(Order.SORT);
-      mygroup[0].len = 3;              // each group length.
-      mygroup[0].count = 0;           // count for correct answers
-      mygroup[0].order = new Order(Order.UNSORT); // the tuple in group is sorted or not
-      for(int i=0; i<mygroup[0].len;i++)  {// set tuple value. 
-	try {
-          mygroup[0].mytuple[i] = new Tuple();
-          mygroup[0].mytuple[i].setHdr(columnum, types, sizes); 
-          mygroup[0].mytuple[i].setStrFld(1,((S1)Q1result.elementAt(i)).sname);  
-          mygroup[0].mytuple[i].setStrFld(2,((S1)Q1result.elementAt(i)).date);  
+		Q5result.addElement(new S5("Mike Carey", 9, (float) 40.3));
+		Q5result.addElement(new S5("Mike Carey", 9, (float) 40.3));
+		Q5result.addElement(new S5("Mike Carey", 9, (float) 40.3));
+		Q5result.addElement(new S5("David Dewitt", 10, (float) 47.2));
+		Q5result.addElement(new S5("David Dewitt", 10, (float) 47.2));
+		Q5result.addElement(new S5("Jeff Naughton", 5, (float) 35.0));
+		Q5result.addElement(new S5("Yannis Ioannidis", 8, (float) 40.2));
+
+		Q6result.addElement(new S2("David Dewitt"));
+		Q6result.addElement(new S2("Mike Carey"));
+		Q6result.addElement(new S2("Raghu Ramakrishnan"));
+		Q6result.addElement(new S2("Yannis Ioannidis"));
+
+		// more initializing
+		for (int i = 0; i < Max_group_num; i++) {
+			mygroup[i] = new Group();
+		}
+
+		// NOW the checking part
+		switch (q_index) {
+
+		case 1:
+			types[0] = new AttrType(AttrType.attrString); // atrrtype array.
+			types[1] = new AttrType(AttrType.attrString);
+			sizes[0] = (short) 25; // string length.
+			sizes[1] = (short) 10;
+			columnum = (short) 2; // colum number.
+			groupnum = 1; // group number.
+			tuplenum = 3; // the total number of answer.
+			grouporder = new Order(Order.SORT);
+			mygroup[0].len = 3; // each group length.
+			mygroup[0].count = 0; // count for correct answers
+			mygroup[0].order = new Order(Order.UNSORT); // the tuple in group is sorted or not
+			for (int i = 0; i < mygroup[0].len; i++) {// set tuple value.
+				try {
+					mygroup[0].mytuple[i] = new Tuple();
+					mygroup[0].mytuple[i].setHdr(columnum, types, sizes);
+					mygroup[0].mytuple[i].setStrFld(1, ((S1) Q1result.elementAt(i)).sname);
+					mygroup[0].mytuple[i].setStrFld(2, ((S1) Q1result.elementAt(i)).date);
+				} catch (Exception e) {
+					System.err.println("**** Error setting up the tuples");
+				}
+			}
+			break;
+
+		case 2:
+			types[0] = new AttrType(AttrType.attrString);
+			sizes[0] = (short) 25;
+			columnum = (short) 1;
+			groupnum = 1;
+			tuplenum = 4;
+			grouporder = new Order(Order.SORT);
+			mygroup[0].len = 4;
+			mygroup[0].count = 0; // count for correct answers
+			mygroup[0].order = new Order(Order.SORT);
+			for (int i = 0; i < mygroup[0].len; i++) {// set tuple value.
+				try {
+					mygroup[0].mytuple[i] = new Tuple();
+					mygroup[0].mytuple[i].setHdr(columnum, types, sizes);
+					mygroup[0].mytuple[i].setStrFld(1, ((S2) Q2result.elementAt(i)).sname);
+				} catch (Exception e) {
+					System.err.println("**** Error setting up the tuples");
+				}
+			}
+			break;
+
+		case 3:
+			types[0] = new AttrType(AttrType.attrString);
+			sizes[0] = (short) 25;
+			columnum = (short) 1;
+			groupnum = 1;
+			tuplenum = 10;
+			grouporder = new Order(Order.SORT);
+			mygroup[0].len = 10;
+			mygroup[0].count = 0; // count for correct answers
+			mygroup[0].order = new Order(Order.UNSORT);
+			for (int i = 0; i < mygroup[0].len; i++) {
+				try {
+					mygroup[0].mytuple[i] = new Tuple();
+					mygroup[0].mytuple[i].setHdr(columnum, types, sizes);
+					mygroup[0].mytuple[i].setStrFld(1, ((S2) Q3result.elementAt(i)).sname);
+				} catch (Exception e) {
+					System.err.println("**** Error setting up the tuples");
+				}
+			}
+			break;
+
+		case 4:
+			types[0] = new AttrType(AttrType.attrString);
+			sizes[0] = (short) 25;
+			columnum = (short) 1;
+			groupnum = 1;
+			tuplenum = 6;
+			grouporder = new Order(Order.UNSORT);
+			mygroup[0].len = 6;
+			mygroup[0].count = 0; // count for correct answers
+			mygroup[0].order = new Order(Order.UNSORT);
+			for (int i = 0; i < mygroup[0].len; i++) {// set tuple value.
+				try {
+					mygroup[0].mytuple[i] = new Tuple();
+					mygroup[0].mytuple[i].setHdr(columnum, types, sizes);
+					mygroup[0].mytuple[i].setStrFld(1, ((S2) Q4result.elementAt(i)).sname);
+				} catch (Exception e) {
+					System.err.println("**** Error setting up the tuples");
+				}
+			}
+			break;
+
+		case 5:
+			types[0] = new AttrType(AttrType.attrString);
+			types[1] = new AttrType(AttrType.attrInteger);
+			types[2] = new AttrType(AttrType.attrReal);
+			sizes[0] = (short) 25;
+			columnum = (short) 3;
+			groupnum = 1;
+			tuplenum = 7;
+			grouporder = new Order(Order.SORT);
+			mygroup[0].len = 7;
+			mygroup[0].count = 0; // count for correct answers
+			mygroup[0].order = new Order(Order.UNSORT);
+			for (int i = 0; i < mygroup[0].len; i++) {// set tuple value.
+				try {
+					mygroup[0].mytuple[i] = new Tuple();
+					mygroup[0].mytuple[i].setHdr(columnum, types, sizes);
+					mygroup[0].mytuple[i].setStrFld(1, ((S5) Q5result.elementAt(i)).sname);
+					mygroup[0].mytuple[i].setIntFld(2, ((S5) Q5result.elementAt(i)).rating);
+					mygroup[0].mytuple[i].setFloFld(3, ((S5) Q5result.elementAt(i)).age);
+				} catch (Exception e) {
+					System.err.println("**** Error setting up the tuples");
+				}
+			}
+			break;
+
+		case 6:
+			types[0] = new AttrType(AttrType.attrString);
+			sizes[0] = (short) 25;
+			columnum = (short) 1;
+			groupnum = 1;
+			tuplenum = 4;
+			grouporder = new Order(Order.UNSORT);
+			mygroup[0].len = 4;
+			mygroup[0].count = 0; // count for correct answers
+			mygroup[0].order = new Order(Order.SORT);
+			for (int i = 0; i < mygroup[0].len; i++) { // set tuple value.
+				try {
+					mygroup[0].mytuple[i] = new Tuple();
+					mygroup[0].mytuple[i].setHdr(columnum, types, sizes);
+					mygroup[0].mytuple[i].setStrFld(1, ((S2) Q6result.elementAt(i)).sname);
+				} catch (Exception e) {
+					System.err.println("**** Error setting up the tuples");
+				}
+			}
+			break;
+
+		default:
+			System.out.print("Before using querycheck, must set " + "up your answer first.\n\n");
+		}
+
+		for (int i = 0; i < Max_group_num; i++) {
+			gmark[i] = 0; // initilize group mark
+			for (int j = 0; j < Max_answer; j++) {// initialize mark.
+				mygroup[i].mark[j] = 0;
+			}
+		}
+
+		total = 0;
+		curGroup = -1;
+
+		G_O_flag = 0;
+		for (int j = 0; j < Max_group_num; j++) {
+			T_O_flag[j] = 0;
+		}
+
+		missing = null;
+		extra = null;
 	}
-	catch (Exception e) {
-	  System.err.println ("**** Error setting up the tuples");
-	}
-      }
-      break;
-      
-    case 2:
-      types[0] = new AttrType(AttrType.attrString);
-      sizes[0] = (short)25;
-      columnum = (short)1;
-      groupnum = 1;
-      tuplenum =4;
-      grouporder = new Order(Order.SORT);
-      mygroup[0].len = 4;
-      mygroup[0].count = 0;           // count for correct answers
-      mygroup[0].order = new Order(Order.SORT);
-      for(int i=0; i<mygroup[0].len;i++)  {// set tuple value.
-        try {
-          mygroup[0].mytuple[i] = new Tuple();
-          mygroup[0].mytuple[i].setHdr(columnum, types, sizes);
-          mygroup[0].mytuple[i].setStrFld(1,((S2)Q2result.elementAt(i)).sname);
-	}
-	catch (Exception e) {
-	  System.err.println ("**** Error setting up the tuples");
-	}
-      }
-      break;
-      
-    case 3:
-      types[0] = new AttrType(AttrType.attrString);
-        sizes[0] = (short)25;
-        columnum = (short)1;
-        groupnum = 1;
-        tuplenum = 10;
-        grouporder = new Order(Order.SORT);
-        mygroup[0].len = 10;
-        mygroup[0].count = 0;           // count for correct answers
-        mygroup[0].order = new Order(Order.UNSORT);
-        for(int i=0; i<mygroup[0].len;i++) {
-	  try {
-	    mygroup[0].mytuple[i] = new Tuple();
-	    mygroup[0].mytuple[i].setHdr(columnum, types, sizes);
-	    mygroup[0].mytuple[i].setStrFld(1,((S2)Q3result.elementAt(i)).sname);
-	  }
-	  catch (Exception e) {
-	    System.err.println ("**** Error setting up the tuples");
-	  }
-	}
-        break;
-
-    case 4:
-        types[0] = new AttrType(AttrType.attrString);
-        sizes[0] = (short)25;
-        columnum = (short)1;
-        groupnum = 1;
-        tuplenum = 6;
-        grouporder = new Order(Order.UNSORT);
-        mygroup[0].len = 6;
-        mygroup[0].count = 0;           // count for correct answers
-        mygroup[0].order = new Order(Order.UNSORT);
-        for(int i=0; i<mygroup[0].len;i++)  {// set tuple value.
-	  try {
-	    mygroup[0].mytuple[i] = new Tuple();
-	    mygroup[0].mytuple[i].setHdr(columnum, types, sizes);
-	    mygroup[0].mytuple[i].setStrFld(1,((S2)Q4result.elementAt(i)).sname);
-	  }
-	  catch (Exception e) {
-	    System.err.println ("**** Error setting up the tuples");
-	  }
-	}
-        break;
-
-    case 5:
-        types[0] = new AttrType(AttrType.attrString);
-        types[1] = new AttrType(AttrType.attrInteger);
-        types[2] = new AttrType(AttrType.attrReal);
-        sizes[0] = (short)25;
-        columnum = (short)3;
-        groupnum = 1;
-        tuplenum = 7;
-        grouporder = new Order(Order.SORT);
-        mygroup[0].len = 7;
-        mygroup[0].count = 0;           // count for correct answers
-        mygroup[0].order = new Order(Order.UNSORT);
-        for(int i=0; i<mygroup[0].len;i++)  {// set tuple value.
-	  try {
-	    mygroup[0].mytuple[i] = new Tuple();
-	    mygroup[0].mytuple[i].setHdr(columnum, types, sizes);
-	    mygroup[0].mytuple[i].setStrFld(1,((S5)Q5result.elementAt(i)).sname);
-	    mygroup[0].mytuple[i].setIntFld(2,((S5)Q5result.elementAt(i)).rating);
-	    mygroup[0].mytuple[i].setFloFld(3,((S5)Q5result.elementAt(i)).age);
-	  }
-	  catch (Exception e) {
-	    System.err.println ("**** Error setting up the tuples");
-	  }
-	}
-        break;
-
-    case 6:
-        types[0] = new AttrType(AttrType.attrString);
-        sizes[0] = (short)25;
-        columnum = (short)1;
-        groupnum = 1;
-        tuplenum = 4;
-        grouporder = new Order(Order.UNSORT);
-        mygroup[0].len = 4;
-        mygroup[0].count = 0;           // count for correct answers
-        mygroup[0].order = new Order(Order.SORT);
-        for(int i=0; i<mygroup[0].len;i++) { // set tuple value.
-	  try {
-            mygroup[0].mytuple[i] = new Tuple();
-            mygroup[0].mytuple[i].setHdr(columnum, types, sizes);
-            mygroup[0].mytuple[i].setStrFld(1,((S2)Q6result.elementAt(i)).sname);
-	  }
-	  catch (Exception e) {
-	    System.err.println ("**** Error setting up the tuples");
-	  }
-        }
-        break;
-
-    
-
-
-    default:
-      System.out.print ("Before using querycheck, must set "
-			+ "up your answer first.\n\n");
-    }
-    
-    for (int i=0; i<Max_group_num; i++) {     
-      gmark[i] = 0;           // initilize group mark
-      for ( int j=0; j< Max_answer; j++) {// initialize mark.
-	mygroup[i].mark[j] = 0;
-      }
-    }
-    
-    total = 0;
-    curGroup = -1;
-    
-    G_O_flag = 0;
-    for( int j=0; j<Max_group_num; j++ ) {
-      T_O_flag[j] = 0;
-    }
-    
-    missing = null;
-    extra   = null; 
-  }
   
   
   void AddtoList(TupleList list, Tuple t) {        

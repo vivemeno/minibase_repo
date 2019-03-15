@@ -410,53 +410,50 @@ public class Sort extends Iterator implements GlobalConst
     throws IOException, 
 	   SortException,
 	   Exception
-  {
-    pnode cur_node;                // needs pq_defs.java  
-    Tuple new_tuple, old_tuple;  
+	{
+		pnode cur_node; // needs pq_defs.java
+		Tuple new_tuple, old_tuple;
 
-    cur_node = Q.deq();
-    old_tuple = cur_node.tuple;
-    /*
-    System.out.print("Get ");
-    old_tuple.print(_in);
-    */
-    // we just removed one tuple from one run, now we need to put another
-    // tuple of the same run into the queue
-    if (i_buf[cur_node.run_num].empty() != true) { 
-      // run not exhausted 
-      new_tuple = new Tuple(tuple_size); // need tuple.java??
+		cur_node = Q.deq();
+		old_tuple = cur_node.tuple;
+		/*
+		 * System.out.print("Get "); old_tuple.print(_in);
+		 */
+		// we just removed one tuple from one run, now we need to put another
+		// tuple of the same run into the queue
+		if (i_buf[cur_node.run_num].empty() != true) {
+			// run not exhausted
+			new_tuple = new Tuple(tuple_size); // need tuple.java??
 
-      try {
-	new_tuple.setHdr(n_cols, _in, str_lens);
-      }
-      catch (Exception e) {
-	throw new SortException(e, "Sort.java: setHdr() failed");
-      }
-      
-      new_tuple = i_buf[cur_node.run_num].Get(new_tuple);  
-      if (new_tuple != null) {
-	/*
-	System.out.print(" fill in from run " + cur_node.run_num);
-	new_tuple.print(_in);
-	*/
-	cur_node.tuple = new_tuple;  // no copy needed -- I think Bingjie 4/22/98
-	try {
-	  Q.enq(cur_node);
-	} catch (UnknowAttrType e) {
-	  throw new SortException(e, "Sort.java: UnknowAttrType caught from Q.enq()");
-	} catch (TupleUtilsException e) {
-	  throw new SortException(e, "Sort.java: TupleUtilsException caught from Q.enq()");
-	} 
-      }
-      else {
-	throw new SortException("********** Wait a minute, I thought input is not empty ***************");
-      }
-      
-    }
+			try {
+				new_tuple.setHdr(n_cols, _in, str_lens);
+			} catch (Exception e) {
+				throw new SortException(e, "Sort.java: setHdr() failed");
+			}
 
-    // changed to return Tuple instead of return char array ????
-    return old_tuple; 
-  }
+			new_tuple = i_buf[cur_node.run_num].Get(new_tuple);
+			if (new_tuple != null) {
+				/*
+				 * System.out.print(" fill in from run " + cur_node.run_num);
+				 * new_tuple.print(_in);
+				 */
+				cur_node.tuple = new_tuple; // no copy needed -- I think Bingjie 4/22/98
+				try {
+					Q.enq(cur_node);
+				} catch (UnknowAttrType e) {
+					throw new SortException(e, "Sort.java: UnknowAttrType caught from Q.enq()");
+				} catch (TupleUtilsException e) {
+					throw new SortException(e, "Sort.java: TupleUtilsException caught from Q.enq()");
+				}
+			} else {
+				throw new SortException("********** Wait a minute, I thought input is not empty ***************");
+			}
+
+		}
+
+		// changed to return Tuple instead of return char array ????
+		return old_tuple;
+	}
   
   /**
    * Set lastElem to be the minimum value of the appropriate type

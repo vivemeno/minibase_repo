@@ -422,48 +422,38 @@ public class AttrCatalog extends Heapfile
   public void read_tuple(Tuple tuple, AttrDesc record)
     throws IOException, 
 	   AttrCatalogException
-    {
-      try {
-	record.relName = tuple.getStrFld(1);
-	record.attrName = tuple.getStrFld(2);
-	record.attrOffset = tuple.getIntFld(3);
-	record.attrPos = tuple.getIntFld(4);
-	
-	int temp;
-	temp = tuple.getIntFld(5);
-	if (temp == 0)
-	  {
-	    record.attrType = new AttrType(AttrType.attrString);
-	    record.minVal.strVal = tuple.getStrFld(8);
-	    record.maxVal.strVal = tuple.getStrFld(9);
-	  }
-	else
-	  if (temp == 1)
-	    {
-	      record.attrType = new AttrType(AttrType.attrReal);
-	      record.minVal.floatVal = tuple.getFloFld(8);
-	      record.maxVal.floatVal = tuple.getFloFld(9);
-	    }
-	  else
-	    if (temp == 2)
-	      {
-		record.attrType = new AttrType(AttrType.attrInteger);
-		record.minVal.intVal = tuple.getIntFld(8);
-		record.maxVal.intVal = tuple.getIntFld(9);
-	      }
-	    else
-	      {
-		return;
-	      }
-	
-	record.attrLen = tuple.getIntFld(6);
-	record.indexCnt = tuple.getIntFld(7);
-      }
-      catch (Exception e1) {
-	throw new AttrCatalogException(e1, "read_tuple failed");
-      }
-      
-    }
+	{
+		try {
+			record.relName = tuple.getStrFld(1);
+			record.attrName = tuple.getStrFld(2);
+			record.attrOffset = tuple.getIntFld(3);
+			record.attrPos = tuple.getIntFld(4);
+
+			int temp;
+			temp = tuple.getIntFld(5);
+			if (temp == 0) {
+				record.attrType = new AttrType(AttrType.attrString);
+				record.minVal.strVal = tuple.getStrFld(8);
+				record.maxVal.strVal = tuple.getStrFld(9);
+			} else if (temp == 1) {
+				record.attrType = new AttrType(AttrType.attrReal);
+				record.minVal.floatVal = tuple.getFloFld(8);
+				record.maxVal.floatVal = tuple.getFloFld(9);
+			} else if (temp == 2) {
+				record.attrType = new AttrType(AttrType.attrInteger);
+				record.minVal.intVal = tuple.getIntFld(8);
+				record.maxVal.intVal = tuple.getIntFld(9);
+			} else {
+				return;
+			}
+
+			record.attrLen = tuple.getIntFld(6);
+			record.indexCnt = tuple.getIntFld(7);
+		} catch (Exception e1) {
+			throw new AttrCatalogException(e1, "read_tuple failed");
+		}
+
+	}
   
   // REMOVE ALL ATTRIBUTE ENTRIES FOR A RELATION
   public void dropRelation(String relation){};

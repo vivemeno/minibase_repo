@@ -35,6 +35,11 @@ public class CondExpr {
   public CondExpr    next;   
   
   /**
+   * Flag is set to change the equal operations behavior for interval type.
+   */    
+  public int flag;
+  
+  /**
    *constructor
    */
   public  CondExpr() {
