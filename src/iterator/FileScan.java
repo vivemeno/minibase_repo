@@ -56,43 +56,41 @@ public class FileScan extends  Iterator
 	   FileScanException,
 	   TupleUtilsException, 
 	   InvalidRelation
-    {
-      _in1 = in1; 
-      in1_len = len_in1;
-      s_sizes = s1_sizes;
-      
-      Jtuple =  new Tuple();
-      AttrType[] Jtypes = new AttrType[n_out_flds];
-      short[]    ts_size;
-      ts_size = TupleUtils.setup_op_tuple(Jtuple, Jtypes, in1, len_in1, s1_sizes, proj_list, n_out_flds);
-      
-      OutputFilter = outFilter;
-      perm_mat = proj_list;
-      nOutFlds = n_out_flds; 
-      tuple1 =  new Tuple();
+	{
+		_in1 = in1;
+		in1_len = len_in1;
+		s_sizes = s1_sizes;
 
-      try {
-	tuple1.setHdr(in1_len, _in1, s1_sizes);
-      }catch (Exception e){
-	throw new FileScanException(e, "setHdr() failed");
-      }
-      t1_size = tuple1.size();
-      
-      try {
-	f = new Heapfile(file_name);
-	
-      }
-      catch(Exception e) {
-	throw new FileScanException(e, "Create new heapfile failed");
-      }
-      
-      try {
-	scan = f.openScan();
-      }
-      catch(Exception e){
-	throw new FileScanException(e, "openScan() failed");
-      }
-    }
+		Jtuple = new Tuple();
+		AttrType[] Jtypes = new AttrType[n_out_flds];
+		short[] ts_size;
+		ts_size = TupleUtils.setup_op_tuple(Jtuple, Jtypes, in1, len_in1, s1_sizes, proj_list, n_out_flds);
+
+		OutputFilter = outFilter;
+		perm_mat = proj_list;
+		nOutFlds = n_out_flds;
+		tuple1 = new Tuple();
+
+		try {
+			tuple1.setHdr(in1_len, _in1, s1_sizes);
+		} catch (Exception e) {
+			throw new FileScanException(e, "setHdr() failed");
+		}
+		t1_size = tuple1.size();
+
+		try {
+			f = new Heapfile(file_name);
+
+		} catch (Exception e) {
+			throw new FileScanException(e, "Create new heapfile failed");
+		}
+
+		try {
+			scan = f.openScan();
+		} catch (Exception e) {
+			throw new FileScanException(e, "openScan() failed");
+		}
+	}
   
   /**
    *@return shows what input fields go where in the output tuple

@@ -364,13 +364,13 @@ public class Convert{
          */
 
         OutputStream out = new ByteArrayOutputStream();
-        ObjectOutputStream outstr = new ObjectOutputStream (out);
-    
+        DataOutputStream outstr = new DataOutputStream (out);
+         
         outstr.writeInt(value.s);
         outstr.writeInt(value.e);
         
         // write the value to the output stream
-        outstr.writeObject(value);
+       // outstr.writeObject(value);
         // creates a byte array with this output stream size and the
         // valid contents of the buffer have been copied into it
         byte []B = ((ByteArrayOutputStream) out).toByteArray();

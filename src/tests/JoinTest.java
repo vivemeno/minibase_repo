@@ -180,7 +180,7 @@ class JoinsDriver implements GlobalConst {
 		Ntypes[1] = new AttrType(AttrType.attrString);
 		
 		short[] Nsizes = new short[1];
-		Nsizes[0] = 5; // first elt. is 30
+		Nsizes[0] = 15; // first elt. is 30
 		
 		Tuple t = new Tuple();
 		try {
@@ -597,6 +597,7 @@ class JoinsDriver implements GlobalConst {
 		expr[0].type2 = new AttrType(AttrType.attrSymbol);
 		expr[0].operand1.symbol = new FldSpec(new RelSpec(RelSpec.outer), 1);
 		expr[0].operand2.symbol = new FldSpec(new RelSpec(RelSpec.innerRel), 1);
+		expr[0].flag = 1;
 		expr[1] = null;
 
 	}
@@ -1494,18 +1495,17 @@ class JoinsDriver implements GlobalConst {
 		boolean status = OK;
 		AttrType[] Ntypes = { new AttrType(AttrType.attrInterval), new AttrType(AttrType.attrString) };
 		short[] Nsizes = new short[1];
-		Nsizes[0] = 5;
+		Nsizes[0] = 1;
 
 		AttrType[] Ntypes2 = { new AttrType(AttrType.attrInterval), new AttrType(AttrType.attrString) };
 		short[] Nsizes2 = new short[1];
-		Nsizes[0] = 5;
+		Nsizes2[0] = 1;
 
 		FldSpec[] Nprojection = { new FldSpec(new RelSpec(RelSpec.outer), 1),
 				new FldSpec(new RelSpec(RelSpec.outer), 2) };
 		FileScan am = null;
 		try {
 			am = new FileScan("nodes.in", Ntypes, Nsizes, (short) 2, (short) 2, Nprojection, null);
-			System.out.println("test");
 		} catch (Exception e) {
 			status = FAIL;
 			System.err.println("" + e);
@@ -1516,7 +1516,7 @@ class JoinsDriver implements GlobalConst {
 		outFilter[1] = new CondExpr();
 		Proj_CondExpr(outFilter);
 		FldSpec[] proj = { new FldSpec(new RelSpec(RelSpec.outer), 2), new FldSpec(new RelSpec(RelSpec.innerRel), 2),
-				new FldSpec(new RelSpec(RelSpec.innerRel), 1), new FldSpec(new RelSpec(RelSpec.innerRel), 2) }; // S.sname,
+				new FldSpec(new RelSpec(RelSpec.outer), 1), new FldSpec(new RelSpec(RelSpec.innerRel), 1) }; // S.sname,
 		NestedLoopsJoins inl = null;
 		try {
 			inl = new NestedLoopsJoins(Ntypes2, 2, Nsizes2, Ntypes2, 2, Nsizes2, 10, am, "nodes.in", outFilter, null,
@@ -1529,9 +1529,12 @@ class JoinsDriver implements GlobalConst {
 		}
 
 		Tuple t = new Tuple();
-		AttrType[] jtype = new AttrType[2];
-		jtype[0] = new AttrType(AttrType.attrInterval);
+		AttrType[] jtype = new AttrType[4];
+		
+		jtype[0] = new AttrType(AttrType.attrString);
 		jtype[1] = new AttrType(AttrType.attrString);
+		jtype[2] = new AttrType(AttrType.attrInterval);
+		jtype[3] = new AttrType(AttrType.attrInterval);
 		try {
 			while ((t = inl.get_next()) != null) {
 				t.print(jtype);
@@ -1541,7 +1544,6 @@ class JoinsDriver implements GlobalConst {
 			System.err.println("" + e);
 			Runtime.getRuntime().exit(1);
 		}
-
 	}
   
   public void Query6()

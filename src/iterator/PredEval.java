@@ -127,7 +127,14 @@ public class PredEval
 
 				switch (temp_ptr.op.attrOperator) {
 				case AttrOperator.aopEQ:
-					if (comp_res == 0)
+					if (comparison_type.attrType == AttrType.attrInterval) {
+						if (temp_ptr.flag == 0) {
+							if(comp_res == 4) {
+								return true;
+							}
+						}
+					}
+					if (comp_res == 1)
 						op_res = true;
 					break;
 				case AttrOperator.aopLT:

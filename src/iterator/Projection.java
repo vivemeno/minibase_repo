@@ -33,54 +33,55 @@ public class Projection
     throws UnknowAttrType,
 	   FieldNumberOutOfBoundException,
 	   IOException
-    {
-      
-      
-      for (int i = 0; i < nOutFlds; i++)
 	{
-	  switch (perm_mat[i].relation.key)
-	    {
-	    case RelSpec.outer:        // Field of outer (t1)
-	      switch (type1[perm_mat[i].offset-1].attrType)
-		{
-		case AttrType.attrInteger:
-		  Jtuple.setIntFld(i+1, t1.getIntFld(perm_mat[i].offset));
-		  break;
-		case AttrType.attrReal:
-		  Jtuple.setFloFld(i+1, t1.getFloFld(perm_mat[i].offset));
-		  break;
-		case AttrType.attrString:
-		  Jtuple.setStrFld(i+1, t1.getStrFld(perm_mat[i].offset));
-		  break;
-		default:
-		  
-		  throw new UnknowAttrType("Don't know how to handle attrSymbol, attrNull");
-		  
+
+		for (int i = 0; i < nOutFlds; i++) {
+			switch (perm_mat[i].relation.key) {
+			case RelSpec.outer: // Field of outer (t1)
+				switch (type1[perm_mat[i].offset - 1].attrType) {
+				case AttrType.attrInteger:
+					Jtuple.setIntFld(i + 1, t1.getIntFld(perm_mat[i].offset));
+					break;
+				case AttrType.attrReal:
+					Jtuple.setFloFld(i + 1, t1.getFloFld(perm_mat[i].offset));
+					break;
+				case AttrType.attrString:
+					Jtuple.setStrFld(i + 1, t1.getStrFld(perm_mat[i].offset));
+					break;
+				case AttrType.attrInterval:
+					Jtuple.setIntervalFld(i + 1, t1.getIntervalField(perm_mat[i].offset));
+					break;
+				default:
+
+					throw new UnknowAttrType("Don't know how to handle attrSymbol, attrNull");
+
+				}
+				break;
+
+			case RelSpec.innerRel: // Field of inner (t2)
+				switch (type2[perm_mat[i].offset - 1].attrType) {
+				case AttrType.attrInteger:
+					Jtuple.setIntFld(i + 1, t2.getIntFld(perm_mat[i].offset));
+					break;
+				case AttrType.attrReal:
+					Jtuple.setFloFld(i + 1, t2.getFloFld(perm_mat[i].offset));
+					break;
+				case AttrType.attrString:
+					Jtuple.setStrFld(i + 1, t2.getStrFld(perm_mat[i].offset));
+					break;
+				case AttrType.attrInterval:
+					Jtuple.setIntervalFld(i + 1, t2.getIntervalField(perm_mat[i].offset));
+					break;
+				default:
+
+					throw new UnknowAttrType("Don't know how to handle attrSymbol, attrNull");
+
+				}
+				break;
+			}
 		}
-	      break;
-	      
-	    case RelSpec.innerRel:        // Field of inner (t2)
-	      switch (type2[perm_mat[i].offset-1].attrType)
-		{
-		case AttrType.attrInteger:
-		  Jtuple.setIntFld(i+1, t2.getIntFld(perm_mat[i].offset));
-		  break;
-		case AttrType.attrReal:
-		  Jtuple.setFloFld(i+1, t2.getFloFld(perm_mat[i].offset));
-		  break;
-		case AttrType.attrString:
-		  Jtuple.setStrFld(i+1, t2.getStrFld(perm_mat[i].offset));
-		  break;
-		default:
-		  
-		  throw new UnknowAttrType("Don't know how to handle attrSymbol, attrNull");  
-		  
-		}
-	      break;
-	    }
+		return;
 	}
-      return;
-    }
   
   
   
