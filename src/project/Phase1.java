@@ -56,15 +56,15 @@ public class Phase1 {
 	public Phase1() {
 		nodes = new Vector();
 		nodes.addElement(new NodeTable("A", new IntervalType(1, 6, 1)));
-		nodes.addElement(new NodeTable("B", new IntervalType(2, 3, 2)));
-		// nodes.addElement(new NodeTable("C", new IntervalType(3, 4, 3)));
-		// nodes.addElement(new NodeTable("B", new IntervalType(5, 6, 2)));
-		nodes.addElement(new NodeTable("E", new IntervalType(4, 5, 2)));
-		// nodes.addElement(new NodeTable("F", new IntervalType(9, 12, 3)));
-		// nodes.addElement(new NodeTable("G", new IntervalType(10, 11, 4)));
+		nodes.addElement(new NodeTable("B", new IntervalType(2, 5, 2)));
+		nodes.addElement(new NodeTable("B", new IntervalType(6, 11, 3)));
+		nodes.addElement(new NodeTable("B", new IntervalType(12, 13, 2)));
+		nodes.addElement(new NodeTable("E", new IntervalType(3, 4, 3)));
+		nodes.addElement(new NodeTable("E", new IntervalType(7, 8, 3)));
+		nodes.addElement(new NodeTable("D", new IntervalType(9, 10, 3)));
 		
 		boolean status = OK;
-		int numnodes = 3;
+		int numnodes = 7;
 		// int numnodes_attrs = 2;
 
 		String dbpath = "/tmp/" + System.getProperty("user.name") + ".minibase.jointestdb";
@@ -221,12 +221,12 @@ public class Phase1 {
 	
 	public void compute() {
 		Rule rule1 = new Rule("A", "B", Rule.RULE_TYPE_PARENT_CHILD);
-		Rule rule2 = new Rule("A", "E", Rule.RULE_TYPE_PARENT_CHILD);
-		ArrayList<Rule> aRules = new ArrayList<>();
+		Rule rule2 = new Rule("B", "E", Rule.RULE_TYPE_PARENT_CHILD);
+		ArrayList<Rule> rules = new ArrayList<>();
 		HashMap<String, Integer> nodeOffsetMap = new HashMap<>();
-		aRules.add(rule1);
-		aRules.add(rule2);
-		Integer nodeNumber = 1;
+		rules.add(rule1);
+		rules.add(rule2);
+		int nodeNumber = 1;
 		boolean status = OK;
 
 		Iterator am = null;
@@ -244,9 +244,11 @@ public class Phase1 {
 			e.printStackTrace();
 		}
 
-		Rule firstRule = aRules.get(0);
+		Rule firstRule = rules.get(0);
 		populateNodeOffsetMap(nodeOffsetMap, firstRule.outerRule, nodeNumber);
+		nodeNumber++;
 		populateNodeOffsetMap(nodeOffsetMap, firstRule.innerRule, nodeNumber);
+		nodeNumber++;
 
 		CondExpr[] outFilter = new CondExpr[4];
 		outFilter[0] = new CondExpr();
@@ -255,8 +257,7 @@ public class Phase1 {
 		outFilter[3] = new CondExpr();
 
 		Project2_CondExpr(outFilter, firstRule);
-		String prevRuleNode = firstRule.outerRule;
-		aRules.remove(0);		
+		rules.remove(0);		
 
 		FldSpec[] proj = { new FldSpec(new RelSpec(RelSpec.outer), 2), new FldSpec(new RelSpec(RelSpec.outer), 1),
 				new FldSpec(new RelSpec(RelSpec.innerRel), 2), new FldSpec(new RelSpec(RelSpec.innerRel), 1) };
@@ -273,14 +274,16 @@ public class Phase1 {
 		}
 		
 		int ruleNumber = 2;
-		for (Rule rule : aRules) {
+		for (Rule rule : rules) {
 			if (!nodeOffsetMap.containsKey(rule.outerRule)) {
 				//Technically, this should never happen.
 				populateNodeOffsetMap(nodeOffsetMap, rule.outerRule, nodeNumber);
+				nodeNumber++;
 			}
 			
 			if (!nodeOffsetMap.containsKey(rule.innerRule)) {
 				populateNodeOffsetMap(nodeOffsetMap, rule.innerRule, nodeNumber);
+				nodeNumber++;
 			}
 
 			outFilter = new CondExpr[4];
