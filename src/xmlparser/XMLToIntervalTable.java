@@ -98,7 +98,7 @@ public class XMLToIntervalTable implements GlobalConst {
         intrvlCounter++;
         nt.nodeIntLabel = new IntervalType();
         nt.nodeIntLabel.s = intrvlCounter;
-        nt.level = level;
+        nt.nodeIntLabel.l = level;
         if(root.children!=null) {
             for (XMLTree node : root.children)
                 intrvlCounter = preOrder(node, result, intrvlCounter, level+1);
