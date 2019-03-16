@@ -550,7 +550,7 @@ public class Tuple implements GlobalConst {
 			
 			case AttrType.attrInterval:
 				ival = Convert.getIntervalValue(fldOffset[i], data);
-				System.out.print("Start" + ival.s + " End:" + ival.e);
+				System.out.print("[" + ival.s + " " + ival.e + "]");
 				break;
 
 			case AttrType.attrNull:
@@ -579,7 +579,7 @@ public class Tuple implements GlobalConst {
 		
 		case AttrType.attrInterval:
 			ival = Convert.getIntervalValue(fldOffset[i], data);
-			System.out.print("Start" + ival.s + " End:" + ival.e);
+			System.out.print("[" + ival.s + "  " + ival.e + "]");
 			break;
 
 		case AttrType.attrNull:

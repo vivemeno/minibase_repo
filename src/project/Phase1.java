@@ -45,6 +45,18 @@ class Rule {
 		this.innerTag = _innerTag;
 		this.ruleType = _ruleType;
 	}
+	
+	public String getRelationship() {
+		if(ruleType == RULE_TYPE_PARENT_CHILD) {
+			return "PC";
+		} 
+		return "AD";
+	}
+	
+	@Override
+	public String toString() {
+		return "Rule :["+ outerTag + " " + innerTag + " " + getRelationship() + "]";
+	}
 }
 
 public class Phase1 {
@@ -258,7 +270,7 @@ public class Phase1 {
 			e.printStackTrace();
 			Runtime.getRuntime().exit(1);
 		}
-		
+		System.out.println(firstRule);
 		//Needs to iterate only from the second rule.
 		rules.remove(0);
 		int ruleNumber = 2;
@@ -319,6 +331,8 @@ public class Phase1 {
 			}
 			prevIterator = currIterator;
 			ruleNumber++;
+			
+		System.out.println(currRule);
 		}
 
 		Tuple finalTuple = new Tuple();
@@ -333,7 +347,9 @@ public class Phase1 {
 		}
 
 		try {
+			int count = 1;
 			while ((finalTuple = currIterator.get_next()) != null) {
+				System.out.println("Result " + count++ + ":");
 				finalTuple.print(finalTupleAttrTypes);
 			}
 		} catch (Exception e) {
