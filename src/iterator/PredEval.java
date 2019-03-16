@@ -138,7 +138,7 @@ public class PredEval
 									op_res = true;
 								} else if (temp_ptr.flag == 2) { // Parent - child relationship
 									IntervalType i1 = tuple1.getIntervalField(fld1);
-									IntervalType i2 = tuple1.getIntervalField(fld2);
+									IntervalType i2 = tuple2.getIntervalField(fld2);
 									if (i2.l == i1.l +1) {
 										op_res = true;
 									}
