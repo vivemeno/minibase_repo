@@ -100,7 +100,7 @@ public class TupleUtils
 					if ((t2_it.s > t1_it.s && t2_it.e > t1_it.e) || (t2_it.s < t1_it.s && t2_it.e < t1_it.e)) {
 						return 0; // no overlap
 					}
-					if (t1.equals(t2)) {
+					if (t2_it.equals(t2_it)) {
 						return 4;
 					} else {
 						return 3; // other types of overlap -- should not happen
