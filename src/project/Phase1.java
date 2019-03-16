@@ -1,7 +1,10 @@
 package project;
 
 import java.io.IOException;
+
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Vector;
 
 import global.AttrOperator;
@@ -17,6 +20,7 @@ import iterator.FldSpec;
 import iterator.Iterator;
 import iterator.NestedLoopsJoins;
 import iterator.RelSpec;
+
 
 class NodeTable {
 	public String nodename;
@@ -145,7 +149,7 @@ public class Phase1 {
 		}
 	}
 
-	private void Project2_CondExpr(CondExpr[] expr, CondExpr[] expr2, Rule rule, int nodeIndex) {
+	private void Project2_CondExpr(CondExpr[] expr, Rule rule) {
 
 		String outerNode = rule.outerRule;
 		expr[0].next = null;
@@ -175,56 +179,54 @@ public class Phase1 {
 		expr[2].operand2.string = rule.innerRule;
 
 		expr[3] = null;
-
-		expr2[0].next = null;
-		expr2[0].op = new AttrOperator(AttrOperator.aopEQ);
-		expr2[0].type1 = new AttrType(AttrType.attrSymbol);
-		expr2[0].type2 = new AttrType(AttrType.attrSymbol);
-		expr2[0].operand1.symbol = new FldSpec(new RelSpec(RelSpec.outer), 2 * nodeIndex - 1);
-		expr2[0].operand2.symbol = new FldSpec(new RelSpec(RelSpec.innerRel), 1);
-
-		expr2[1] = null;
 	}
 
-	private void Project3_CondExpr(CondExpr[] RightFilter, CondExpr[] OutFilter, Rule rule, int nodeIndex) {
-
+	private void Project3_CondExpr(CondExpr[] OutFilter, Rule rule, int offset) {
+		
 		String outerNode = rule.outerRule;
-		RightFilter[0].next = null;
-		RightFilter[0].op = new AttrOperator(AttrOperator.aopEQ);
-		RightFilter[0].type1 = new AttrType(AttrType.attrSymbol);
-		RightFilter[0].type2 = new AttrType(AttrType.attrString);
-		RightFilter[0].operand1.symbol = new FldSpec(new RelSpec(RelSpec.outer), 2);
-		RightFilter[0].operand2.string = rule.innerRule;
-
-		RightFilter[1] = null;
-
+		
 		OutFilter[0].next = null;
 		OutFilter[0].op = new AttrOperator(AttrOperator.aopEQ);
 		OutFilter[0].type1 = new AttrType(AttrType.attrSymbol);
 		OutFilter[0].type2 = new AttrType(AttrType.attrSymbol);
-		OutFilter[0].operand1.symbol = new FldSpec(new RelSpec(RelSpec.outer), (2 * nodeIndex) - 1);
+		OutFilter[0].operand1.symbol = new FldSpec(new RelSpec(RelSpec.outer), offset);
 		OutFilter[0].operand2.symbol = new FldSpec(new RelSpec(RelSpec.innerRel), 1);
 		if (rule.ruleType == Rule.RULE_TYPE_PARENT_CHILD) {
 			OutFilter[0].flag = 2;
 		} else {
 			OutFilter[0].flag = 1;
 		}
-
+		
 		OutFilter[1].next = null;
 		OutFilter[1].op = new AttrOperator(AttrOperator.aopEQ);
 		OutFilter[1].type1 = new AttrType(AttrType.attrSymbol);
-		OutFilter[1].operand1.symbol = new FldSpec(new RelSpec(RelSpec.outer), 2);
+		OutFilter[1].operand1.symbol = new FldSpec(new RelSpec(RelSpec.outer), offset - 1);
 		OutFilter[1].type2 = new AttrType(AttrType.attrString);
 		OutFilter[1].operand2.string = outerNode;
-		OutFilter[2] = null;
+		
+		OutFilter[2].next = null;
+		OutFilter[2].op = new AttrOperator(AttrOperator.aopEQ);
+		OutFilter[2].type1 = new AttrType(AttrType.attrSymbol);
+		OutFilter[2].type2 = new AttrType(AttrType.attrString);
+		OutFilter[2].operand1.symbol = new FldSpec(new RelSpec(RelSpec.innerRel), 2);
+		OutFilter[2].operand2.string = rule.innerRule;
+		
+		OutFilter[3] = null;
 	}
 
+	private void populateNodeOffsetMap(Map<String, Integer> offsetMap, String nodeName, Integer nodeNumber) {
+		offsetMap.put(nodeName, 2*nodeNumber);
+		nodeNumber = nodeNumber + 1;
+	}
+	
 	public void compute() {
 		Rule rule1 = new Rule("A", "B", Rule.RULE_TYPE_PARENT_CHILD);
 		Rule rule2 = new Rule("A", "E", Rule.RULE_TYPE_PARENT_CHILD);
 		ArrayList<Rule> aRules = new ArrayList<>();
+		HashMap<String, Integer> nodeOffsetMap = new HashMap<>();
 		aRules.add(rule1);
 		aRules.add(rule2);
+		Integer nodeNumber = 1;
 		boolean status = OK;
 
 		Iterator am = null;
@@ -243,6 +245,8 @@ public class Phase1 {
 		}
 
 		Rule firstRule = aRules.get(0);
+		populateNodeOffsetMap(nodeOffsetMap, firstRule.outerRule, nodeNumber);
+		populateNodeOffsetMap(nodeOffsetMap, firstRule.innerRule, nodeNumber);
 
 		CondExpr[] outFilter = new CondExpr[4];
 		outFilter[0] = new CondExpr();
@@ -250,13 +254,9 @@ public class Phase1 {
 		outFilter[2] = new CondExpr();
 		outFilter[3] = new CondExpr();
 
-		CondExpr[] outFilter2 = new CondExpr[2];
-		outFilter2[0] = new CondExpr();
-		outFilter2[1] = new CondExpr();
-
-		Project2_CondExpr(outFilter, outFilter2, firstRule, 1);
+		Project2_CondExpr(outFilter, firstRule);
 		String prevRuleNode = firstRule.outerRule;
-		aRules.remove(0);
+		aRules.remove(0);		
 
 		FldSpec[] proj = { new FldSpec(new RelSpec(RelSpec.outer), 2), new FldSpec(new RelSpec(RelSpec.outer), 1),
 				new FldSpec(new RelSpec(RelSpec.innerRel), 2), new FldSpec(new RelSpec(RelSpec.innerRel), 1) };
@@ -271,29 +271,31 @@ public class Phase1 {
 			e.printStackTrace();
 			Runtime.getRuntime().exit(1);
 		}
-		int nodeIndex = 1;
+		
 		int ruleNumber = 2;
 		for (Rule rule : aRules) {
-			if (rule.outerRule != prevRuleNode) {
-				nodeIndex++;
+			if (!nodeOffsetMap.containsKey(rule.outerRule)) {
+				//Technically, this should never happen.
+				populateNodeOffsetMap(nodeOffsetMap, rule.outerRule, nodeNumber);
+			}
+			
+			if (!nodeOffsetMap.containsKey(rule.innerRule)) {
+				populateNodeOffsetMap(nodeOffsetMap, rule.innerRule, nodeNumber);
 			}
 
-			outFilter = new CondExpr[3];
+			outFilter = new CondExpr[4];
 			outFilter[0] = new CondExpr();
 			outFilter[1] = new CondExpr();
 			outFilter[2] = new CondExpr();
-
-			CondExpr[] RightFilter = new CondExpr[2];
-			RightFilter[0] = new CondExpr();
-			RightFilter[1] = new CondExpr();
-
-			Project3_CondExpr(RightFilter, outFilter, rule, nodeIndex);
+			outFilter[3] = new CondExpr();
+			
+			Project3_CondExpr(outFilter, rule, nodeOffsetMap.get(rule.outerRule));
 			AttrType[] Ntypes2 = new AttrType[2 * ruleNumber];
 			for (int i = 0; i < 2 * ruleNumber; i++) {
 				if (i % 2 == 0) {
-					Ntypes2[i] = new AttrType(AttrType.attrInterval);
-				} else {
 					Ntypes2[i] = new AttrType(AttrType.attrString);
+				} else {
+					Ntypes2[i] = new AttrType(AttrType.attrInterval);
 				}
 			}
 			short[] Nsizes2 = new short[ruleNumber];
@@ -303,10 +305,10 @@ public class Phase1 {
 
 			FldSpec[] proj2 = new FldSpec[2 * ruleNumber + 2];
 			for (int i = 0; i < 2 * ruleNumber; i++) {
-				proj2[i] = new FldSpec(new RelSpec(RelSpec.outer), i + 1);
+				proj2[i] = new FldSpec(new RelSpec(RelSpec.outer), i+1);
 			}
-			proj2[2 * ruleNumber] = new FldSpec(new RelSpec(RelSpec.innerRel), 1);
-			proj2[2 * ruleNumber + 1] = new FldSpec(new RelSpec(RelSpec.innerRel), 2);
+			proj2[2 * ruleNumber] = new FldSpec(new RelSpec(RelSpec.innerRel), 2);
+			proj2[2 * ruleNumber + 1] = new FldSpec(new RelSpec(RelSpec.innerRel), 1);
 
 			try {
 				inl2 = new NestedLoopsJoins(Ntypes2, 2 * ruleNumber, Nsizes2, Ntypes, 2, Nsizes, 10, inl, "nodes.in",
@@ -320,15 +322,8 @@ public class Phase1 {
 			inl = inl2;
 			ruleNumber++;
 		}
-
+		
 		Tuple t = new Tuple();
-		// AttrType[] jtype = new AttrType[4];
-		//
-		// jtype[0] = new AttrType(AttrType.attrString);
-		// jtype[1] = new AttrType(AttrType.attrInterval);
-		// jtype[2] = new AttrType(AttrType.attrString);
-		// jtype[3] = new AttrType(AttrType.attrInterval);
-		//
 		AttrType[] jtype = new AttrType[2 * ruleNumber + 2];
 
 		for (int i = 0; i < 2 * ruleNumber; i++) {
@@ -338,6 +333,7 @@ public class Phase1 {
 				jtype[i] = new AttrType(AttrType.attrInterval);
 			}
 		}
+
 		try {
 			while ((t = inl2.get_next()) != null) {
 				t.print(jtype);
