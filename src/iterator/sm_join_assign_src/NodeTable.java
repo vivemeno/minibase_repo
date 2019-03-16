@@ -6,5 +6,4 @@ import global.IntervalType;
 public class NodeTable {
     public IntervalType nodeIntLabel;
     public String nodeTag;
-    public int level;
 }
