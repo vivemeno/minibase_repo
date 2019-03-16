@@ -747,7 +747,7 @@ private void Project3_CondExpr(CondExpr[] RightFilter, CondExpr[] OutFilter, Rul
 		RightFilter[0].op = new AttrOperator(AttrOperator.aopEQ);
 		RightFilter[0].type1 = new AttrType(AttrType.attrSymbol);
 		RightFilter[0].type2 = new AttrType(AttrType.attrString);
-		RightFilter[0].operand1.symbol = new FldSpec(new RelSpec(RelSpec.outer), 2);
+		RightFilter[0].operand1.symbol = new FldSpec(new RelSpec(RelSpec.innerRel), 2);
 		RightFilter[0].operand2.string = rule.innerRule;
 		
 		RightFilter[1] = null;
@@ -756,7 +756,7 @@ private void Project3_CondExpr(CondExpr[] RightFilter, CondExpr[] OutFilter, Rul
 		OutFilter[0].op = new AttrOperator(AttrOperator.aopEQ);
 		OutFilter[0].type1 = new AttrType(AttrType.attrSymbol);
 		OutFilter[0].type2 = new AttrType(AttrType.attrSymbol);
-		OutFilter[0].operand1.symbol = new FldSpec(new RelSpec(RelSpec.outer), (2 * nodeIndex) - 1);
+		OutFilter[0].operand1.symbol = new FldSpec(new RelSpec(RelSpec.outer), (2 * nodeIndex));
 		OutFilter[0].operand2.symbol = new FldSpec(new RelSpec(RelSpec.innerRel), 1);
 		if (rule.ruleType == Rule.RULE_TYPE_PARENT_CHILD) {
 			OutFilter[0].flag = 2;
@@ -767,10 +767,18 @@ private void Project3_CondExpr(CondExpr[] RightFilter, CondExpr[] OutFilter, Rul
 		OutFilter[1].next = null;
 		OutFilter[1].op = new AttrOperator(AttrOperator.aopEQ);
 		OutFilter[1].type1 = new AttrType(AttrType.attrSymbol);
-		OutFilter[1].operand1.symbol = new FldSpec(new RelSpec(RelSpec.outer), 2);
+		OutFilter[1].operand1.symbol = new FldSpec(new RelSpec(RelSpec.outer), 1);
 		OutFilter[1].type2 = new AttrType(AttrType.attrString);
 		OutFilter[1].operand2.string = outerNode;
-		OutFilter[2] = null;
+		
+		OutFilter[2].next = null;
+		OutFilter[2].op = new AttrOperator(AttrOperator.aopEQ);
+		OutFilter[2].type1 = new AttrType(AttrType.attrSymbol);
+		OutFilter[2].type2 = new AttrType(AttrType.attrString);
+		OutFilter[2].operand1.symbol = new FldSpec(new RelSpec(RelSpec.innerRel), 2);
+		OutFilter[2].operand2.string = rule.innerRule;
+		
+		OutFilter[3] = null;
 	}
 
 	public void Query1() {
@@ -1681,10 +1689,11 @@ private void Project3_CondExpr(CondExpr[] RightFilter, CondExpr[] OutFilter, Rul
 				nodeIndex++;
 			}
 
-			outFilter = new CondExpr[3];
+			outFilter = new CondExpr[4];
 			outFilter[0] = new CondExpr();
 			outFilter[1] = new CondExpr();
 			outFilter[2] = new CondExpr();
+			outFilter[3] = new CondExpr();
 			
 			CondExpr[] RightFilter = new CondExpr[2];
 			RightFilter[0] = new CondExpr();
@@ -1694,9 +1703,9 @@ private void Project3_CondExpr(CondExpr[] RightFilter, CondExpr[] OutFilter, Rul
 			AttrType[] Ntypes2 = new AttrType[2 * ruleNumber];
 			for (int i = 0; i < 2 * ruleNumber; i++) {
 				if (i % 2 == 0) {
-					Ntypes2[i] = new AttrType(AttrType.attrInterval);
-				} else {
 					Ntypes2[i] = new AttrType(AttrType.attrString);
+				} else {
+					Ntypes2[i] = new AttrType(AttrType.attrInterval);
 				}
 			}
 			short[] Nsizes2 = new short[ruleNumber];
@@ -1708,8 +1717,8 @@ private void Project3_CondExpr(CondExpr[] RightFilter, CondExpr[] OutFilter, Rul
 			for (int i = 0; i < 2 * ruleNumber; i++) {
 				proj2[i] = new FldSpec(new RelSpec(RelSpec.outer), i+1);
 			}
-			proj2[2 * ruleNumber] = new FldSpec(new RelSpec(RelSpec.innerRel), 1);
-			proj2[2 * ruleNumber + 1] = new FldSpec(new RelSpec(RelSpec.innerRel), 2);
+			proj2[2 * ruleNumber] = new FldSpec(new RelSpec(RelSpec.innerRel), 2);
+			proj2[2 * ruleNumber + 1] = new FldSpec(new RelSpec(RelSpec.innerRel), 1);
 
 			try {
 				inl2 = new NestedLoopsJoins(Ntypes2, 2 * ruleNumber, Nsizes2, Ntypes, 2, Nsizes, 10, inl, "nodes.in",
