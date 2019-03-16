@@ -92,18 +92,18 @@ public class TupleUtils
 					t1_it = t1.getIntervalField(t1_fld_no);
 					t2_it = t2.getIntervalField(t2_fld_no);
 					if (t2_it.s > t1_it.s && t2_it.e < t1_it.e) {
-						return 1; // containment
+						return IntervalType.INTERVAL_CONTAINMENT; 
 					}
 					if (t2_it.s < t1_it.s && t2_it.e > t1_it.e) {
-						return 2; // enclosure
+						return IntervalType.INTERVAL_ENCLOSURE; 
 					}
 					if ((t2_it.s > t1_it.s && t2_it.e > t1_it.e) || (t2_it.s < t1_it.s && t2_it.e < t1_it.e)) {
-						return 0; // no overlap
+						return IntervalType.INTERVAL_NO_OVERLAP; 
 					}
 					if (t2_it.equals(t2_it)) {
 						return 4;
 					} else {
-						return 3; // other types of overlap -- should not happen
+						return IntervalType.INTERVAL_OTHER; // other types of overlap -- should not happen
 					}
 				} catch (FieldNumberOutOfBoundException e) {
 					throw new TupleUtilsException(e, "FieldNumberOutOfBoundException is caught by TupleUtils.java");
