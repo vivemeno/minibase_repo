@@ -2,10 +2,17 @@ package global;
 import java.io.Serializable;
 
 public class IntervalType implements Serializable {
-    public int s; //Start Interval
+    
+	public static int INTERVAL_CONTAINMENT = 1;
+	public static int INTERVAL_NO_OVERLAP = 0;
+	public static int INTERVAL_ENCLOSURE = 2;
+	public static int INTERVAL_EQUAL = 4;
+	public static int INTERVAL_OTHER = 3; //should not happen
+	
+	public int s; //Start Interval
     public int e; //End Interval
     public int l; //Level of current interval node
-
+      
     public IntervalType() {
 
     }

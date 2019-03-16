@@ -39,6 +39,10 @@ public class CondExpr {
    */    
   public int flag = 0;
   
+  public static int FLAG_EQUALITY_CHECK = 0;
+  public static int FLAG_PC_CHECK = 1;
+  public static int FLAG_AD_CHECK = 2;
+  
   /**
    *constructor
    */
