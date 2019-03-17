@@ -264,13 +264,13 @@ public class Phase1 {
 	}
 	
 	public void compute() {
-		Rule rule1 = new Rule("A", "B", Rule.RULE_TYPE_PARENT_CHILD);
-		Rule rule2 = new Rule("B", "E", Rule.RULE_TYPE_PARENT_CHILD);
-		Rule rule3 = new Rule("B", "D", Rule.RULE_TYPE_ANCESTRAL_DESCENDENT);
+		//Rule rule1 = new Rule("A", "B", Rule.RULE_TYPE_PARENT_CHILD);
+		Rule rule2 = new Rule("A", "B", Rule.RULE_TYPE_PARENT_CHILD);
+		//Rule rule3 = new Rule("B", "D", Rule.RULE_TYPE_ANCESTRAL_DESCENDENT);
 		ArrayList<Rule> rules = new ArrayList<>();
-		rules.add(rule1);
+		//rules.add(rule1);
 		rules.add(rule2);
-		rules.add(rule3);
+		//rules.add(rule3);
 
 		// Map containing the corresponding column number for the
 		// given tag Id in the joined table.
@@ -388,7 +388,10 @@ public class Phase1 {
 			
 		System.out.println(currRule);
 		}
-
+		
+		if(currIterator == null) {
+			currIterator = prevIterator;
+		}
 		Tuple finalTuple = new Tuple();
 		AttrType[] finalTupleAttrTypes = new AttrType[2 * ruleNumber + 2];
 
@@ -420,7 +423,7 @@ public class Phase1 {
 
 	public void computeSM() {
 		{
-			Rule rule1 = new Rule("A", "B", Rule.RULE_TYPE_PARENT_CHILD);
+			Rule rule1 = new Rule("B", "E", Rule.RULE_TYPE_PARENT_CHILD);
 			Rule rule2 = new Rule("B", "E", Rule.RULE_TYPE_PARENT_CHILD);
 			List<Rule> rules = new ArrayList<>();
 			Map<String, Integer> nodeOffsetMap = new HashMap<>();
@@ -452,7 +455,14 @@ public class Phase1 {
 					new FldSpec(new RelSpec(RelSpec.innerRel), 2), new FldSpec(new RelSpec(RelSpec.innerRel), 1) };
 			List<SortMerge> listSM = new LinkedList<>();
 			for(Rule rule: rules) {
-				CondExpr[] outFilter = new CondExpr[4];
+				try {
+					am = new FileScan("nodes.in", Ntypes, Nsizes, (short) 2, (short) 2, Nprojection, null);
+					am1 = new FileScan("nodes.in", Ntypes, Nsizes, (short) 2, (short) 2, Nprojection, null);
+				} catch (Exception e) {
+					status = FAIL;
+					System.err.println("" + e);
+					e.printStackTrace();
+				}				CondExpr[] outFilter = new CondExpr[4];
 				outFilter[0] = new CondExpr();
 				outFilter[1] = new CondExpr();
 				outFilter[2] = new CondExpr();
@@ -468,8 +478,28 @@ public class Phase1 {
 							am, am1,
 							false, false, ascending,
 							outFilter, proj, 4);
-					Tuple t = sm.get_next();
-					listSM.add(sm);
+					//Tuple t = sm.get_next();
+					//listSM.add(sm);
+					Tuple t = new Tuple();
+					AttrType[] jtype = new AttrType[2 * 2];
+
+					for (int i = 0; i < 2 * 2; i++) {
+						if (i % 2 == 0) {
+							jtype[i] = new AttrType(AttrType.attrString);
+						} else {
+							jtype[i] = new AttrType(AttrType.attrInterval);
+						}
+					}
+
+					try {
+						while ((t = sm.get_next()) != null) {
+							t.print(jtype);
+						}
+					} catch (Exception e) {
+						System.err.println("*** Error preparing for get_next tuple");
+						System.err.println("" + e);
+						Runtime.getRuntime().exit(1);
+					}
 				}
 				catch (Exception e) {
 					System.err.println("*** join error in SortMerge constructor ***");
@@ -572,5 +602,6 @@ public class Phase1 {
 	public static void main(String[] args) {
 		Phase1 phase1 = new Phase1();
 		phase1.compute();
+		//phase1.computeSM();
 	}
 }

@@ -101,7 +101,7 @@ public class TupleUtils
 						return IntervalType.INTERVAL_NO_OVERLAP; 
 					}
 					if (t2_it.equals(t2_it)) {
-						return 4;
+						return IntervalType.INTERVAL_EQUAL;
 					} else {
 						return IntervalType.INTERVAL_OTHER; // other types of overlap -- should not happen
 					}
@@ -146,6 +146,28 @@ public class TupleUtils
 	{
 		return CompareTupleWithTuple(fldType, t1, t1_fld_no, value, t1_fld_no);
 	}
+	
+//	public static int CompareIntervalTuple(Tuple t1, int t1_fld_no, Tuple value, int t2_fld_no) 
+//			throws IOException,
+//			UnknowAttrType,
+//			TupleUtilsException
+//	{
+//		try {
+//			IntervalType t1_it, t2_it;
+//			t1_it = t1.getIntervalField(t1_fld_no);
+//			t2_it = value.getIntervalField(t2_fld_no);
+//			if (t1_it.e < t2_it.s) {
+//				return -1;
+//			}
+//			if ((t1_it.s > t2_it.e) || (t2_it.s < t1_it.s && t2_it.e > t1_it.e)) {
+//				return 1;
+//			} else
+//				return 0;
+//		} catch (FieldNumberOutOfBoundException e) {
+//			throw new TupleUtilsException(e, "FieldNumberOutOfBoundException is caught by TupleUtils.java");
+//		}
+//
+//	}
 
 	/**
 	 *This function Compares two Tuple inn all fields
