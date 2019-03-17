@@ -279,7 +279,7 @@ public class SortMerge extends Iterator implements GlobalConst
 				// Note that depending on whether the sort order
 				// is ascending or descending,
 				// this loop will be modified.
-				comp_res = sortFldType.attrType == AttrType.attrInterval? TupleUtils.CompareTupleWithTuple(tuple1,
+				comp_res = sortFldType.attrType == AttrType.attrInterval? TupleUtils.CompareTupleWithTuple(sortFldType, tuple1,
 						jc_in1, tuple2, jc_in2):TupleUtils.CompareTupleWithTuple(sortFldType, tuple1,
 						jc_in1, tuple2, jc_in2);
 				while ((comp_res < 0 && _order.tupleOrder == TupleOrder.Ascending) ||
@@ -290,12 +290,12 @@ public class SortMerge extends Iterator implements GlobalConst
 						return null;
 					}
 
-					comp_res = sortFldType.attrType == AttrType.attrInterval? TupleUtils.CompareTupleWithTuple(tuple1,
+					comp_res = sortFldType.attrType == AttrType.attrInterval? TupleUtils.CompareTupleWithTuple(sortFldType, tuple1,
 							jc_in1, tuple2, jc_in2):TupleUtils.CompareTupleWithTuple(sortFldType, tuple1,
 							jc_in1, tuple2, jc_in2);
 				}
 
-				comp_res = sortFldType.attrType == AttrType.attrInterval? TupleUtils.CompareTupleWithTuple(tuple1,
+				comp_res = sortFldType.attrType == AttrType.attrInterval? TupleUtils.CompareTupleWithTuple(sortFldType, tuple1,
 						jc_in1, tuple2, jc_in2):TupleUtils.CompareTupleWithTuple(sortFldType, tuple1,
 						jc_in1, tuple2, jc_in2);
 				while ((comp_res > 0 && _order.tupleOrder == TupleOrder.Ascending) ||
@@ -307,7 +307,7 @@ public class SortMerge extends Iterator implements GlobalConst
 						return null;
 					}
 
-					comp_res = sortFldType.attrType == AttrType.attrInterval? TupleUtils.CompareTupleWithTuple(tuple1,
+					comp_res = sortFldType.attrType == AttrType.attrInterval? TupleUtils.CompareTupleWithTuple(sortFldType, tuple1,
 							jc_in1, tuple2, jc_in2):TupleUtils.CompareTupleWithTuple(sortFldType, tuple1,
 							jc_in1, tuple2, jc_in2);
 				}
@@ -324,7 +324,7 @@ public class SortMerge extends Iterator implements GlobalConst
 				io_buf1.init(_bufs1,       1, t1_size, temp_file_fd1);
 				io_buf2.init(_bufs2,       1, t2_size, temp_file_fd2);
 
-				int comp_res1 = sortFldType.attrType == AttrType.attrInterval? TupleUtils.CompareTupleWithTuple(tuple1, jc_in1, TempTuple1, jc_in1):
+				int comp_res1 = sortFldType.attrType == AttrType.attrInterval? TupleUtils.CompareTupleWithTuple(sortFldType, tuple1, jc_in1, TempTuple1, jc_in1):
 						TupleUtils.CompareTupleWithTuple(sortFldType,  tuple1, jc_in1, TempTuple1, jc_in1);
 				while (comp_res1 == 0)
 				{
@@ -340,10 +340,10 @@ public class SortMerge extends Iterator implements GlobalConst
 						get_from_in1       = true;
 						break;
 					}
-					comp_res1 = sortFldType.attrType == AttrType.attrInterval? TupleUtils.CompareTupleWithTuple(tuple1, jc_in1, TempTuple1, jc_in1):
+					comp_res1 = sortFldType.attrType == AttrType.attrInterval? TupleUtils.CompareTupleWithTuple(sortFldType, tuple1, jc_in1, TempTuple1, jc_in1):
 							TupleUtils.CompareTupleWithTuple(sortFldType,  tuple1, jc_in1, TempTuple1, jc_in1);
 				}
-				int comp_res2 = sortFldType.attrType == AttrType.attrInterval? TupleUtils.CompareTupleWithTuple(tuple2, jc_in2, TempTuple2, jc_in2):
+				int comp_res2 = sortFldType.attrType == AttrType.attrInterval? TupleUtils.CompareTupleWithTuple(sortFldType, tuple2, jc_in2, TempTuple2, jc_in2):
 						TupleUtils.CompareTupleWithTuple(sortFldType,  tuple2, jc_in2, TempTuple2, jc_in2);
 
 				while (comp_res2 == 0)
@@ -361,7 +361,7 @@ public class SortMerge extends Iterator implements GlobalConst
 						get_from_in2       = true;
 						break;
 					}
-					comp_res2 = sortFldType.attrType == AttrType.attrInterval? TupleUtils.CompareTupleWithTuple(tuple2, jc_in2, TempTuple2, jc_in2):
+					comp_res2 = sortFldType.attrType == AttrType.attrInterval? TupleUtils.CompareTupleWithTuple(sortFldType, tuple2, jc_in2, TempTuple2, jc_in2):
 							TupleUtils.CompareTupleWithTuple(sortFldType,  tuple2, jc_in2, TempTuple2, jc_in2);
 				}
 

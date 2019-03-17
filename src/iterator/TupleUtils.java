@@ -92,18 +92,18 @@ public class TupleUtils
 					t1_it = t1.getIntervalField(t1_fld_no);
 					t2_it = t2.getIntervalField(t2_fld_no);
 					if (t2_it.s > t1_it.s && t2_it.e < t1_it.e) {
-						return 1; // containment
+						return IntervalType.INTERVAL_CONTAINMENT; 
 					}
 					if (t2_it.s < t1_it.s && t2_it.e > t1_it.e) {
-						return 2; // enclosure
+						return IntervalType.INTERVAL_ENCLOSURE; 
 					}
 					if ((t2_it.s > t1_it.s && t2_it.e > t1_it.e) || (t2_it.s < t1_it.s && t2_it.e < t1_it.e)) {
-						return 0; // no overlap
+						return IntervalType.INTERVAL_NO_OVERLAP; 
 					}
 					if (t2_it.equals(t2_it)) {
-						return 4;
+						return IntervalType.INTERVAL_EQUAL;
 					} else {
-						return 3; // other types of overlap -- should not happen
+						return IntervalType.INTERVAL_OTHER; // other types of overlap -- should not happen
 					}
 				} catch (FieldNumberOutOfBoundException e) {
 					throw new TupleUtilsException(e, "FieldNumberOutOfBoundException is caught by TupleUtils.java");
@@ -118,33 +118,6 @@ public class TupleUtils
 				throw new UnknowAttrType(null, "Don't know how to handle attrSymbol, attrNull");
 
 		}
-	}
-
-	public static int CompareTupleWithTuple(Tuple  t1, int t1_fld_no,
-											Tuple  t2, int t2_fld_no)
-			throws IOException,
-			UnknowAttrType,
-			TupleUtilsException
-	{
-		try {
-			IntervalType t1_it, t2_it;
-					t1_it = t1.getIntervalField(t1_fld_no);
-					t2_it = t2.getIntervalField(t2_fld_no);
-					if (t1_it.s < t2_it.s) {
-						return -1; // containment
-					} else if(t1_it.s > t2_it.s) {
-						return 1;
-					} else if(t1_it.equals(t2_it)) {
-						return 0;
-					}
-				} catch (FieldNumberOutOfBoundException e) {
-					throw new TupleUtilsException(e, "FieldNumberOutOfBoundException is caught by TupleUtils.java");
-				} // catch (ClassNotFoundException e) {
-				// TODO Auto-generated catch block
-				// throw new TupleUtilsException(e, "ClassNotFoundException is caught by
-				// TupleUtils.java");
-				// }
-		return 0;
 	}
 
 
@@ -171,11 +144,30 @@ public class TupleUtils
 			UnknowAttrType,
 			TupleUtilsException
 	{
-		int comp_res = fldType.attrType == AttrType.attrInterval? TupleUtils.CompareTupleWithTuple(t1, t1_fld_no, value, t1_fld_no):
-				TupleUtils.CompareTupleWithTuple(fldType, t1, t1_fld_no, value, t1_fld_no);
-		return comp_res;
-
+		return CompareTupleWithTuple(fldType, t1, t1_fld_no, value, t1_fld_no);
 	}
+	
+//	public static int CompareIntervalTuple(Tuple t1, int t1_fld_no, Tuple value, int t2_fld_no) 
+//			throws IOException,
+//			UnknowAttrType,
+//			TupleUtilsException
+//	{
+//		try {
+//			IntervalType t1_it, t2_it;
+//			t1_it = t1.getIntervalField(t1_fld_no);
+//			t2_it = value.getIntervalField(t2_fld_no);
+//			if (t1_it.e < t2_it.s) {
+//				return -1;
+//			}
+//			if ((t1_it.s > t2_it.e) || (t2_it.s < t1_it.s && t2_it.e > t1_it.e)) {
+//				return 1;
+//			} else
+//				return 0;
+//		} catch (FieldNumberOutOfBoundException e) {
+//			throw new TupleUtilsException(e, "FieldNumberOutOfBoundException is caught by TupleUtils.java");
+//		}
+//
+//	}
 
 	/**
 	 *This function Compares two Tuple inn all fields
