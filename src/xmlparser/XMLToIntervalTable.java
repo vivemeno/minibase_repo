@@ -1,8 +1,9 @@
 package xmlparser;
 
 import global.GlobalConst;
+
 import global.IntervalType;
-import iterator.sm_join_assign_src.NodeTable;
+import global.NodeTable;
 import javax.xml.stream.XMLEventReader;
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamConstants;
@@ -19,14 +20,14 @@ class XMLTree {
 
 //using event based parser to support larger files
 public class XMLToIntervalTable implements GlobalConst {
-    public final static List<NodeTable> xmlToTreeConverter() {
+    public final static Vector<NodeTable> xmlToTreeConverter() {
         XMLTree root = null;
         try {
             Stack<XMLTree> yetToCloseTags = new Stack<>();
             XMLInputFactory factory = XMLInputFactory.newInstance();
             factory.setProperty(XMLInputFactory.IS_COALESCING, true);
             XMLEventReader eventReader =
-                    factory.createXMLEventReader(new FileReader("/home/eldo/IdeaProjects/JavaLeetCode/src/learning/input.txt"));
+                    factory.createXMLEventReader(new FileReader("/home/akhil/MS/DBMS/xml_sample_data.xml"));
 
             while(eventReader.hasNext()) {
 
@@ -38,14 +39,14 @@ public class XMLToIntervalTable implements GlobalConst {
                         StartElement startElement = event.asStartElement();
                         String tagName = startElement.getName().getLocalPart();
                         XMLTree node = new XMLTree();
-                        node.tagName = tagName;
+                        node.tagName = trimCharTags(tagName);
                         Iterator<Attribute> attributes = startElement.getAttributes();
                         while(attributes.hasNext()) {
                             if(node.children == null) node.children = new ArrayList<>();
                             Attribute attr = attributes.next();
                             tagName = attr.getName().getLocalPart();
                             XMLTree attrNameNode = new XMLTree();
-                            attrNameNode.tagName = tagName;
+                            attrNameNode.tagName = trimCharTags(tagName);
                             XMLTree attrValNode = new XMLTree();
                             attrValNode.tagName = trimCharTags(attr.getValue());
                             attrNameNode.children = Arrays.asList(attrValNode);
@@ -84,27 +85,27 @@ public class XMLToIntervalTable implements GlobalConst {
         return createNdeTblFrmXMLTree(root);
     }
 
-    private final static List<NodeTable> createNdeTblFrmXMLTree(XMLTree root) {
-        List<NodeTable> finalResult = new ArrayList<>();
+    private final static Vector<NodeTable> createNdeTblFrmXMLTree(XMLTree root) {
+        Vector<NodeTable> finalResult = new Vector<>();
         preOrder(root, finalResult, 0, 1);
         return finalResult;
     }
 
-    private final static int preOrder(XMLTree root, List<NodeTable> result, int intrvlCounter, int level) {
+    private final static int preOrder(XMLTree root, Vector<NodeTable> result, int intrvlCounter, int level) {
         if (root == null)
             return intrvlCounter;
         NodeTable nt = new NodeTable();
-        nt.nodeTag = root.tagName;
+        nt.nodename = root.tagName;
         intrvlCounter++;
-        nt.nodeIntLabel = new IntervalType();
-        nt.nodeIntLabel.s = intrvlCounter;
-        nt.nodeIntLabel.l = level;
+        nt.interval = new IntervalType();
+        nt.interval.s = intrvlCounter;
+        nt.interval.l = level;
         if(root.children!=null) {
             for (XMLTree node : root.children)
                 intrvlCounter = preOrder(node, result, intrvlCounter, level+1);
         }
         intrvlCounter++;
-        nt.nodeIntLabel.e = intrvlCounter;
+        nt.interval.e = intrvlCounter;
         result.add(nt);
         return intrvlCounter;
     }

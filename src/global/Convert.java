@@ -4,6 +4,7 @@ package global;
 
 import java.io.*;
 import java.lang.*;
+import java.nio.charset.StandardCharsets;
 
 public class Convert{
  
@@ -304,18 +305,16 @@ public class Convert{
   /* creates a new data output stream to write data to
    * underlying output stream
    */
- 
    OutputStream out = new ByteArrayOutputStream();
    DataOutputStream outstr = new DataOutputStream (out);
    
    // write the value to the output stream
-   
    outstr.writeUTF(value);
    // creates a byte array with this output stream size and the 
    // valid contents of the buffer have been copied into it
    byte []B = ((ByteArrayOutputStream) out).toByteArray();
+   int sz =outstr.size(); 
    
-   int sz =outstr.size();  
    // copies the contents of this byte array into data[]
    System.arraycopy (B, 0, data, position, sz);
    
