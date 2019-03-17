@@ -1,14 +1,20 @@
 package project;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
 
 import java.util.*;
 
+import bufmgr.BufMgr;
 import global.*;
 import heap.Heapfile;
 import heap.Tuple;
 import iterator.*;
 import iterator.Iterator;
+import iterator.NestedLoopsJoins;
+import iterator.RelSpec;
 
 
 class NodeTable {
@@ -48,13 +54,13 @@ class Rule {
 	}
 }
 
-
 public class Phase1 {
 	public static final int NUMBUF = 50;
 	public static final int TAG_LENGTH = 1;
 	private boolean OK = true;
 	private boolean FAIL = false;
 	public Vector<NodeTable> nodes;
+	private String input_file_base = "/home/vivemeno/DBMSI/input/";
 
 	public Phase1() {
 		nodes = new Vector<NodeTable>();
@@ -234,9 +240,9 @@ public class Phase1 {
 		outFilter[0].operand1.symbol = new FldSpec(new RelSpec(RelSpec.outer), outerIntervalColNo);
 		outFilter[0].operand2.symbol = new FldSpec(new RelSpec(RelSpec.innerRel), 1);
 		if (rule.ruleType == Rule.RULE_TYPE_PARENT_CHILD) {
-			outFilter[0].flag = 2;
+			outFilter[0].flag = CondExpr.FLAG_PC_CHECK;
 		} else {
-			outFilter[0].flag = 1;
+			outFilter[0].flag = CondExpr.FLAG_AD_CHECK;
 		}
 		
 		//Outer table comparison. For eg: If rule is A B PC, this condition will return 
@@ -264,11 +270,11 @@ public class Phase1 {
 	}
 	
 	public void compute() {
-		//Rule rule1 = new Rule("A", "B", Rule.RULE_TYPE_PARENT_CHILD);
-		Rule rule2 = new Rule("A", "B", Rule.RULE_TYPE_PARENT_CHILD);
+		Rule rule1 = new Rule("A", "B", Rule.RULE_TYPE_PARENT_CHILD);
+		Rule rule2 = new Rule("A", "E", Rule.RULE_TYPE_ANCESTRAL_DESCENDENT);
 		//Rule rule3 = new Rule("B", "D", Rule.RULE_TYPE_ANCESTRAL_DESCENDENT);
 		ArrayList<Rule> rules = new ArrayList<>();
-		//rules.add(rule1);
+		rules.add(rule1);
 		rules.add(rule2);
 		//rules.add(rule3);
 
@@ -598,9 +604,103 @@ public class Phase1 {
 
 		}
 	}
-	
+
+
+	private String[] readFile(String filename) {
+		StringBuffer stringBuffer = new StringBuffer();
+		try {
+			File file = new File(filename);
+			FileReader fileReader = new FileReader(file);
+			BufferedReader bufferedReader = new BufferedReader(fileReader);
+
+			String line;
+			while ((line = bufferedReader.readLine()) != null) {
+				stringBuffer.append(line);
+				stringBuffer.append("\n");
+			}
+			fileReader.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return stringBuffer.toString().split("\n");
+	}
+
+	private List<Rule> getRuleList(String[] file_contents) {
+		int n = Integer.parseInt(file_contents[0]);
+		int index = 0;
+		int[] rankIndex = new int[n];
+		Map<Integer, List<Rule>> ruleMap = new HashMap<>();
+		for (String line : file_contents) {
+			if (index > 0 && index <= n)
+				ruleMap.put(index, new ArrayList<>());
+
+
+			if (index > n) {
+				String[] rule_components = line.split(" ");
+				System.out.print(rule_components[2]);
+				int relation = rule_components[2].equals("PC") ? Rule.RULE_TYPE_PARENT_CHILD : Rule.RULE_TYPE_ANCESTRAL_DESCENDENT;
+				rankIndex[Integer.parseInt(rule_components[1]) - 1]++;
+				ruleMap.get(Integer.parseInt(rule_components[0])).add(new Rule(rule_components[0], rule_components[1], relation));
+			}
+			index++;
+		}
+		Integer root = getRoot(rankIndex);
+		System.out.print("rott is " + root);
+		return getRulesInOrder(root, ruleMap);
+	}
+
+	private void input() {
+		String choice = "Y";
+		while (!choice.equals("N") && !choice.equals("n")) {
+			BufMgr.page_access_counter = 0;
+			System.out.println("Enter input filename for query");
+			Scanner scanner = new Scanner(System.in);
+			String file = scanner.next();
+			String[] file_contents = readFile(input_file_base + file);
+			List<Rule> rules = getRuleList(file_contents);
+			printRules(rules);
+			System.out.println("Number of page accessed = " + BufMgr.page_access_counter);
+			System.out.println("Press N to stop");
+			choice = scanner.next();
+			System.out.print(choice);
+		}
+	}
+
+	private void printRules(List<Rule> rules) {
+		System.out.print("Printing rules " + rules.size() );
+		for (Rule rule : rules)
+			System.out.println(rule.outerTag + " " + rule.innerTag + rule.getRelationship());
+	}
+
+	List<Rule> getRulesInOrder(Integer root, Map<Integer, List<Rule>> ruleMap) {
+		List<Rule>  orderedList = new ArrayList<>();
+		Queue<Integer> queue = new ArrayDeque<>();
+		queue.add(root);
+		while (!queue.isEmpty()) {
+			Integer node = queue.remove();
+			List<Rule> childRules = ruleMap.get(node);
+			if (childRules != null) {
+				for (Rule rule : childRules) {
+					queue.add(Integer.parseInt(rule.innerTag));
+				}
+				orderedList.addAll(childRules);
+			}
+		}
+		return orderedList;
+	}
+
+
+
+	private Integer getRoot(int[] rankIndex) {
+		for (int i = 0; i < rankIndex.length; i++)
+			if (rankIndex[i] == 0)
+				return i + 1;
+		return -1;
+	}
+
 	public static void main(String[] args) {
 		Phase1 phase1 = new Phase1();
+		//phase1.input();
 		phase1.compute();
 		//phase1.computeSM();
 	}
