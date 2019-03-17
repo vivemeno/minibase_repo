@@ -40,7 +40,8 @@ public class SortMerge extends Iterator implements GlobalConst
 	private  Tuple     Jtuple;
 	private  FldSpec   perm_mat[];
 	private  int        nOutFlds;
-	boolean checkFlag = true;
+	private boolean checkFlag = true;
+	private int counter = 0;
 
 	/**
 	 *constructor,initialization
@@ -211,6 +212,9 @@ public class SortMerge extends Iterator implements GlobalConst
 
 		// Now, that stuff is setup, all we have to do is a get_next !!!!
 	}
+	public void setCheckFlag(boolean flag){
+		checkFlag = flag;
+	}
 
 	/**
 	 *  The tuple is returned
@@ -255,6 +259,7 @@ public class SortMerge extends Iterator implements GlobalConst
 
 		int    comp_res;
 		Tuple _tuple1,_tuple2;
+		Tuple _sm_tuple1 = null, _sm_tuple2 = null;
 		if (done) return null;
 
 		while (true)
@@ -377,18 +382,26 @@ public class SortMerge extends Iterator implements GlobalConst
 			}
 
 			if(checkFlag) {
-				_tuple2 = io_buf2.Get(TempTuple2);
-				_tuple1 = io_buf1.Get(TempTuple1);
-			if (PredEval.Eval(OutputFilter, TempTuple1, TempTuple2, _in1, _in2) == true)
-			{
-				Projection.Join(TempTuple1, _in1,
-						TempTuple2, _in2,
-						Jtuple, perm_mat, nOutFlds);
-				io_buf2.reread();
-				return Jtuple;
-			} else {
-				io_buf1.reread();
-			}
+				if(counter>0) {
+					_sm_tuple1 = io_buf1.Get(TempTuple1);
+				} else {
+					_sm_tuple1 = TempTuple1;
+					_sm_tuple2 = io_buf2.Get(TempTuple2);
+				}
+				counter++;
+				if(_sm_tuple1 == null) {
+					_sm_tuple2 = io_buf2.Get(TempTuple2);
+					if(_sm_tuple2 == null) {
+						return null;
+					}
+					io_buf1.setDone(false);
+					io_buf1.reread();
+				} else {
+					Projection.Join(TempTuple1, _in1,
+							TempTuple2, _in2,
+							Jtuple, perm_mat, nOutFlds);
+					return Jtuple;
+				}
 			} else {
 				if ((_tuple2 = io_buf2.Get(TempTuple2)) == null) {
 					if ((_tuple1 = io_buf1.Get(TempTuple1)) == null) {
@@ -399,13 +412,13 @@ public class SortMerge extends Iterator implements GlobalConst
 						_tuple2 = io_buf2.Get(TempTuple2);
 					}
 				}
-		if (PredEval.Eval(OutputFilter, TempTuple1, TempTuple2, _in1, _in2) == true)
-		{
-			Projection.Join(TempTuple1, _in1,
-					TempTuple2, _in2,
-					Jtuple, perm_mat, nOutFlds);
-			return Jtuple;
-		}
+				if (PredEval.Eval(OutputFilter, TempTuple1, TempTuple2, _in1, _in2) == true)
+				{
+					Projection.Join(TempTuple1, _in1,
+							TempTuple2, _in2,
+							Jtuple, perm_mat, nOutFlds);
+					return Jtuple;
+				}
 			}
 
 		}

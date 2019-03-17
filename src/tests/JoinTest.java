@@ -1786,7 +1786,8 @@ class JoinsDriver implements GlobalConst {
 
 	public void ProjectSM() {
 		Rule rule1 = new Rule("A", "B", Rule.RULE_TYPE_PARENT_CHILD);
-		Rule rule2 = new Rule("A", "E", Rule.RULE_TYPE_ANCESTRAL_DESCENDENT);
+		Rule rule2 = new Rule("B", "E", Rule.RULE_TYPE_PARENT_CHILD);
+		//Rule rule3 = new Rule("E", "F", Rule.RULE_TYPE_PARENT_CHILD);
 		List<Rule> rules = new ArrayList<>();
 		Map<String, Integer> nodeOffsetMap = new HashMap<>();
 		rules.add(rule1);
@@ -1890,8 +1891,13 @@ class JoinsDriver implements GlobalConst {
 						prevSM, listNLJ.get(x),
 						true, false, ascending,
 						outFilter, proj2, 2*index + 2);
+				if(rules.get(x).ruleType==Rule.RULE_TYPE_ANCESTRAL_DESCENDENT && (prevRule.innerRule!=rules.get(x).outerRule)) {
+					sm.setCheckFlag(true);
+				} else
+					sm.setCheckFlag(false);
 				index++;
 				prevSM = sm;
+				prevRule = rules.get(x);
 			}
 			catch (Exception e) {
 				System.err.println("*** join error in SortMerge constructor ***");

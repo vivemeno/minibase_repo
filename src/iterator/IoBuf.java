@@ -20,7 +20,7 @@ public class IoBuf implements GlobalConst{
    *@param n_pages the numbers of page of this buffer
    *@param tSize the page size
    *@param temp_fd the reference to a Heapfile
-   */ 
+   */
   public void init(byte bufs[][], int n_pages, int tSize, Heapfile temp_fd)
     {
       _bufs    = bufs;
@@ -188,7 +188,10 @@ public class IoBuf implements GlobalConst{
 	  t_rd_from_pg = 0;
 	  curr_page    = 0;
 	}
-    }   
+    }
+    public void setDone(boolean flag) {
+        done = flag;
+    }
   
   public static final int WRITE_BUFFER =0;
   public static final int READ_BUFFER  =1;
