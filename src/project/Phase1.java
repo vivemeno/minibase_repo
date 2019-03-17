@@ -214,9 +214,11 @@ public class Phase1 {
 	public void compute() {
 		Rule rule1 = new Rule("A", "B", Rule.RULE_TYPE_PARENT_CHILD);
 		Rule rule2 = new Rule("B", "E", Rule.RULE_TYPE_PARENT_CHILD);
+		Rule rule3 = new Rule("B", "D", Rule.RULE_TYPE_ANCESTRAL_DESCENDENT);
 		ArrayList<Rule> rules = new ArrayList<>();
 		rules.add(rule1);
 		rules.add(rule2);
+		rules.add(rule3);
 
 		// Map containing the corresponding column number for the
 		// given tag Id in the joined table.
