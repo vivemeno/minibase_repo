@@ -2,24 +2,13 @@ package project;
 
 import java.io.IOException;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Vector;
+import java.util.*;
 
-import global.AttrOperator;
-import global.AttrType;
-import global.IntervalType;
-import global.RID;
-import global.SystemDefs;
+import global.*;
 import heap.Heapfile;
 import heap.Tuple;
-import iterator.CondExpr;
-import iterator.FileScan;
-import iterator.FldSpec;
+import iterator.*;
 import iterator.Iterator;
-import iterator.NestedLoopsJoins;
-import iterator.RelSpec;
 
 
 class NodeTable {
@@ -58,6 +47,7 @@ class Rule {
 		return "Rule :["+ outerTag + " " + innerTag + " " + getRelationship() + "]";
 	}
 }
+
 
 public class Phase1 {
 	public static final int NUMBUF = 50;
@@ -159,6 +149,68 @@ public class Phase1 {
 			System.err.println("*** Error creating relation for nodes");
 			Runtime.getRuntime().exit(1);
 		}
+	}
+
+	private void Project2_CondExpr(CondExpr[] expr, Rule rule) {
+
+		String outerNode = rule.outerTag;
+		expr[0].next = null;
+		expr[0].op = new AttrOperator(AttrOperator.aopEQ);
+		expr[0].type1 = new AttrType(AttrType.attrSymbol);
+		expr[0].type2 = new AttrType(AttrType.attrSymbol);
+		expr[0].operand1.symbol = new FldSpec(new RelSpec(RelSpec.outer), 1);
+		expr[0].operand2.symbol = new FldSpec(new RelSpec(RelSpec.innerRel), 1);
+		if (rule.ruleType == Rule.RULE_TYPE_PARENT_CHILD) {
+			expr[0].flag = 2;
+		} else {
+			expr[0].flag = 1;
+		}
+
+		expr[1].next = null;
+		expr[1].op = new AttrOperator(AttrOperator.aopEQ);
+		expr[1].type1 = new AttrType(AttrType.attrSymbol);
+		expr[1].operand1.symbol = new FldSpec(new RelSpec(RelSpec.outer), 2);
+		expr[1].type2 = new AttrType(AttrType.attrString);
+		expr[1].operand2.string = outerNode;
+
+		expr[2].next = null;
+		expr[2].op = new AttrOperator(AttrOperator.aopEQ);
+		expr[2].type1 = new AttrType(AttrType.attrSymbol);
+		expr[2].operand1.symbol = new FldSpec(new RelSpec(RelSpec.innerRel), 2);
+		expr[2].type2 = new AttrType(AttrType.attrString);
+		expr[2].operand2.string = rule.innerTag;
+
+		expr[3] = null;
+	}
+
+
+	private void Project4_CondExpr(CondExpr[] OutFilter, Rule rule, int offset) {
+
+		String outerNode = rule.outerTag;
+
+		OutFilter[0].next = null;
+		OutFilter[0].op = new AttrOperator(AttrOperator.aopEQ);
+		OutFilter[0].type1 = new AttrType(AttrType.attrSymbol);
+		OutFilter[0].type2 = new AttrType(AttrType.attrSymbol);
+		OutFilter[0].operand1.symbol = new FldSpec(new RelSpec(RelSpec.outer), offset);
+		OutFilter[0].operand2.symbol = new FldSpec(new RelSpec(RelSpec.innerRel), 2);
+		OutFilter[0].flag =0;
+
+		OutFilter[1].next = null;
+		OutFilter[1].op = new AttrOperator(AttrOperator.aopEQ);
+		OutFilter[1].type1 = new AttrType(AttrType.attrSymbol);
+		OutFilter[1].operand1.symbol = new FldSpec(new RelSpec(RelSpec.outer), offset - 1);
+		OutFilter[1].type2 = new AttrType(AttrType.attrString);
+		OutFilter[1].operand2.string = outerNode;
+
+		OutFilter[2].next = null;
+		OutFilter[2].op = new AttrOperator(AttrOperator.aopEQ);
+		OutFilter[2].type1 = new AttrType(AttrType.attrSymbol);
+		OutFilter[2].type2 = new AttrType(AttrType.attrString);
+		OutFilter[2].operand1.symbol = new FldSpec(new RelSpec(RelSpec.innerRel), 1);
+		OutFilter[2].operand2.string = rule.innerTag;
+
+		OutFilter[3] = null;
 	}
 
 	private void setConditions(CondExpr[] outFilter, Rule rule, int offset, boolean isFirstRule) {
@@ -364,6 +416,157 @@ public class Phase1 {
 			System.out.println(" Error Occured !!");
 		}
 
+	}
+
+	public void computeSM() {
+		{
+			Rule rule1 = new Rule("A", "B", Rule.RULE_TYPE_PARENT_CHILD);
+			Rule rule2 = new Rule("B", "E", Rule.RULE_TYPE_PARENT_CHILD);
+			List<Rule> rules = new ArrayList<>();
+			Map<String, Integer> nodeOffsetMap = new HashMap<>();
+			rules.add(rule1);
+			rules.add(rule2);
+			int nodeNumber = 1;
+			boolean status = OK;
+
+			Iterator am = null;
+			Iterator am1 = null;
+			AttrType[] Ntypes = { new AttrType(AttrType.attrInterval), new AttrType(AttrType.attrString) };
+			short[] Nsizes = new short[1];
+			Nsizes[0] = 1;
+
+			FldSpec[] Nprojection = { new FldSpec(new RelSpec(RelSpec.outer), 1),
+					new FldSpec(new RelSpec(RelSpec.outer), 2) };
+			try {
+				am = new FileScan("nodes.in", Ntypes, Nsizes, (short) 2, (short) 2, Nprojection, null);
+				am1 = new FileScan("nodes.in", Ntypes, Nsizes, (short) 2, (short) 2, Nprojection, null);
+			} catch (Exception e) {
+				status = FAIL;
+				System.err.println("" + e);
+				e.printStackTrace();
+			}
+
+			TupleOrder ascending = new TupleOrder(TupleOrder.Ascending);
+
+			FldSpec[] proj = { new FldSpec(new RelSpec(RelSpec.outer), 2), new FldSpec(new RelSpec(RelSpec.outer), 1),
+					new FldSpec(new RelSpec(RelSpec.innerRel), 2), new FldSpec(new RelSpec(RelSpec.innerRel), 1) };
+			List<SortMerge> listSM = new LinkedList<>();
+			for(Rule rule: rules) {
+				CondExpr[] outFilter = new CondExpr[4];
+				outFilter[0] = new CondExpr();
+				outFilter[1] = new CondExpr();
+				outFilter[2] = new CondExpr();
+				outFilter[3] = new CondExpr();
+				Project2_CondExpr(outFilter, rule);
+				SortMerge sm = null;
+				try {
+					sm = new SortMerge(Ntypes, 2, Nsizes,
+							Ntypes, 2, Nsizes,
+							1, 4,
+							1, 4,
+							10,
+							am, am1,
+							false, false, ascending,
+							outFilter, proj, 4);
+					Tuple t = sm.get_next();
+					listSM.add(sm);
+				}
+				catch (Exception e) {
+					System.err.println("*** join error in SortMerge constructor ***");
+					status = FAIL;
+
+					System.err.println (""+e);
+					e.printStackTrace();
+				}
+
+			}
+			Rule prevRule = rules.get(0);
+			populateNodeOffsetMap(nodeOffsetMap, prevRule.outerTag, nodeNumber);
+			nodeNumber++;
+			populateNodeOffsetMap(nodeOffsetMap, prevRule.innerTag, nodeNumber);
+			nodeNumber++;
+			SortMerge prevSM = listSM.get(0);
+			int index = 2;
+			for(int x =1; x<listSM.size(); ++x) {
+				if (!nodeOffsetMap.containsKey(rules.get(x).outerTag)) {
+					populateNodeOffsetMap(nodeOffsetMap, rules.get(x).outerTag, nodeNumber);
+					nodeNumber++;
+				}
+
+				if (!nodeOffsetMap.containsKey(rules.get(x).innerTag)) {
+					populateNodeOffsetMap(nodeOffsetMap, rules.get(x).outerTag, nodeNumber);
+					nodeNumber++;
+				}
+				try {
+					CondExpr[] outFilter = new CondExpr[4];
+					outFilter[0] = new CondExpr();
+					outFilter[1] = new CondExpr();
+					outFilter[2] = new CondExpr();
+					outFilter[3] = new CondExpr();
+
+					Project4_CondExpr(outFilter, rules.get(x), nodeOffsetMap.get(rules.get(x).outerTag));
+					AttrType[] NtypesFix = { new AttrType(AttrType.attrInterval),
+							new AttrType(AttrType.attrString), new AttrType(AttrType.attrInterval), new AttrType(AttrType.attrString)};
+					short[] NsizesFix = new short[2];
+					NsizesFix[0] = 1;
+					NsizesFix[1] = 1;
+					AttrType[] Ntypes2 = new AttrType[2 * index];
+					for (int i = 0; i < 2 * index; i++) {
+						if (i % 2 == 0) {
+							Ntypes2[i] = new AttrType(AttrType.attrString);
+						} else {
+							Ntypes2[i] = new AttrType(AttrType.attrInterval);
+						}
+					}
+					short[] Nsizes2 = new short[index];
+					for (int i = 0; i < index; i++) {
+						Nsizes2[i] = 1;
+					}
+					FldSpec[] proj2 = new FldSpec[2 * index + 2];
+					for (int i = 0; i < 2 * index; i++) {
+						proj2[i] = new FldSpec(new RelSpec(RelSpec.outer), i+1);
+					}
+					proj2[2 * index] = new FldSpec(new RelSpec(RelSpec.innerRel), 2);
+					proj2[2 * index + 1] = new FldSpec(new RelSpec(RelSpec.innerRel), 1);
+					SortMerge sm = new SortMerge(Ntypes2, index++*2, Nsizes2,
+							NtypesFix, 4, NsizesFix,
+							1, 4,
+							1, 4,
+							10,
+							prevSM, listSM.get(x),
+							true, true, ascending,
+							outFilter, proj2, 4);
+					prevSM = sm;
+				}
+				catch (Exception e) {
+					System.err.println("*** join error in SortMerge constructor ***");
+					status = FAIL;
+					System.err.println (""+e);
+					e.printStackTrace();
+				}
+			}
+			Tuple t = new Tuple();
+			AttrType[] jtype = new AttrType[2 * index + 2];
+
+			for (int i = 0; i < 2 * index; i++) {
+				if (i % 2 == 0) {
+					jtype[i] = new AttrType(AttrType.attrString);
+				} else {
+					jtype[i] = new AttrType(AttrType.attrInterval);
+				}
+			}
+
+			try {
+				while ((t = prevSM.get_next()) != null) {
+					t.print(jtype);
+				}
+			} catch (Exception e) {
+				System.err.println("*** Error preparing for get_next tuple");
+				System.err.println("" + e);
+				Runtime.getRuntime().exit(1);
+			}
+
+		}
 	}
 	
 	public static void main(String[] args) {

@@ -100,8 +100,8 @@ public class TupleUtils
 					if ((t2_it.s > t1_it.s && t2_it.e > t1_it.e) || (t2_it.s < t1_it.s && t2_it.e < t1_it.e)) {
 						return IntervalType.INTERVAL_NO_OVERLAP; 
 					}
-					if (t1.equals(t2)) {
-						return IntervalType.INTERVAL_EQUAL;
+					if (t2_it.equals(t2_it)) {
+						return 4;
 					} else {
 						return IntervalType.INTERVAL_OTHER; // other types of overlap -- should not happen
 					}
