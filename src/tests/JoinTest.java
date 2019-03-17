@@ -63,24 +63,15 @@ class Reserves {
 	}
 }
 
-class NodeTable {
-	public String nodename;
-	public IntervalType interval;
-
-	public NodeTable (String _nodeName, IntervalType _interval) {
-		nodename = _nodeName;
-		interval = _interval;
-	}
-}
 
 class Rule {
 	public String outerRule;
 	public String innerRule;
 	public int ruleType;
-	
+
 	public static int RULE_TYPE_PARENT_CHILD = 0;
 	public static int RULE_TYPE_ANCESTRAL_DESCENDENT = 1;
-	
+
 	public Rule(String _outerRule, String _innerRule, int _ruleType) {
 		this.outerRule = _outerRule;
 		this.innerRule = _innerRule;
@@ -129,6 +120,7 @@ class JoinsDriver implements GlobalConst {
 		sailors.addElement(new Sailor(21, "David Dewitt", 10, 47.2));
 		sailors.addElement(new Sailor(29, "Tom Reps", 7, 39.1));
 		sailors.addElement(new Sailor(31, "Jeff Naughton", 5, 35.0));
+		sailors.addElement(new Sailor(31, "Jeff Naughton", 5, 35.0));
 		sailors.addElement(new Sailor(35, "Miron Livny", 7, 37.6));
 		sailors.addElement(new Sailor(37, "Marv Solomon", 10, 48.9));
 
@@ -142,6 +134,7 @@ class JoinsDriver implements GlobalConst {
 		reserves.addElement(new Reserves(21, 1, "05/11/95"));
 		reserves.addElement(new Reserves(10, 2, "05/11/95"));
 		reserves.addElement(new Reserves(31, 1, "05/12/95"));
+		reserves.addElement(new Reserves(31, 1, "05/12/96"));
 		reserves.addElement(new Reserves(10, 3, "05/13/95"));
 		reserves.addElement(new Reserves(69, 4, "05/12/95"));
 		reserves.addElement(new Reserves(69, 5, "05/14/95"));
@@ -149,30 +142,24 @@ class JoinsDriver implements GlobalConst {
 		reserves.addElement(new Reserves(57, 2, "05/10/95"));
 		reserves.addElement(new Reserves(35, 3, "05/15/95"));
 
-		//nodes.addElement(new NodeTable("A", new IntervalType(1, 14, 1)));
-		//nodes.addElement(new NodeTable("B", new IntervalType(2, 7, 2)));
-		//nodes.addElement(new NodeTable("C", new IntervalType(3, 4, 3)));
-		//nodes.addElement(new NodeTable("B", new IntervalType(5, 6, 2)));
-		//nodes.addElement(new NodeTable("E", new IntervalType(8, 13, 2)));
-		//nodes.addElement(new NodeTable("F", new IntervalType(9, 12, 3)));
-		//nodes.addElement(new NodeTable("G", new IntervalType(10, 11, 4)));
+		nodes.addElement(new NodeTable("A", new IntervalType(1, 18, 1)));
+		nodes.addElement(new NodeTable("B", new IntervalType(2, 7, 2)));
+		nodes.addElement(new NodeTable("B", new IntervalType(8, 15, 2)));
+		nodes.addElement(new NodeTable("B", new IntervalType(16, 17, 2)));
+		nodes.addElement(new NodeTable("E", new IntervalType(3, 6, 3)));
+		nodes.addElement(new NodeTable("E", new IntervalType(9, 12, 3)));
+		nodes.addElement(new NodeTable("D", new IntervalType(13, 14, 3)));
+		nodes.addElement(new NodeTable("F", new IntervalType(4, 5, 4)));
+		nodes.addElement(new NodeTable("F", new IntervalType(10, 11, 4)));
 
-		nodes.addElement(new NodeTable("A", new IntervalType(1, 6, 1)));
-		nodes.addElement(new NodeTable("B", new IntervalType(2, 3, 2)));
-		//nodes.addElement(new NodeTable("C", new IntervalType(3, 4, 3)));
-		//nodes.addElement(new NodeTable("B", new IntervalType(5, 6, 2)));
-		nodes.addElement(new NodeTable("E", new IntervalType(4, 5, 2)));
-		//nodes.addElement(new NodeTable("F", new IntervalType(9, 12, 3)));
-		//nodes.addElement(new NodeTable("G", new IntervalType(10, 11, 4)));
-		
 		boolean status = OK;
-		int numsailors = 25;
+		int numsailors = 26;
 		int numsailors_attrs = 4;
-		int numreserves = 10;
+		int numreserves = 11;
 		int numreserves_attrs = 3;
 		int numboats = 5;
 		int numboats_attrs = 3;
-		int numnodes = 3;
+		int numnodes = 9;
 		int numnodes_attrs = 2;
 
 		String dbpath = "/tmp/" + System.getProperty("user.name") + ".minibase.jointestdb";
@@ -457,163 +444,198 @@ class JoinsDriver implements GlobalConst {
 
 	}
 
-  public boolean runTests() {
-    
-    Disclaimer();
-    Query1();
-    
-    Query2();
-    Query3();
-    
-   
-    Query4();
-    Query5();
-    Query6();
-    
-    Project3();
-    
-    
-    System.out.print ("Finished joins testing"+"\n");
-   
-    
-    return true;
-  }
+	public boolean runTests() {
 
-  private void Query1_CondExpr(CondExpr[] expr) {
+		Disclaimer();
+		ProjectSM();
 
-    expr[0].next  = null;
-    expr[0].op    = new AttrOperator(AttrOperator.aopEQ);
-    expr[0].type1 = new AttrType(AttrType.attrSymbol);
-    expr[0].type2 = new AttrType(AttrType.attrSymbol);
-    expr[0].operand1.symbol = new FldSpec (new RelSpec(RelSpec.outer),1);
-    expr[0].operand2.symbol = new FldSpec (new RelSpec(RelSpec.innerRel),1);
 
-    expr[1].op    = new AttrOperator(AttrOperator.aopEQ);
-    expr[1].next  = null;
-    expr[1].type1 = new AttrType(AttrType.attrSymbol);
-    expr[1].type2 = new AttrType(AttrType.attrInteger);
-    expr[1].operand1.symbol = new FldSpec (new RelSpec(RelSpec.innerRel),2);
-    expr[1].operand2.integer = 1;
- 
-    expr[2] = null;
-  }
+		System.out.print ("Finished joins testing"+"\n");
 
-  private void Query2_CondExpr(CondExpr[] expr, CondExpr[] expr2) {
 
-    expr[0].next  = null;
-    expr[0].op    = new AttrOperator(AttrOperator.aopEQ);
-    expr[0].type1 = new AttrType(AttrType.attrSymbol);
-    expr[0].type2 = new AttrType(AttrType.attrSymbol);
-    expr[0].operand1.symbol = new FldSpec (new RelSpec(RelSpec.outer),1);
-    expr[0].operand2.symbol = new FldSpec (new RelSpec(RelSpec.innerRel),1);
-    
-    expr[1] = null;
- 
-    expr2[0].next  = null;
-    expr2[0].op    = new AttrOperator(AttrOperator.aopEQ); 
-    expr2[0].type1 = new AttrType(AttrType.attrSymbol);
-    expr2[0].type2 = new AttrType(AttrType.attrSymbol);   
-    expr2[0].operand1.symbol = new FldSpec (new RelSpec(RelSpec.outer),2);
-    expr2[0].operand2.symbol = new FldSpec (new RelSpec(RelSpec.innerRel),1);
-    
-    expr2[1].op   = new AttrOperator(AttrOperator.aopEQ);
-    expr2[1].next = null;
-    expr2[1].type1 = new AttrType(AttrType.attrSymbol);
-    expr2[1].type2 = new AttrType(AttrType.attrString);
-    expr2[1].operand1.symbol = new FldSpec (new RelSpec(RelSpec.innerRel),3);
-    expr2[1].operand2.string = "red";
- 
-    expr2[2] = null;
-  }
+		return true;
+	}
 
-  private void Query3_CondExpr(CondExpr[] expr) {
+	private void Query1_CondExpr(CondExpr[] expr) {
 
-    expr[0].next  = null;
-    expr[0].op    = new AttrOperator(AttrOperator.aopEQ);
-    expr[0].type1 = new AttrType(AttrType.attrSymbol);
-    expr[0].operand1.symbol = new FldSpec (new RelSpec(RelSpec.outer),1);
-    expr[0].type2 = new AttrType(AttrType.attrSymbol);
-    expr[0].operand2.symbol = new FldSpec (new RelSpec(RelSpec.innerRel),1);
-    expr[1] = null;
-  }
+		expr[0].next  = null;
+		expr[0].op    = new AttrOperator(AttrOperator.aopEQ);
+		expr[0].type1 = new AttrType(AttrType.attrSymbol);
+		expr[0].type2 = new AttrType(AttrType.attrSymbol);
+		expr[0].operand1.symbol = new FldSpec (new RelSpec(RelSpec.outer),1);
+		expr[0].operand2.symbol = new FldSpec (new RelSpec(RelSpec.innerRel),1);
 
-  private CondExpr[] Query5_CondExpr() {
-    CondExpr [] expr2 = new CondExpr[3];
-    expr2[0] = new CondExpr();
-    
-   
-    expr2[0].next  = null;
-    expr2[0].op    = new AttrOperator(AttrOperator.aopEQ);
-    expr2[0].type1 = new AttrType(AttrType.attrSymbol);
-    
-    expr2[0].operand1.symbol = new FldSpec(new RelSpec(RelSpec.outer),1);
-    expr2[0].type2 = new AttrType(AttrType.attrSymbol);
-    
-    expr2[0].operand2.symbol = new FldSpec (new RelSpec(RelSpec.innerRel),1);
-    
-    expr2[1] = new CondExpr();
-    expr2[1].op   = new AttrOperator(AttrOperator.aopGT);
-    expr2[1].next = null;
-    expr2[1].type1 = new AttrType(AttrType.attrSymbol);
-   
-    expr2[1].operand1.symbol = new FldSpec (new RelSpec(RelSpec.outer),4);
-    expr2[1].type2 = new AttrType(AttrType.attrReal);
-    expr2[1].operand2.real = (float)40.0;
-    
+		expr[1].op    = new AttrOperator(AttrOperator.aopEQ);
+		expr[1].next  = null;
+		expr[1].type1 = new AttrType(AttrType.attrSymbol);
+		expr[1].type2 = new AttrType(AttrType.attrInteger);
+		expr[1].operand1.symbol = new FldSpec (new RelSpec(RelSpec.innerRel),2);
+		expr[1].operand2.integer = 1;
 
-    expr2[1].next = new CondExpr();
-    expr2[1].next.op   = new AttrOperator(AttrOperator.aopLT);
-    expr2[1].next.next = null;
-    expr2[1].next.type1 = new AttrType(AttrType.attrSymbol); // rating
-    expr2[1].next.operand1.symbol = new FldSpec ( new RelSpec(RelSpec.outer),3);
-    expr2[1].next.type2 = new AttrType(AttrType.attrInteger);
-    expr2[1].next.operand2.integer = 7;
- 
-    expr2[2] = null;
-    return expr2;
-  }
+		expr[2] = null;
+	}
 
-  private void Query6_CondExpr(CondExpr[] expr, CondExpr[] expr2) {
+	private void setConditions(CondExpr[] outFilter, Rule rule, int offset, boolean isFirstRule) {
 
-    expr[0].next  = null;
-    expr[0].op    = new AttrOperator(AttrOperator.aopEQ);
-    expr[0].type1 = new AttrType(AttrType.attrSymbol);
-   
-    expr[0].operand1.symbol = new FldSpec (new RelSpec(RelSpec.outer),1);
-    expr[0].type2 = new AttrType(AttrType.attrSymbol);
-    
-    expr[0].operand2.symbol = new FldSpec (new RelSpec(RelSpec.innerRel),1);
+		int outerIntervalColNo = offset;
+		int outerTagNameColNo ;
+		// The original schema is Interval - Tag Name. Since the projection is Tag Name - Interval
+		// the column numbers are swapped. Since no projection has been applied to the first rule,
+		// it retains the table schema.
+		if(isFirstRule) {
+			outerTagNameColNo = offset + 1;
+		} else {
+			outerTagNameColNo = offset - 1;
+		}
 
-    expr[1].next  = null;
-    expr[1].op    = new AttrOperator(AttrOperator.aopGT);
-    expr[1].type1 = new AttrType(AttrType.attrSymbol);
-    
-    expr[1].operand1.symbol = new FldSpec (new RelSpec(RelSpec.outer),3);
-    expr[1].type2 = new AttrType(AttrType.attrInteger);
-    expr[1].operand2.integer = 7;
- 
-    expr[2] = null;
- 
-    expr2[0].next  = null;
-    expr2[0].op    = new AttrOperator(AttrOperator.aopEQ);
-    expr2[0].type1 = new AttrType(AttrType.attrSymbol);
-    
-    expr2[0].operand1.symbol = new FldSpec (new RelSpec(RelSpec.outer),2);
-    expr2[0].type2 = new AttrType(AttrType.attrSymbol);
-    
-    expr2[0].operand2.symbol = new FldSpec (new RelSpec(RelSpec.innerRel),1);
+		//Join Condition
+		outFilter[0].next = null;
+		outFilter[0].op = new AttrOperator(AttrOperator.aopEQ);
+		outFilter[0].type1 = new AttrType(AttrType.attrSymbol);
+		outFilter[0].type2 = new AttrType(AttrType.attrSymbol);
+		outFilter[0].operand1.symbol = new FldSpec(new RelSpec(RelSpec.outer), outerIntervalColNo);
+		outFilter[0].operand2.symbol = new FldSpec(new RelSpec(RelSpec.innerRel), 1);
+		if (rule.ruleType == Rule.RULE_TYPE_PARENT_CHILD) {
+			outFilter[0].flag = 2;
+		} else {
+			outFilter[0].flag = 1;
+		}
 
-    expr2[1].next = null;
-    expr2[1].op   = new AttrOperator(AttrOperator.aopEQ);
-    expr2[1].type1 = new AttrType(AttrType.attrSymbol);
-    
-    expr2[1].operand1.symbol = new FldSpec (new RelSpec(RelSpec.innerRel),3);
-    expr2[1].type2 = new AttrType(AttrType.attrString);
-    expr2[1].operand2.string = "red";
- 
-    expr2[2] = null;
-  }
-  
+		//Outer table comparison. For eg: If rule is A B PC, this condition will return
+		//results for outer table where tag name equals to A.
+		outFilter[1].next = null;
+		outFilter[1].op = new AttrOperator(AttrOperator.aopEQ);
+		outFilter[1].type1 = new AttrType(AttrType.attrSymbol);
+		outFilter[1].operand1.symbol = new FldSpec(new RelSpec(RelSpec.outer), outerTagNameColNo);
+		outFilter[1].type2 = new AttrType(AttrType.attrString);
+		outFilter[1].operand2.string = rule.outerRule;
+
+		//Inner table comparison.
+		outFilter[2].next = null;
+		outFilter[2].op = new AttrOperator(AttrOperator.aopEQ);
+		outFilter[2].type1 = new AttrType(AttrType.attrSymbol);
+		outFilter[2].type2 = new AttrType(AttrType.attrString);
+		outFilter[2].operand1.symbol = new FldSpec(new RelSpec(RelSpec.innerRel), 2);
+		outFilter[2].operand2.string = rule.innerRule;
+
+		outFilter[3] = null;
+	}
+	private void Query2_CondExpr(CondExpr[] expr, CondExpr[] expr2) {
+
+		expr[0].next  = null;
+		expr[0].op    = new AttrOperator(AttrOperator.aopEQ);
+		expr[0].type1 = new AttrType(AttrType.attrSymbol);
+		expr[0].type2 = new AttrType(AttrType.attrSymbol);
+		expr[0].operand1.symbol = new FldSpec (new RelSpec(RelSpec.outer),1);
+		expr[0].operand2.symbol = new FldSpec (new RelSpec(RelSpec.innerRel),1);
+
+		expr[1] = null;
+
+		expr2[0].next  = null;
+		expr2[0].op    = new AttrOperator(AttrOperator.aopEQ);
+		expr2[0].type1 = new AttrType(AttrType.attrSymbol);
+		expr2[0].type2 = new AttrType(AttrType.attrSymbol);
+		expr2[0].operand1.symbol = new FldSpec (new RelSpec(RelSpec.outer),2);
+		expr2[0].operand2.symbol = new FldSpec (new RelSpec(RelSpec.innerRel),1);
+
+		expr2[1].op   = new AttrOperator(AttrOperator.aopEQ);
+		expr2[1].next = null;
+		expr2[1].type1 = new AttrType(AttrType.attrSymbol);
+		expr2[1].type2 = new AttrType(AttrType.attrString);
+		expr2[1].operand1.symbol = new FldSpec (new RelSpec(RelSpec.innerRel),3);
+		expr2[1].operand2.string = "red";
+
+		expr2[2] = null;
+	}
+
+	private void Query3_CondExpr(CondExpr[] expr) {
+
+		expr[0].next  = null;
+		expr[0].op    = new AttrOperator(AttrOperator.aopEQ);
+		expr[0].type1 = new AttrType(AttrType.attrSymbol);
+		expr[0].operand1.symbol = new FldSpec (new RelSpec(RelSpec.outer),1);
+		expr[0].type2 = new AttrType(AttrType.attrSymbol);
+		expr[0].operand2.symbol = new FldSpec (new RelSpec(RelSpec.innerRel),1);
+		expr[1] = null;
+	}
+
+	private CondExpr[] Query5_CondExpr() {
+		CondExpr [] expr2 = new CondExpr[3];
+		expr2[0] = new CondExpr();
+
+
+		expr2[0].next  = null;
+		expr2[0].op    = new AttrOperator(AttrOperator.aopEQ);
+		expr2[0].type1 = new AttrType(AttrType.attrSymbol);
+
+		expr2[0].operand1.symbol = new FldSpec(new RelSpec(RelSpec.outer),1);
+		expr2[0].type2 = new AttrType(AttrType.attrSymbol);
+
+		expr2[0].operand2.symbol = new FldSpec (new RelSpec(RelSpec.innerRel),1);
+
+		expr2[1] = new CondExpr();
+		expr2[1].op   = new AttrOperator(AttrOperator.aopGT);
+		expr2[1].next = null;
+		expr2[1].type1 = new AttrType(AttrType.attrSymbol);
+
+		expr2[1].operand1.symbol = new FldSpec (new RelSpec(RelSpec.outer),4);
+		expr2[1].type2 = new AttrType(AttrType.attrReal);
+		expr2[1].operand2.real = (float)40.0;
+
+
+		expr2[1].next = new CondExpr();
+		expr2[1].next.op   = new AttrOperator(AttrOperator.aopLT);
+		expr2[1].next.next = null;
+		expr2[1].next.type1 = new AttrType(AttrType.attrSymbol); // rating
+		expr2[1].next.operand1.symbol = new FldSpec ( new RelSpec(RelSpec.outer),3);
+		expr2[1].next.type2 = new AttrType(AttrType.attrInteger);
+		expr2[1].next.operand2.integer = 7;
+
+		expr2[2] = null;
+		return expr2;
+	}
+
+	private void Query6_CondExpr(CondExpr[] expr, CondExpr[] expr2) {
+
+		expr[0].next  = null;
+		expr[0].op    = new AttrOperator(AttrOperator.aopEQ);
+		expr[0].type1 = new AttrType(AttrType.attrSymbol);
+
+		expr[0].operand1.symbol = new FldSpec (new RelSpec(RelSpec.outer),1);
+		expr[0].type2 = new AttrType(AttrType.attrSymbol);
+
+		expr[0].operand2.symbol = new FldSpec (new RelSpec(RelSpec.innerRel),1);
+
+		expr[1].next  = null;
+		expr[1].op    = new AttrOperator(AttrOperator.aopGT);
+		expr[1].type1 = new AttrType(AttrType.attrSymbol);
+
+		expr[1].operand1.symbol = new FldSpec (new RelSpec(RelSpec.outer),3);
+		expr[1].type2 = new AttrType(AttrType.attrInteger);
+		expr[1].operand2.integer = 7;
+
+		expr[2] = null;
+
+		expr2[0].next  = null;
+		expr2[0].op    = new AttrOperator(AttrOperator.aopEQ);
+		expr2[0].type1 = new AttrType(AttrType.attrSymbol);
+
+		expr2[0].operand1.symbol = new FldSpec (new RelSpec(RelSpec.outer),2);
+		expr2[0].type2 = new AttrType(AttrType.attrSymbol);
+
+		expr2[0].operand2.symbol = new FldSpec (new RelSpec(RelSpec.innerRel),1);
+
+		expr2[1].next = null;
+		expr2[1].op   = new AttrOperator(AttrOperator.aopEQ);
+		expr2[1].type1 = new AttrType(AttrType.attrSymbol);
+
+		expr2[1].operand1.symbol = new FldSpec (new RelSpec(RelSpec.innerRel),3);
+		expr2[1].type2 = new AttrType(AttrType.attrString);
+		expr2[1].operand2.string = "red";
+
+		expr2[2] = null;
+	}
+
 
 	private void Proj_CondExpr(CondExpr[] expr) {
 		expr[0].next = null;
@@ -649,7 +671,7 @@ class JoinsDriver implements GlobalConst {
 
 		expr[3] = null;
 	}
-	
+
 	private void Project_CondExpr(CondExpr[] expr, List<Rule> rules, int nodeNumber) {
 		String outerNode = rules.get(0).outerRule;
 		expr[0].next = null;
@@ -698,9 +720,9 @@ class JoinsDriver implements GlobalConst {
 
 		expr[3] = null;
 	}
-	
-	private void Project2_CondExpr(CondExpr[] expr, CondExpr[] expr2, Rule rule, int nodeIndex) {
-		
+
+	private void Project2_CondExpr(CondExpr[] expr, Rule rule) {
+
 		String outerNode = rule.outerRule;
 		expr[0].next = null;
 		expr[0].op = new AttrOperator(AttrOperator.aopEQ);
@@ -713,64 +735,74 @@ class JoinsDriver implements GlobalConst {
 		} else {
 			expr[0].flag = 1;
 		}
-		
+
 		expr[1].next = null;
 		expr[1].op = new AttrOperator(AttrOperator.aopEQ);
 		expr[1].type1 = new AttrType(AttrType.attrSymbol);
 		expr[1].operand1.symbol = new FldSpec(new RelSpec(RelSpec.outer), 2);
 		expr[1].type2 = new AttrType(AttrType.attrString);
 		expr[1].operand2.string = outerNode;
-		
-		expr[2].next = null;
-		expr[2].op    = new AttrOperator(AttrOperator.aopEQ);
-	    expr[2].type1 = new AttrType(AttrType.attrSymbol);
-	    expr[2].operand1.symbol = new FldSpec (new RelSpec(RelSpec.innerRel),2);
-	    expr[2].type2 = new AttrType(AttrType.attrString);
-	    expr[2].operand2.string = rule.innerRule;
-	    
-	    expr[3] = null;
-		
-	    expr2[0].next = null;
-		expr2[0].op = new AttrOperator(AttrOperator.aopEQ);
-		expr2[0].type1 = new AttrType(AttrType.attrSymbol);
-		expr2[0].type2 = new AttrType(AttrType.attrSymbol);
-		expr2[0].operand1.symbol = new FldSpec(new RelSpec(RelSpec.outer), 2 * nodeIndex - 1);
-		expr2[0].operand2.symbol = new FldSpec(new RelSpec(RelSpec.innerRel), 1);
 
-		expr2[1] = null;
+		expr[2].next = null;
+		expr[2].op = new AttrOperator(AttrOperator.aopEQ);
+		expr[2].type1 = new AttrType(AttrType.attrSymbol);
+		expr[2].operand1.symbol = new FldSpec(new RelSpec(RelSpec.innerRel), 2);
+		expr[2].type2 = new AttrType(AttrType.attrString);
+		expr[2].operand2.string = rule.innerRule;
+
+		expr[3] = null;
 	}
-	
-private void Project3_CondExpr(CondExpr[] RightFilter, CondExpr[] OutFilter, Rule rule, int nodeIndex) {
-		
+
+	private void Project3_CondExpr(CondExpr[] OutFilter, Rule rule, int offset) {
+
 		String outerNode = rule.outerRule;
-		RightFilter[0].next = null;
-		RightFilter[0].op = new AttrOperator(AttrOperator.aopEQ);
-		RightFilter[0].type1 = new AttrType(AttrType.attrSymbol);
-		RightFilter[0].type2 = new AttrType(AttrType.attrString);
-		RightFilter[0].operand1.symbol = new FldSpec(new RelSpec(RelSpec.outer), 2);
-		RightFilter[0].operand2.string = rule.innerRule;
-		
-		RightFilter[1] = null;
-		
+
 		OutFilter[0].next = null;
 		OutFilter[0].op = new AttrOperator(AttrOperator.aopEQ);
 		OutFilter[0].type1 = new AttrType(AttrType.attrSymbol);
 		OutFilter[0].type2 = new AttrType(AttrType.attrSymbol);
-		OutFilter[0].operand1.symbol = new FldSpec(new RelSpec(RelSpec.outer), (2 * nodeIndex) - 1);
+		OutFilter[0].operand1.symbol = new FldSpec(new RelSpec(RelSpec.outer), offset);
 		OutFilter[0].operand2.symbol = new FldSpec(new RelSpec(RelSpec.innerRel), 1);
 		if (rule.ruleType == Rule.RULE_TYPE_PARENT_CHILD) {
 			OutFilter[0].flag = 2;
 		} else {
 			OutFilter[0].flag = 1;
 		}
-		
+
 		OutFilter[1].next = null;
 		OutFilter[1].op = new AttrOperator(AttrOperator.aopEQ);
 		OutFilter[1].type1 = new AttrType(AttrType.attrSymbol);
-		OutFilter[1].operand1.symbol = new FldSpec(new RelSpec(RelSpec.outer), 2);
+		OutFilter[1].operand1.symbol = new FldSpec(new RelSpec(RelSpec.outer), offset - 1);
 		OutFilter[1].type2 = new AttrType(AttrType.attrString);
 		OutFilter[1].operand2.string = outerNode;
-		OutFilter[2] = null;
+
+		OutFilter[2].next = null;
+		OutFilter[2].op = new AttrOperator(AttrOperator.aopEQ);
+		OutFilter[2].type1 = new AttrType(AttrType.attrSymbol);
+		OutFilter[2].type2 = new AttrType(AttrType.attrString);
+		OutFilter[2].operand1.symbol = new FldSpec(new RelSpec(RelSpec.innerRel), 2);
+		OutFilter[2].operand2.string = rule.innerRule;
+
+		OutFilter[3] = null;
+	}
+
+	private void Project4_CondExpr(CondExpr[] OutFilter, Rule rule, int offset) {
+
+		String outerNode = rule.outerRule;
+
+		OutFilter[0].next = null;
+		OutFilter[0].op = new AttrOperator(AttrOperator.aopEQ);
+		OutFilter[0].type1 = new AttrType(AttrType.attrSymbol);
+		OutFilter[0].type2 = new AttrType(AttrType.attrSymbol);
+		OutFilter[0].operand1.symbol = new FldSpec(new RelSpec(RelSpec.outer), offset);
+		OutFilter[0].operand2.symbol = new FldSpec(new RelSpec(RelSpec.innerRel), 2);
+		OutFilter[0].flag =0;
+
+	}
+
+	private void populateNodeOffsetMap(Map<String, Integer> offsetMap, String nodeName, Integer nodeNumber) {
+		offsetMap.put(nodeName, 2*nodeNumber);
+		nodeNumber = nodeNumber + 1;
 	}
 
 	public void Query1() {
@@ -1621,13 +1653,15 @@ private void Project3_CondExpr(CondExpr[] RightFilter, CondExpr[] OutFilter, Rul
 			Runtime.getRuntime().exit(1);
 		}
 	}
-	
+
 	public void Project3() {
 		Rule rule1 = new Rule("A", "B", Rule.RULE_TYPE_PARENT_CHILD);
-		Rule rule2 = new Rule("A", "E", Rule.RULE_TYPE_PARENT_CHILD);
-		ArrayList<Rule> aRules = new ArrayList<>();
-		aRules.add(rule1);
-		aRules.add(rule2);
+		Rule rule2 = new Rule("B", "E", Rule.RULE_TYPE_PARENT_CHILD);
+		ArrayList<Rule> rules = new ArrayList<>();
+		HashMap<String, Integer> nodeOffsetMap = new HashMap<>();
+		rules.add(rule1);
+		rules.add(rule2);
+		int nodeNumber = 1;
 		boolean status = OK;
 
 		Iterator am = null;
@@ -1645,7 +1679,11 @@ private void Project3_CondExpr(CondExpr[] RightFilter, CondExpr[] OutFilter, Rul
 			e.printStackTrace();
 		}
 
-		Rule firstRule = aRules.get(0);
+		Rule firstRule = rules.get(0);
+		populateNodeOffsetMap(nodeOffsetMap, firstRule.outerRule, nodeNumber);
+		nodeNumber++;
+		populateNodeOffsetMap(nodeOffsetMap, firstRule.innerRule, nodeNumber);
+		nodeNumber++;
 
 		CondExpr[] outFilter = new CondExpr[4];
 		outFilter[0] = new CondExpr();
@@ -1653,13 +1691,8 @@ private void Project3_CondExpr(CondExpr[] RightFilter, CondExpr[] OutFilter, Rul
 		outFilter[2] = new CondExpr();
 		outFilter[3] = new CondExpr();
 
-		CondExpr[] outFilter2 = new CondExpr[2];
-		outFilter2[0] = new CondExpr();
-		outFilter2[1] = new CondExpr();
-
-		Project2_CondExpr(outFilter, outFilter2, firstRule, 1);
-		String prevRuleNode = firstRule.outerRule;
-		aRules.remove(0);		
+		Project2_CondExpr(outFilter, firstRule);
+		rules.remove(0);
 
 		FldSpec[] proj = { new FldSpec(new RelSpec(RelSpec.outer), 2), new FldSpec(new RelSpec(RelSpec.outer), 1),
 				new FldSpec(new RelSpec(RelSpec.innerRel), 2), new FldSpec(new RelSpec(RelSpec.innerRel), 1) };
@@ -1674,29 +1707,33 @@ private void Project3_CondExpr(CondExpr[] RightFilter, CondExpr[] OutFilter, Rul
 			e.printStackTrace();
 			Runtime.getRuntime().exit(1);
 		}
-		int nodeIndex = 1;
+
 		int ruleNumber = 2;
-		for (Rule rule : aRules) {
-			if (rule.outerRule != prevRuleNode) {
-				nodeIndex++;
+		for (Rule rule : rules) {
+			if (!nodeOffsetMap.containsKey(rule.outerRule)) {
+				//Technically, this should never happen.
+				populateNodeOffsetMap(nodeOffsetMap, rule.outerRule, nodeNumber);
+				nodeNumber++;
 			}
 
-			outFilter = new CondExpr[3];
+			if (!nodeOffsetMap.containsKey(rule.innerRule)) {
+				populateNodeOffsetMap(nodeOffsetMap, rule.innerRule, nodeNumber);
+				nodeNumber++;
+			}
+
+			outFilter = new CondExpr[4];
 			outFilter[0] = new CondExpr();
 			outFilter[1] = new CondExpr();
 			outFilter[2] = new CondExpr();
-			
-			CondExpr[] RightFilter = new CondExpr[2];
-			RightFilter[0] = new CondExpr();
-			RightFilter[1] = new CondExpr();
+			outFilter[3] = new CondExpr();
 
-			Project3_CondExpr(RightFilter, outFilter, rule, nodeIndex);
+			Project3_CondExpr(outFilter, rule, nodeOffsetMap.get(rule.outerRule));
 			AttrType[] Ntypes2 = new AttrType[2 * ruleNumber];
 			for (int i = 0; i < 2 * ruleNumber; i++) {
 				if (i % 2 == 0) {
-					Ntypes2[i] = new AttrType(AttrType.attrInterval);
-				} else {
 					Ntypes2[i] = new AttrType(AttrType.attrString);
+				} else {
+					Ntypes2[i] = new AttrType(AttrType.attrInterval);
 				}
 			}
 			short[] Nsizes2 = new short[ruleNumber];
@@ -1708,8 +1745,8 @@ private void Project3_CondExpr(CondExpr[] RightFilter, CondExpr[] OutFilter, Rul
 			for (int i = 0; i < 2 * ruleNumber; i++) {
 				proj2[i] = new FldSpec(new RelSpec(RelSpec.outer), i+1);
 			}
-			proj2[2 * ruleNumber] = new FldSpec(new RelSpec(RelSpec.innerRel), 1);
-			proj2[2 * ruleNumber + 1] = new FldSpec(new RelSpec(RelSpec.innerRel), 2);
+			proj2[2 * ruleNumber] = new FldSpec(new RelSpec(RelSpec.innerRel), 2);
+			proj2[2 * ruleNumber + 1] = new FldSpec(new RelSpec(RelSpec.innerRel), 1);
 
 			try {
 				inl2 = new NestedLoopsJoins(Ntypes2, 2 * ruleNumber, Nsizes2, Ntypes, 2, Nsizes, 10, inl, "nodes.in",
@@ -1723,15 +1760,8 @@ private void Project3_CondExpr(CondExpr[] RightFilter, CondExpr[] OutFilter, Rul
 			inl = inl2;
 			ruleNumber++;
 		}
-		
+
 		Tuple t = new Tuple();
-		// AttrType[] jtype = new AttrType[4];
-		//
-		// jtype[0] = new AttrType(AttrType.attrString);
-		// jtype[1] = new AttrType(AttrType.attrInterval);
-		// jtype[2] = new AttrType(AttrType.attrString);
-		// jtype[3] = new AttrType(AttrType.attrInterval);
-		//
 		AttrType[] jtype = new AttrType[2 * ruleNumber + 2];
 
 		for (int i = 0; i < 2 * ruleNumber; i++) {
@@ -1741,14 +1771,6 @@ private void Project3_CondExpr(CondExpr[] RightFilter, CondExpr[] OutFilter, Rul
 				jtype[i] = new AttrType(AttrType.attrInterval);
 			}
 		}
-
-//		Tuple t = new Tuple();
-//		AttrType[] jtype = new AttrType[4];
-//
-//		jtype[0] = new AttrType(AttrType.attrString);
-//		jtype[1] = new AttrType(AttrType.attrInterval);
-//		jtype[2] = new AttrType(AttrType.attrString);
-//		jtype[3] = new AttrType(AttrType.attrInterval);
 
 		try {
 			while ((t = inl2.get_next()) != null) {
@@ -1762,6 +1784,145 @@ private void Project3_CondExpr(CondExpr[] RightFilter, CondExpr[] OutFilter, Rul
 
 	}
 
+	public void ProjectSM() {
+		Rule rule1 = new Rule("A", "B", Rule.RULE_TYPE_PARENT_CHILD);
+		Rule rule2 = new Rule("A", "E", Rule.RULE_TYPE_ANCESTRAL_DESCENDENT);
+		List<Rule> rules = new ArrayList<>();
+		Map<String, Integer> nodeOffsetMap = new HashMap<>();
+		rules.add(rule1);
+		rules.add(rule2);
+		//rules.add(rule3);
+		int nodeNumber = 1;
+		boolean status = OK;
+
+		Iterator am = null;
+		Iterator am1 = null;
+		AttrType[] Ntypes = { new AttrType(AttrType.attrInterval), new AttrType(AttrType.attrString) };
+		short[] Nsizes = new short[1];
+		Nsizes[0] = 1;
+
+		FldSpec[] Nprojection = { new FldSpec(new RelSpec(RelSpec.outer), 1),
+				new FldSpec(new RelSpec(RelSpec.outer), 2) };
+
+		TupleOrder ascending = new TupleOrder(TupleOrder.Ascending);
+
+		FldSpec[] proj = { new FldSpec(new RelSpec(RelSpec.outer), 2), new FldSpec(new RelSpec(RelSpec.outer), 1),
+				new FldSpec(new RelSpec(RelSpec.innerRel), 2), new FldSpec(new RelSpec(RelSpec.innerRel), 1) };
+		List<NestedLoopsJoins> listNLJ = new LinkedList<>();
+		for(Rule rule:rules) {
+			try {
+				am = new FileScan("nodes.in", Ntypes, Nsizes, (short) 2, (short) 2, Nprojection, null);
+			} catch (Exception e) {
+				status = FAIL;
+				System.err.println("" + e);
+				e.printStackTrace();
+			}
+			NestedLoopsJoins inl = null;
+			try {
+				CondExpr[] outFilter = new CondExpr[4];
+				outFilter[0] = new CondExpr();
+				outFilter[1] = new CondExpr();
+				outFilter[2] = new CondExpr();
+				outFilter[3] = new CondExpr();
+				setConditions(outFilter, rule, 1 , true);
+				inl = new NestedLoopsJoins(Ntypes, 2, Nsizes, Ntypes, 2, Nsizes, 10, am, "nodes.in", outFilter, null, proj,
+						4);
+				listNLJ.add(inl);
+			} catch (Exception e) {
+				System.err.println("*** Error preparing for nested_loop_join");
+				System.err.println("" + e);
+				e.printStackTrace();
+				Runtime.getRuntime().exit(1);
+			}
+		}
+		Rule prevRule = rules.get(0);
+		populateNodeOffsetMap(nodeOffsetMap, prevRule.outerRule, nodeNumber);
+		nodeNumber++;
+		populateNodeOffsetMap(nodeOffsetMap, prevRule.innerRule, nodeNumber);
+		nodeNumber++;
+		Iterator prevSM = listNLJ.get(0);
+		int index = 2;
+		for(int x =1; x<listNLJ.size(); ++x) {
+			if (!nodeOffsetMap.containsKey(rules.get(x).outerRule)) {
+				//Technically, this should never happen.
+				populateNodeOffsetMap(nodeOffsetMap, rules.get(x).outerRule, nodeNumber);
+				nodeNumber++;
+			}
+
+			if (!nodeOffsetMap.containsKey(rules.get(x).innerRule)) {
+				populateNodeOffsetMap(nodeOffsetMap, rules.get(x).innerRule, nodeNumber);
+				nodeNumber++;
+			}
+			try {
+				CondExpr[] outFilter = new CondExpr[2];
+				outFilter[0] = new CondExpr();
+				outFilter[1] = null;
+
+				Project4_CondExpr(outFilter, rules.get(x), nodeOffsetMap.get(rules.get(x).outerRule));
+				AttrType[] NtypesFix = { new AttrType(AttrType.attrString),
+						new AttrType(AttrType.attrInterval), new AttrType(AttrType.attrString), new AttrType(AttrType.attrInterval)};
+				short[] NsizesFix = new short[2];
+				NsizesFix[0] = 1;
+				NsizesFix[1] = 1;
+				AttrType[] Ntypes2 = new AttrType[2 * index];
+				for (int i = 0; i < 2 * index; i++) {
+					if (i % 2 == 0) {
+						Ntypes2[i] = new AttrType(AttrType.attrString);
+					} else {
+						Ntypes2[i] = new AttrType(AttrType.attrInterval);
+					}
+				}
+				short[] Nsizes2 = new short[index];
+				for (int i = 0; i < index; i++) {
+					Nsizes2[i] = 1;
+				}
+				FldSpec[] proj2 = new FldSpec[2 * index + 2];
+				for (int i = 0; i < 2 * index; i++) {
+					proj2[i] = new FldSpec(new RelSpec(RelSpec.outer), i+1);
+				}
+				proj2[2 * index] = new FldSpec(new RelSpec(RelSpec.innerRel), 3);
+				proj2[2 * index + 1] = new FldSpec(new RelSpec(RelSpec.innerRel), 4);
+				SortMerge sm = new SortMerge(Ntypes2, index*2, Nsizes2,
+						NtypesFix, 4, NsizesFix,
+						nodeOffsetMap.get(rules.get(x).outerRule), 4,
+						2, 4,
+						10,
+						prevSM, listNLJ.get(x),
+						true, false, ascending,
+						outFilter, proj2, 2*index + 2);
+				index++;
+				prevSM = sm;
+			}
+			catch (Exception e) {
+				System.err.println("*** join error in SortMerge constructor ***");
+				status = FAIL;
+				System.err.println (""+e);
+				e.printStackTrace();
+			}
+		}
+		Tuple t = new Tuple();
+		AttrType[] jtype = new AttrType[2 * index + 2];
+
+		for (int i = 0; i < 2 * index; i++) {
+			if (i % 2 == 0) {
+				jtype[i] = new AttrType(AttrType.attrString);
+			} else {
+				jtype[i] = new AttrType(AttrType.attrInterval);
+			}
+		}
+
+		try {
+			while ((t = prevSM.get_next()) != null) {
+				t.print(jtype);
+			}
+		} catch (Exception e) {
+			System.err.println("*** Error preparing for get_next tuple");
+			System.err.println("" + e);
+			Runtime.getRuntime().exit(1);
+		}
+
+	}
+/*
 	public void Project2() {
 		Rule rule1 = new Rule("A", "B", Rule.RULE_TYPE_PARENT_CHILD);
 		Rule rule2 = new Rule("A", "E", Rule.RULE_TYPE_PARENT_CHILD);
@@ -1939,159 +2100,148 @@ private void Project3_CondExpr(CondExpr[] RightFilter, CondExpr[] OutFilter, Rul
 		}
 	}
 
-	/*
+
 	public void Project_SM() {
+		Rule rule1 = new Rule("A", "B", Rule.RULE_TYPE_PARENT_CHILD);
+		Rule rule2 = new Rule("A", "E", Rule.RULE_TYPE_PARENT_CHILD);
+		ArrayList<Rule> aRules = new ArrayList<>();
+		aRules.add(rule1);
+		aRules.add(rule2);
 		boolean status = OK;
-		CondExpr[] outFilter = new CondExpr[3];
+
+		Iterator am = null;
+		AttrType[] Ntypes = { new AttrType(AttrType.attrInterval), new AttrType(AttrType.attrString) };
+		short[] Nsizes = new short[1];
+		Nsizes[0] = 1;
+
+		FldSpec[] Nprojection = { new FldSpec(new RelSpec(RelSpec.outer), 1),
+				new FldSpec(new RelSpec(RelSpec.outer), 2) };
+		try {
+			am = new FileScan("nodes.in", Ntypes, Nsizes, (short) 2, (short) 2, Nprojection, null);
+		} catch (Exception e) {
+			status = FAIL;
+			System.err.println("" + e);
+			e.printStackTrace();
+		}
+
+		Rule firstRule = aRules.get(0);
+
+		CondExpr[] outFilter = new CondExpr[4];
 		outFilter[0] = new CondExpr();
 		outFilter[1] = new CondExpr();
 		outFilter[2] = new CondExpr();
+		outFilter[3] = new CondExpr();
 
-		Query1_CondExpr(outFilter);
+		CondExpr[] outFilter2 = new CondExpr[2];
+		outFilter2[0] = new CondExpr();
+		outFilter2[1] = new CondExpr();
+
+		Project2_CondExpr(outFilter, outFilter2, firstRule, 1);
+		String prevRuleNode = firstRule.outerRule;
+		aRules.remove(0);
+
+		FldSpec[] proj = { new FldSpec(new RelSpec(RelSpec.outer), 2), new FldSpec(new RelSpec(RelSpec.outer), 1),
+				new FldSpec(new RelSpec(RelSpec.innerRel), 2), new FldSpec(new RelSpec(RelSpec.innerRel), 1) };
+		NestedLoopsJoins inl = null;
+		NestedLoopsJoins inl2 = null;
+		try {
+			inl = new NestedLoopsJoins(Ntypes, 2, Nsizes, Ntypes, 2, Nsizes, 10, am, "nodes.in", outFilter, null, proj,
+					4);
+		} catch (Exception e) {
+			System.err.println("*** Error preparing for nested_loop_join");
+			System.err.println("" + e);
+			e.printStackTrace();
+			Runtime.getRuntime().exit(1);
+		}
+		int nodeIndex = 1;
+		int ruleNumber = 2;
+		for (Rule rule : aRules) {
+			if (rule.outerRule != prevRuleNode) {
+				nodeIndex++;
+			}
+
+			outFilter = new CondExpr[3];
+			outFilter[0] = new CondExpr();
+			outFilter[1] = new CondExpr();
+			outFilter[2] = new CondExpr();
+
+			CondExpr[] RightFilter = new CondExpr[2];
+			RightFilter[0] = new CondExpr();
+			RightFilter[1] = new CondExpr();
+
+			Project3_CondExpr(RightFilter, outFilter, rule, nodeIndex);
+			AttrType[] Ntypes2 = new AttrType[2 * ruleNumber];
+			for (int i = 0; i < 2 * ruleNumber; i++) {
+				if (i % 2 == 0) {
+					Ntypes2[i] = new AttrType(AttrType.attrInterval);
+				} else {
+					Ntypes2[i] = new AttrType(AttrType.attrString);
+				}
+			}
+			short[] Nsizes2 = new short[ruleNumber];
+			for (int i = 0; i < ruleNumber; i++) {
+				Nsizes2[i] = 1;
+			}
+
+			FldSpec[] proj2 = new FldSpec[2 * ruleNumber + 2];
+			for (int i = 0; i < 2 * ruleNumber; i++) {
+				proj2[i] = new FldSpec(new RelSpec(RelSpec.outer), i+1);
+			}
+			proj2[2 * ruleNumber] = new FldSpec(new RelSpec(RelSpec.innerRel), 1);
+			proj2[2 * ruleNumber + 1] = new FldSpec(new RelSpec(RelSpec.innerRel), 2);
+
+			try {
+				inl2 = new NestedLoopsJoins(Ntypes2, 2 * ruleNumber, Nsizes2, Ntypes, 2, Nsizes, 10, inl, "nodes.in",
+						outFilter, null, proj2, 2 * ruleNumber + 2);
+			} catch (Exception e) {
+				System.err.println("*** Error preparing for nested_loop_join");
+				System.err.println("" + e);
+				e.printStackTrace();
+				Runtime.getRuntime().exit(1);
+			}
+			inl = inl2;
+			ruleNumber++;
+		}
 
 		Tuple t = new Tuple();
+		// AttrType[] jtype = new AttrType[4];
+		//
+		// jtype[0] = new AttrType(AttrType.attrString);
+		// jtype[1] = new AttrType(AttrType.attrInterval);
+		// jtype[2] = new AttrType(AttrType.attrString);
+		// jtype[3] = new AttrType(AttrType.attrInterval);
+		//
+		AttrType[] jtype = new AttrType[2 * ruleNumber + 2];
 
-		AttrType [] Stypes = new AttrType[4];
-		Stypes[0] = new AttrType (AttrType.attrInteger);
-		Stypes[1] = new AttrType (AttrType.attrString);
-		Stypes[2] = new AttrType (AttrType.attrInteger);
-		Stypes[3] = new AttrType (AttrType.attrReal);
-
-		//SOS
-		short [] Ssizes = new short[1];
-		Ssizes[0] = 30; //first elt. is 30
-
-		FldSpec [] Sprojection = new FldSpec[4];
-		Sprojection[0] = new FldSpec(new RelSpec(RelSpec.outer), 1);
-		Sprojection[1] = new FldSpec(new RelSpec(RelSpec.outer), 2);
-		Sprojection[2] = new FldSpec(new RelSpec(RelSpec.outer), 3);
-		Sprojection[3] = new FldSpec(new RelSpec(RelSpec.outer), 4);
-
-		CondExpr [] selects = new CondExpr [1];
-		selects = null;
-
-
-		FileScan am = null;
-		try {
-			am  = new FileScan("sailors.in", Stypes, Ssizes,
-					(short)4, (short)4,
-					Sprojection, null);
-		}
-		catch (Exception e) {
-			status = FAIL;
-			System.err.println (""+e);
-		}
-
-		if (status != OK) {
-			//bail out
-			System.err.println ("*** Error setting up scan for sailors");
-			Runtime.getRuntime().exit(1);
-		}
-
-		AttrType [] Rtypes = new AttrType[3];
-		Rtypes[0] = new AttrType (AttrType.attrInteger);
-		Rtypes[1] = new AttrType (AttrType.attrInteger);
-		Rtypes[2] = new AttrType (AttrType.attrString);
-
-		short [] Rsizes = new short[1];
-		Rsizes[0] = 15;
-		FldSpec [] Rprojection = new FldSpec[3];
-		Rprojection[0] = new FldSpec(new RelSpec(RelSpec.outer), 1);
-		Rprojection[1] = new FldSpec(new RelSpec(RelSpec.outer), 2);
-		Rprojection[2] = new FldSpec(new RelSpec(RelSpec.outer), 3);
-
-		FileScan am2 = null;
-		try {
-			am2 = new FileScan("reserves.in", Rtypes, Rsizes,
-					(short)3, (short) 3,
-					Rprojection, null);
-		}
-		catch (Exception e) {
-			status = FAIL;
-			System.err.println (""+e);
-		}
-
-		if (status != OK) {
-			//bail out
-			System.err.println ("*** Error setting up scan for reserves");
-			Runtime.getRuntime().exit(1);
-		}
-
-
-		FldSpec [] proj_list = new FldSpec[2];
-		proj_list[0] = new FldSpec(new RelSpec(RelSpec.outer), 2);
-		proj_list[1] = new FldSpec(new RelSpec(RelSpec.innerRel), 3);
-
-		AttrType [] jtype = new AttrType[2];
-		jtype[0] = new AttrType (AttrType.attrString);
-		jtype[1] = new AttrType (AttrType.attrString);
-
-		TupleOrder ascending = new TupleOrder(TupleOrder.Ascending);
-		SortMerge sm = null;
-		try {
-			sm = new SortMerge(Stypes, 4, Ssizes,
-					Rtypes, 3, Rsizes,
-					1, 4,
-					1, 4,
-					10,
-					am, am2,
-					false, false, ascending,
-					outFilter, proj_list, 2);
-		}
-		catch (Exception e) {
-			System.err.println("*** join error in SortMerge constructor ***");
-			status = FAIL;
-			System.err.println (""+e);
-			e.printStackTrace();
-		}
-
-		if (status != OK) {
-			//bail out
-			System.err.println ("*** Error constructing SortMerge");
-			Runtime.getRuntime().exit(1);
-		}
-
-
-
-		QueryCheck qcheck1 = new QueryCheck(1);
-
-
-		t = null;
-
-		try {
-			while ((t = sm.get_next()) != null) {
-				t.print(jtype);
-
-				qcheck1.Check(t);
+		for (int i = 0; i < 2 * ruleNumber; i++) {
+			if (i % 2 == 0) {
+				jtype[i] = new AttrType(AttrType.attrString);
+			} else {
+				jtype[i] = new AttrType(AttrType.attrInterval);
 			}
 		}
-		catch (Exception e) {
-			System.err.println (""+e);
-			e.printStackTrace();
-			status = FAIL;
-		}
-		if (status != OK) {
-			//bail out
-			System.err.println ("*** Error in get next tuple ");
+
+//		Tuple t = new Tuple();
+//		AttrType[] jtype = new AttrType[4];
+//
+//		jtype[0] = new AttrType(AttrType.attrString);
+//		jtype[1] = new AttrType(AttrType.attrInterval);
+//		jtype[2] = new AttrType(AttrType.attrString);
+//		jtype[3] = new AttrType(AttrType.attrInterval);
+
+		try {
+			while ((t = inl2.get_next()) != null) {
+				t.print(jtype);
+			}
+		} catch (Exception e) {
+			System.err.println("*** Error preparing for get_next tuple");
+			System.err.println("" + e);
 			Runtime.getRuntime().exit(1);
 		}
 
-		qcheck1.report(1);
-		try {
-			sm.close();
-		}
-		catch (Exception e) {
-			status = FAIL;
-			e.printStackTrace();
-		}
-		System.out.println ("\n");
-		if (status != OK) {
-			//bail out
-			System.err.println ("*** Error in closing ");
-			Runtime.getRuntime().exit(1);
-		}
 	}
 */
+
 	public void Query6()
 	{
 		System.out.print("**********************Query6 strating *********************\n");

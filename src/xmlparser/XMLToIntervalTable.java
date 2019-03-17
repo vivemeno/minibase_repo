@@ -2,7 +2,8 @@ package xmlparser;
 
 import global.GlobalConst;
 import global.IntervalType;
-import iterator.sm_join_assign_src.NodeTable;
+import tests.NodeTable;
+
 import javax.xml.stream.XMLEventReader;
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamConstants;
@@ -94,17 +95,17 @@ public class XMLToIntervalTable implements GlobalConst {
         if (root == null)
             return intrvlCounter;
         NodeTable nt = new NodeTable();
-        nt.nodeTag = root.tagName;
+        nt.nodename = root.tagName;
         intrvlCounter++;
-        nt.nodeIntLabel = new IntervalType();
-        nt.nodeIntLabel.s = intrvlCounter;
-        nt.nodeIntLabel.l = level;
+        nt.interval = new IntervalType();
+        nt.interval.s = intrvlCounter;
+        nt.interval.l = level;
         if(root.children!=null) {
             for (XMLTree node : root.children)
                 intrvlCounter = preOrder(node, result, intrvlCounter, level+1);
         }
         intrvlCounter++;
-        nt.nodeIntLabel.e = intrvlCounter;
+        nt.interval.e = intrvlCounter;
         result.add(nt);
         return intrvlCounter;
     }

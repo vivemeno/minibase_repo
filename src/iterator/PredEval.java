@@ -119,7 +119,8 @@ public class PredEval
 
 				// Got the arguments, now perform a comparison.
 				try {
-					comp_res = TupleUtils.CompareTupleWithTuple(comparison_type, tuple1, fld1, tuple2, fld2);
+					comp_res = comparison_type.attrType == AttrType.attrInterval && temp_ptr.flag==0 ? TupleUtils.CompareTupleWithTuple(tuple1,
+							fld1, tuple2, fld2):TupleUtils.CompareTupleWithTuple(comparison_type, tuple1, fld1, tuple2, fld2);
 				} catch (TupleUtilsException e) {
 					throw new PredEvalException(e, "TupleUtilsException is caught by PredEval.java");
 				}
@@ -129,7 +130,7 @@ public class PredEval
 				case AttrOperator.aopEQ:
 					if (comparison_type.attrType == AttrType.attrInterval) {
 						if (temp_ptr.flag == 0) { // equal intervals
-							if(comp_res == 4) {
+							if(comp_res == 0) {
 								op_res = true;
 							}
 						} else if (temp_ptr.flag == 1 || temp_ptr.flag == 2) { //check for containment
