@@ -7,6 +7,7 @@ import java.io.IOException;
 
 import java.util.*;
 
+import bufmgr.BufMgr;
 import global.*;
 import heap.Heapfile;
 import heap.Tuple;
@@ -621,12 +622,14 @@ public class Phase1 {
 	private void input() {
 		String choice = "Y";
 		while (!choice.equals("N") && !choice.equals("n")) {
-			System.out.println("Enter input filename");
+			BufMgr.page_access_counter = 0;
+			System.out.println("Enter input filename for query");
 			Scanner scanner = new Scanner(System.in);
 			String file = scanner.next();
 			String[] file_contents = readFile(input_file_base + file);
 			List<Rule> rules = getRuleList(file_contents);
 			printRules(rules);
+			System.out.println("Number of page accessed = " + BufMgr.page_access_counter);
 			System.out.println("Press N to stop");
 			choice = scanner.next();
 			System.out.print(choice);
