@@ -27,7 +27,7 @@ public class XMLToIntervalTable implements GlobalConst {
             XMLInputFactory factory = XMLInputFactory.newInstance();
             factory.setProperty(XMLInputFactory.IS_COALESCING, true);
             XMLEventReader eventReader =
-                    factory.createXMLEventReader(new FileReader("/home/akhil/MS/DBMS/xml_sample_data.xml"));
+                    factory.createXMLEventReader(new FileReader("/home/akhil/MS/DBMS/sample.xml"));
 
             while(eventReader.hasNext()) {
 
