@@ -15,17 +15,7 @@ import iterator.*;
 import iterator.Iterator;
 import iterator.NestedLoopsJoins;
 import iterator.RelSpec;
-
-
-class NodeTable {
-	public String nodename;
-	public IntervalType interval;
-	
-	public NodeTable (String _nodeName, IntervalType _interval) {
-		nodename = _nodeName;
-		interval = _interval;
-	}
-}
+import xmlparser.XMLToIntervalTable;
 
 class Rule {
 	public String outerTag;
@@ -56,24 +46,26 @@ class Rule {
 
 public class Phase1 {
 	public static final int NUMBUF = 50;
-	public static final int TAG_LENGTH = 1;
+	public static final int TAG_LENGTH = 10;
 	private boolean OK = true;
 	private boolean FAIL = false;
 	public Vector<NodeTable> nodes;
-	private String input_file_base = "/home/vivemeno/DBMSI/input/";
-
+	private String input_file_base = "/home/akhil/MS/DBMS/";
+	private Map<String, String> tagMapping = new HashMap<>(); // contains id to tag name mapping
 	public Phase1() {
-		nodes = new Vector<NodeTable>();
+/*		nodes = new Vector<NodeTable>();
 		nodes.addElement(new NodeTable("A", new IntervalType(1, 14, 1)));
-		nodes.addElement(new NodeTable("B", new IntervalType(2, 5, 2)));
-		nodes.addElement(new NodeTable("B", new IntervalType(6, 11, 2)));
+		nodes.addElement(new NodeTable("B", new IntervalType(2, 9, 2)));
+		nodes.addElement(new NodeTable("B", new IntervalType(10, 11, 2)));
 		nodes.addElement(new NodeTable("B", new IntervalType(12, 13, 2)));
-		nodes.addElement(new NodeTable("E", new IntervalType(3, 4, 3)));
-		nodes.addElement(new NodeTable("E", new IntervalType(7, 8, 3)));
-		nodes.addElement(new NodeTable("D", new IntervalType(9, 10, 3)));
+		nodes.addElement(new NodeTable("C", new IntervalType(3, 6, 3)));
+		nodes.addElement(new NodeTable("D", new IntervalType(7, 8, 3)));
+		nodes.addElement(new NodeTable("E", new IntervalType(4, 5, 4)));
+//		
+*/	
+		nodes = XMLToIntervalTable.xmlToTreeConverter();
 		
 		boolean status = OK;
-		int numnodes = 7;
 
 		String dbpath = "/tmp/" + System.getProperty("user.name") + ".minibase.jointestdb";
 		String logpath = "/tmp/" + System.getProperty("user.name") + ".joinlog";
@@ -131,8 +123,10 @@ public class Phase1 {
 			status = FAIL;
 			e.printStackTrace();
 		}
-
+		
+		int numnodes = nodes.size();
 		for (int i = 0; i < numnodes; i++) {
+			System.out.println(i);
 			try {
 				t.setIntervalFld(1, ((NodeTable) nodes.elementAt(i)).interval);
 				t.setStrFld(2, ((NodeTable) nodes.elementAt(i)).nodename);
@@ -252,7 +246,7 @@ public class Phase1 {
 		outFilter[1].type1 = new AttrType(AttrType.attrSymbol);
 		outFilter[1].operand1.symbol = new FldSpec(new RelSpec(RelSpec.outer), outerTagNameColNo);
 		outFilter[1].type2 = new AttrType(AttrType.attrString);
-		outFilter[1].operand2.string = rule.outerTag;
+		outFilter[1].operand2.string = tagMapping.get(rule.outerTag);
 		
 		//Inner table comparison.
 		outFilter[2].next = null;
@@ -260,7 +254,7 @@ public class Phase1 {
 		outFilter[2].type1 = new AttrType(AttrType.attrSymbol);
 		outFilter[2].type2 = new AttrType(AttrType.attrString);
 		outFilter[2].operand1.symbol = new FldSpec(new RelSpec(RelSpec.innerRel), 2);
-		outFilter[2].operand2.string = rule.innerTag;
+		outFilter[2].operand2.string = tagMapping.get(rule.innerTag);
 		
 		outFilter[3] = null;
 	}
@@ -269,15 +263,17 @@ public class Phase1 {
 		offsetMap.put(nodeName, 2*nodeNumber);
 	}
 	
-	public void compute() {
-		Rule rule1 = new Rule("A", "B", Rule.RULE_TYPE_PARENT_CHILD);
-		Rule rule2 = new Rule("A", "E", Rule.RULE_TYPE_ANCESTRAL_DESCENDENT);
-		//Rule rule3 = new Rule("B", "D", Rule.RULE_TYPE_ANCESTRAL_DESCENDENT);
-		ArrayList<Rule> rules = new ArrayList<>();
-		rules.add(rule1);
-		rules.add(rule2);
-		//rules.add(rule3);
-
+	public void compute(List<Rule> rules) {
+//		Rule rule1 = new Rule("A", "B", Rule.RULE_TYPE_PARENT_CHILD);
+//		Rule rule2 = new Rule("A", "E", Rule.RULE_TYPE_ANCESTRAL_DESCENDENT);
+//		Rule rule3 = new Rule("B", "C", Rule.RULE_TYPE_PARENT_CHILD);
+//		
+//		//Rule rule3 = new Rule("B", "D", Rule.RULE_TYPE_ANCESTRAL_DESCENDENT);
+//		ArrayList<Rule> rules = new ArrayList<>();
+//		rules.add(rule1);
+//		rules.add(rule2);
+//		rules.add(rule3);
+ 
 		// Map containing the corresponding column number for the
 		// given tag Id in the joined table.
 		HashMap<String, Integer> tagOffsetMap = new HashMap<>();
@@ -330,7 +326,6 @@ public class Phase1 {
 			e.printStackTrace();
 			Runtime.getRuntime().exit(1);
 		}
-		System.out.println(firstRule);
 		//Needs to iterate only from the second rule.
 		rules.remove(0);
 		int ruleNumber = 2;
@@ -392,7 +387,6 @@ public class Phase1 {
 			prevIterator = currIterator;
 			ruleNumber++;
 			
-		System.out.println(currRule);
 		}
 		
 		if(currIterator == null) {
@@ -601,7 +595,6 @@ public class Phase1 {
 				System.err.println("" + e);
 				Runtime.getRuntime().exit(1);
 			}
-
 		}
 	}
 
@@ -631,9 +624,10 @@ public class Phase1 {
 		int[] rankIndex = new int[n];
 		Map<Integer, List<Rule>> ruleMap = new HashMap<>();
 		for (String line : file_contents) {
-			if (index > 0 && index <= n)
+			if (index > 0 && index <= n) {
 				ruleMap.put(index, new ArrayList<>());
-
+				tagMapping.put(Integer.toString(index), line);
+			}
 
 			if (index > n) {
 				String[] rule_components = line.split(" ");
@@ -645,12 +639,12 @@ public class Phase1 {
 			index++;
 		}
 		Integer root = getRoot(rankIndex);
-		System.out.print("rott is " + root);
 		return getRulesInOrder(root, ruleMap);
 	}
 
 	private void input() {
 		String choice = "Y";
+		System.out.println("Number of page accessed = " + BufMgr.page_access_counter);
 		while (!choice.equals("N") && !choice.equals("n")) {
 			BufMgr.page_access_counter = 0;
 			System.out.println("Enter input filename for query");
@@ -658,7 +652,7 @@ public class Phase1 {
 			String file = scanner.next();
 			String[] file_contents = readFile(input_file_base + file);
 			List<Rule> rules = getRuleList(file_contents);
-			printRules(rules);
+			compute(rules);
 			System.out.println("Number of page accessed = " + BufMgr.page_access_counter);
 			System.out.println("Press N to stop");
 			choice = scanner.next();
@@ -700,8 +694,8 @@ public class Phase1 {
 
 	public static void main(String[] args) {
 		Phase1 phase1 = new Phase1();
-		//phase1.input();
-		phase1.compute();
+		phase1.input();
+		//phase1.compute();
 		//phase1.computeSM();
 	}
 }
