@@ -110,7 +110,7 @@ public class XMLToIntervalTable implements GlobalConst {
         return intrvlCounter;
     }
 
-    private final static String trimCharTags(String s) {
+    public final static String trimCharTags(String s) {
         StringBuilder characterToTag = new StringBuilder(s);
         if(characterToTag.length() > XML_PLAIN_TXT_CHAR_LMT) {
             characterToTag.setLength(XML_PLAIN_TXT_CHAR_LMT);
