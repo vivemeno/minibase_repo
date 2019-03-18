@@ -626,7 +626,7 @@ public class Phase1 {
 		for (String line : file_contents) {
 			if (index > 0 && index <= n) {
 				ruleMap.put(index, new ArrayList<>());
-				tagMapping.put(Integer.toString(index), line);
+                tagMapping.put(Integer.toString(index), XMLToIntervalTable.trimCharTags(line));
 			}
 
 			if (index > n) {
