@@ -50,7 +50,7 @@ public class Phase1 {
 	private boolean OK = true;
 	private boolean FAIL = false;
 	public Vector<NodeTable> nodes;
-	private String input_file_base = "/home/akhil/MS/DBMS/";
+	private String input_file_base = "/home/vivemeno/DBMSI/";
 	private Map<String, String> tagMapping = new HashMap<>(); // contains id to tag name mapping
 	public Phase1() {
 /*		nodes = new Vector<NodeTable>();
