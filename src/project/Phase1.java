@@ -46,7 +46,7 @@ class Rule {
 
 public class Phase1 {
 	public static final int NUMBUF = 50;
-	public static final int TAG_LENGTH = 10;
+	public static final int TAG_LENGTH = 5;
 	private boolean OK = true;
 	private boolean FAIL = false;
 	public Vector<NodeTable> nodes;
@@ -213,7 +213,7 @@ public class Phase1 {
 		OutFilter[3] = null;
 	}
 
-	private void setConditions(CondExpr[] outFilter, Rule rule, int offset, boolean isFirstRule) {
+	private void setConditions(CondExpr[] outFilter, CondExpr[] rightFilter, Rule rule, int offset, boolean isFirstRule) {
 		
 		int outerIntervalColNo = offset;
 		int outerTagNameColNo ;
@@ -248,15 +248,17 @@ public class Phase1 {
 		outFilter[1].type2 = new AttrType(AttrType.attrString);
 		outFilter[1].operand2.string = tagMapping.get(rule.outerTag);
 		
-		//Inner table comparison.
-		outFilter[2].next = null;
-		outFilter[2].op = new AttrOperator(AttrOperator.aopEQ);
-		outFilter[2].type1 = new AttrType(AttrType.attrSymbol);
-		outFilter[2].type2 = new AttrType(AttrType.attrString);
-		outFilter[2].operand1.symbol = new FldSpec(new RelSpec(RelSpec.innerRel), 2);
-		outFilter[2].operand2.string = tagMapping.get(rule.innerTag);
+		outFilter[2] = null;
 		
-		outFilter[3] = null;
+		//Inner table comparison.
+		rightFilter[0].next = null;
+		rightFilter[0].op = new AttrOperator(AttrOperator.aopEQ);
+		rightFilter[0].type1 = new AttrType(AttrType.attrSymbol);
+		rightFilter[0].type2 = new AttrType(AttrType.attrString);
+		rightFilter[0].operand1.symbol = new FldSpec(new RelSpec(RelSpec.outer), 2);
+		rightFilter[0].operand2.string = tagMapping.get(rule.innerTag);
+		
+		rightFilter[1] = null;
 	}
 
 	private void populateNodeOffsetMap(Map<String, Integer> offsetMap, String nodeName, int nodeNumber) {
@@ -286,19 +288,36 @@ public class Phase1 {
 		AttrType[] baseTableAttrTypes = { new AttrType(AttrType.attrInterval), new AttrType(AttrType.attrString) };
 		short[] baseTableStringLengths = new short[1];
 		baseTableStringLengths[0] = TAG_LENGTH;
+		
+		Rule firstRule = rules.get(0);
+		
+		CondExpr[] innerRelFilterConditions = new CondExpr[2];
+		innerRelFilterConditions[0] = new CondExpr();
+		innerRelFilterConditions[1] = new CondExpr();
+		
+		//Inner table comparison.
+		innerRelFilterConditions[0].next = null;
+		innerRelFilterConditions[0].op = new AttrOperator(AttrOperator.aopEQ);
+		innerRelFilterConditions[0].type1 = new AttrType(AttrType.attrSymbol);
+		innerRelFilterConditions[0].type2 = new AttrType(AttrType.attrString);
+		innerRelFilterConditions[0].operand1.symbol = new FldSpec(new RelSpec(RelSpec.outer), 2);
+		innerRelFilterConditions[0].operand2.string = tagMapping.get(firstRule.outerTag);
+				
+		innerRelFilterConditions[1] = null;
 
 		FldSpec[] initialProjection = { new FldSpec(new RelSpec(RelSpec.outer), 1),
 				new FldSpec(new RelSpec(RelSpec.outer), 2) };
 		try {
+			
 			fileScanner = new FileScan("nodes.in", baseTableAttrTypes, baseTableStringLengths, (short) 2, (short) 2,
-					initialProjection, null);
+					initialProjection, innerRelFilterConditions);
 		} catch (Exception e) {
 			status = FAIL;
 			System.err.println("" + e);
 			e.printStackTrace();
 		}
 
-		Rule firstRule = rules.get(0);
+		
 		populateNodeOffsetMap(tagOffsetMap, firstRule.outerTag, nodeNumber);
 		nodeNumber++;
 		populateNodeOffsetMap(tagOffsetMap, firstRule.innerTag, nodeNumber);
@@ -309,8 +328,12 @@ public class Phase1 {
 		filterConditions[1] = new CondExpr();
 		filterConditions[2] = new CondExpr();
 		filterConditions[3] = new CondExpr();
+		
+		innerRelFilterConditions = new CondExpr[2];
+		innerRelFilterConditions[0] = new CondExpr();
+		innerRelFilterConditions[1] = new CondExpr();
 
-		setConditions(filterConditions, firstRule, 1, true);
+		setConditions(filterConditions, innerRelFilterConditions, firstRule, 1, true);
 		FldSpec[] currProjection = { new FldSpec(new RelSpec(RelSpec.outer), 2),
 				new FldSpec(new RelSpec(RelSpec.outer), 1), new FldSpec(new RelSpec(RelSpec.innerRel), 2),
 				new FldSpec(new RelSpec(RelSpec.innerRel), 1) };
@@ -319,7 +342,7 @@ public class Phase1 {
 		NestedLoopsJoins currIterator = null;
 		try {
 			prevIterator = new NestedLoopsJoins(baseTableAttrTypes, 2, baseTableStringLengths, baseTableAttrTypes, 2,
-					baseTableStringLengths, 10, fileScanner, "nodes.in", filterConditions, null, currProjection, 4);
+					baseTableStringLengths, 10, fileScanner, "nodes.in", filterConditions, innerRelFilterConditions, currProjection, 4);
 		} catch (Exception e) {
 			System.err.println("*** Error preparing for nested_loop_join");
 			System.err.println("" + e);
@@ -346,7 +369,11 @@ public class Phase1 {
 			filterConditions[1] = new CondExpr();
 			filterConditions[2] = new CondExpr();
 			filterConditions[3] = new CondExpr();
-			setConditions(filterConditions, currRule, tagOffsetMap.get(currRule.outerTag), false);
+			
+			innerRelFilterConditions = new CondExpr[2];
+			innerRelFilterConditions[0] = new CondExpr();
+			innerRelFilterConditions[1] = new CondExpr();
+			setConditions(filterConditions, innerRelFilterConditions, currRule, tagOffsetMap.get(currRule.outerTag), false);
 			
 			//After each rule the 2 more columns will be added.
 			AttrType[] joinedTableAttrTypes = new AttrType[2 * ruleNumber];
@@ -359,7 +386,7 @@ public class Phase1 {
 			}
 			short[] joinedTableStringLengths = new short[ruleNumber];
 			for (int i = 0; i < ruleNumber; i++) {
-				joinedTableStringLengths[i] = 1;
+				joinedTableStringLengths[i] = TAG_LENGTH;
 			}
 			
 			//Projection size will also increase by 2 in every rule. Also, an additional 2 more columns will
@@ -376,7 +403,7 @@ public class Phase1 {
 
 			try {
 				currIterator = new NestedLoopsJoins(joinedTableAttrTypes, 2 * ruleNumber, joinedTableStringLengths, baseTableAttrTypes, 2,
-						baseTableStringLengths, 10, prevIterator, "nodes.in", filterConditions, null, currProjection,
+						baseTableStringLengths, 10, prevIterator, "nodes.in", filterConditions, innerRelFilterConditions, currProjection,
 						2 * ruleNumber + 2);
 			} catch (Exception e) {
 				System.err.println("*** Error preparing for nested_loop_join");
@@ -393,7 +420,7 @@ public class Phase1 {
 			currIterator = prevIterator;
 		}
 		Tuple finalTuple = new Tuple();
-		AttrType[] finalTupleAttrTypes = new AttrType[2 * ruleNumber + 2];
+		AttrType[] finalTupleAttrTypes = new AttrType[2 * ruleNumber];
 
 		for (int i = 0; i < 2 * ruleNumber; i++) {
 			if (i % 2 == 0) {
@@ -626,7 +653,7 @@ public class Phase1 {
 		for (String line : file_contents) {
 			if (index > 0 && index <= n) {
 				ruleMap.put(index, new ArrayList<>());
-				tagMapping.put(Integer.toString(index), line);
+                tagMapping.put(Integer.toString(index), XMLToIntervalTable.trimCharTags(line));
 			}
 
 			if (index > n) {
@@ -658,6 +685,7 @@ public class Phase1 {
 			choice = scanner.next();
 			System.out.print(choice);
 		}
+		System.out.println("OVERR!!!");
 	}
 
 	private void printRules(List<Rule> rules) {
