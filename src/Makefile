@@ -37,7 +37,9 @@ db:
 	make -C heap
 	make -C index
 	make -C iterator
+	make -C xmlparser
 	make -C project
+
 	
 doc:
 	$(JAVADOC) $(DOCFILES)

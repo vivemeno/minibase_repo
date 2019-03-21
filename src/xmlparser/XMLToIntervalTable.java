@@ -20,14 +20,14 @@ class XMLTree {
 
 //using event based parser to support larger files
 public class XMLToIntervalTable implements GlobalConst {
-    public final static Vector<NodeTable> xmlToTreeConverter() {
+    public final static Vector<NodeTable> xmlToTreeConverter(String file) {
         XMLTree root = null;
         try {
             Stack<XMLTree> yetToCloseTags = new Stack<>();
             XMLInputFactory factory = XMLInputFactory.newInstance();
             factory.setProperty(XMLInputFactory.IS_COALESCING, true);
             XMLEventReader eventReader =
-                    factory.createXMLEventReader(new FileReader("/home/akhil/MS/DBMS/sample.xml"));
+                    factory.createXMLEventReader(new FileReader(file));
 
             while(eventReader.hasNext()) {
 
