@@ -7,6 +7,7 @@ public class IntervalType implements Serializable {
 	public static int INTERVAL_NO_OVERLAP = 0;
 	public static int INTERVAL_ENCLOSURE = 2;
 	public static int INTERVAL_EQUAL = 4;
+
 	public static int INTERVAL_OTHER = 3; //should not happen
 	
 	public int s; //Start Interval

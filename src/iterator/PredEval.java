@@ -7,7 +7,7 @@ import java.io.*;
 public class PredEval
 {
   /**
-   *predicate evaluate, according to the condition ConExpr, judge if 
+   *predicate evaluate, according to the condition ConExpr, judge if
    *the two tuple can join. if so, return true, otherwise false
    *@return true or false
    *@param p[] single select condition array
@@ -22,7 +22,7 @@ public class PredEval
    *@exception FieldNumberOutOfBoundException field number exceeds limit
    *@exception PredEvalException exception from this method
    */
-  public static boolean Eval(CondExpr p[], Tuple t1, Tuple t2, AttrType in1[], 
+  public static boolean Eval(CondExpr p[], Tuple t1, Tuple t2, AttrType in1[],
 			     AttrType in2[])
     throws IOException,
 	   UnknowAttrType,
@@ -119,8 +119,9 @@ public class PredEval
 
 				// Got the arguments, now perform a comparison.
 				try {
-					comp_res = TupleUtils.CompareTupleWithTuple(comparison_type, tuple1, fld1, tuple2, fld2);
-				} catch (TupleUtilsException e) {
+                    comp_res = (comparison_type.attrType == AttrType.attrInterval && temp_ptr.flag==0) ? TupleUtils.CompareTupleWithTuple(tuple1,
+                            fld1, tuple2, fld2):TupleUtils.CompareTupleWithTuple(comparison_type, tuple1, fld1, tuple2, fld2);
+                } catch (TupleUtilsException e) {
 					throw new PredEvalException(e, "TupleUtilsException is caught by PredEval.java");
 				}
 				op_res = false;
@@ -129,10 +130,10 @@ public class PredEval
 				case AttrOperator.aopEQ:
 					if (comparison_type.attrType == AttrType.attrInterval) {
 						if (temp_ptr.flag == CondExpr.FLAG_EQUALITY_CHECK) { // equal intervals
-							if (comp_res == IntervalType.INTERVAL_EQUAL) {
+							if (comp_res == 0) {
 								op_res = true;
 							}
-						} else if (temp_ptr.flag == CondExpr.FLAG_PC_CHECK || temp_ptr.flag == CondExpr.FLAG_AD_CHECK) { 
+						} else if (temp_ptr.flag == CondExpr.FLAG_PC_CHECK || temp_ptr.flag == CondExpr.FLAG_AD_CHECK) {
 							if (comp_res == IntervalType.INTERVAL_CONTAINMENT) {
 								if (temp_ptr.flag == CondExpr.FLAG_AD_CHECK) { // Ancestor-descendent relationship
 									op_res = true;
