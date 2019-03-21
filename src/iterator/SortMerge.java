@@ -41,7 +41,7 @@ public class SortMerge extends Iterator implements GlobalConst
 	private  FldSpec   perm_mat[];
 	private  int        nOutFlds;
 	private boolean checkFlag = true;
-	private int counter = 0;
+	private int counter;
 
 	/**
 	 *constructor,initialization
@@ -266,6 +266,7 @@ public class SortMerge extends Iterator implements GlobalConst
 		{
 			if (process_next_block)
 			{
+				counter = 0;
 				process_next_block = false;
 				if (get_from_in1)
 					if ((tuple1 = p_i1.get_next()) == null)
@@ -392,7 +393,8 @@ public class SortMerge extends Iterator implements GlobalConst
 				if(_sm_tuple1 == null) {
 					_sm_tuple2 = io_buf2.Get(TempTuple2);
 					if(_sm_tuple2 == null) {
-						return null;
+						process_next_block = true;
+						continue;
 					}
 					io_buf1.setDone(false);
 					io_buf1.reread();
@@ -467,5 +469,3 @@ public class SortMerge extends Iterator implements GlobalConst
 	}
 
 }
-
-

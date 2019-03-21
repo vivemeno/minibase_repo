@@ -46,7 +46,7 @@ class Rule {
 }
 
 public class Phase1 {
-	public static final int NUMBUF = 50;
+	public static final int NUMBUF = 10000;
 	public static final int TAG_LENGTH = 5;
 	private boolean OK = true;
 	private boolean FAIL = false;
@@ -84,7 +84,7 @@ public class Phase1 {
 			System.err.println("" + e);
 		}
 
-		SystemDefs sysdef = new SystemDefs(dbpath, 1000, NUMBUF, "Clock");
+		SystemDefs sysdef = new SystemDefs(dbpath, 10000, NUMBUF, "Clock");
 
 		// creating the node table relation
 		AttrType[] nodeTableAttrTypes = new AttrType[2];
@@ -197,22 +197,8 @@ public class Phase1 {
 		OutFilter[0].operand2.symbol = new FldSpec(new RelSpec(RelSpec.innerRel), 2);
 		OutFilter[0].flag =0;
 
-		OutFilter[1].next = null;
-		OutFilter[1].op = new AttrOperator(AttrOperator.aopEQ);
-		OutFilter[1].type1 = new AttrType(AttrType.attrSymbol);
-		OutFilter[1].operand1.symbol = new FldSpec(new RelSpec(RelSpec.outer), offset - 1);
-		OutFilter[1].type2 = new AttrType(AttrType.attrString);
-		OutFilter[1].operand2.string = outerNode;
-
-		OutFilter[2].next = null;
-		OutFilter[2].op = new AttrOperator(AttrOperator.aopEQ);
-		OutFilter[2].type1 = new AttrType(AttrType.attrSymbol);
-		OutFilter[2].type2 = new AttrType(AttrType.attrString);
-		OutFilter[2].operand1.symbol = new FldSpec(new RelSpec(RelSpec.innerRel), 1);
-		OutFilter[2].operand2.string = rule.innerTag;
-
-		OutFilter[3] = null;
 	}
+
 
 	private CondExpr[] createFilterForQueryHeap(List<Rule> rules) {
 		Set<String> uniqueTags = new HashSet<>();
@@ -441,9 +427,10 @@ public class Phase1 {
 			Runtime.getRuntime().exit(1);
 		}
 		//Needs to iterate only from the second rule.
-		rules.remove(0);
+		//rules.remove(0);
 		int ruleNumber = 2;
-		for (Rule currRule : rules) {
+		for (int index = 1; index < rules.size(); index++) {
+			Rule currRule = rules.get(index);
 			if (!tagOffsetMap.containsKey(currRule.outerTag)) {
 				// Technically, this should never happen, since the input tree is connected.
 				populateNodeOffsetMap(tagOffsetMap, currRule.outerTag, nodeNumber);
@@ -540,162 +527,173 @@ public class Phase1 {
 	}
 
 	public void computeSM(List<Rule> rules, TupleOrder order) {
-		{
-			Map<String, Integer> nodeOffsetMap = new HashMap<>();
-			//rules.add(rule3);
-			int nodeNumber = 1;
-			boolean status = OK;
+		Map<String, Integer> nodeOffsetMap = new HashMap<>();
+		//rules.add(rule3);
+		int nodeNumber = 1;
+		boolean status = OK;
 
-			Iterator am = null;
-			Iterator am1 = null;
-			AttrType[] Ntypes = {new AttrType(AttrType.attrInterval), new AttrType(AttrType.attrString)};
-			short[] Nsizes = new short[1];
-			Nsizes[0] = TAG_LENGTH;
+		Iterator am = null;
+		Iterator am1 = null;
+		AttrType[] Ntypes = {new AttrType(AttrType.attrInterval), new AttrType(AttrType.attrString)};
+		short[] Nsizes = new short[1];
+		Nsizes[0] = TAG_LENGTH;
 
-			FldSpec[] Nprojection = {new FldSpec(new RelSpec(RelSpec.outer), 1),
-					new FldSpec(new RelSpec(RelSpec.outer), 2)};
+		FldSpec[] Nprojection = {new FldSpec(new RelSpec(RelSpec.outer), 1),
+				new FldSpec(new RelSpec(RelSpec.outer), 2)};
 
 
-			FldSpec[] proj = {new FldSpec(new RelSpec(RelSpec.outer), 2), new FldSpec(new RelSpec(RelSpec.outer), 1),
-					new FldSpec(new RelSpec(RelSpec.innerRel), 2), new FldSpec(new RelSpec(RelSpec.innerRel), 1)};
-			List<NestedLoopsJoins> listNLJ = new LinkedList<>();
-			for (Rule rule : rules) {
-				try {
-					CondExpr[] innerRelFilterConditions = new CondExpr[2];
-					innerRelFilterConditions[0] = new CondExpr();
-					innerRelFilterConditions[1] = new CondExpr();
+		FldSpec[] proj = {new FldSpec(new RelSpec(RelSpec.outer), 2), new FldSpec(new RelSpec(RelSpec.outer), 1),
+				new FldSpec(new RelSpec(RelSpec.innerRel), 2), new FldSpec(new RelSpec(RelSpec.innerRel), 1)};
+		List<NestedLoopsJoins> listNLJ = new LinkedList<>();
+		for (Rule rule : rules) {
+			try {
+				CondExpr[] innerRelFilterConditions = new CondExpr[2];
+				innerRelFilterConditions[0] = new CondExpr();
+				innerRelFilterConditions[1] = new CondExpr();
 
-					//Inner table comparison.
-					innerRelFilterConditions[0].next = null;
-					innerRelFilterConditions[0].op = new AttrOperator(AttrOperator.aopEQ);
-					innerRelFilterConditions[0].type1 = new AttrType(AttrType.attrSymbol);
-					innerRelFilterConditions[0].type2 = new AttrType(AttrType.attrString);
-					innerRelFilterConditions[0].operand1.symbol = new FldSpec(new RelSpec(RelSpec.outer), 2);
-					innerRelFilterConditions[0].operand2.string = tagMapping.get(rule.outerTag);
+				//Inner table comparison.
+				innerRelFilterConditions[0].next = null;
+				innerRelFilterConditions[0].op = new AttrOperator(AttrOperator.aopEQ);
+				innerRelFilterConditions[0].type1 = new AttrType(AttrType.attrSymbol);
+				innerRelFilterConditions[0].type2 = new AttrType(AttrType.attrString);
+				innerRelFilterConditions[0].operand1.symbol = new FldSpec(new RelSpec(RelSpec.outer), 2);
+				innerRelFilterConditions[0].operand2.string = tagMapping.get(rule.outerTag);
 
-					innerRelFilterConditions[1] = null;
-					am = new FileScan("nodes.in", Ntypes, Nsizes, (short) 2, (short) 2, Nprojection, innerRelFilterConditions);
-				} catch (Exception e) {
-					status = FAIL;
-					System.err.println("" + e);
-					e.printStackTrace();
-				}
-				NestedLoopsJoins inl = null;
-				try {
-					CondExpr[] outFilter = new CondExpr[4];
-					outFilter[0] = new CondExpr();
-					outFilter[1] = new CondExpr();
-					outFilter[2] = new CondExpr();
-					outFilter[3] = new CondExpr();
-
-					CondExpr[] innerRelFilterConditions = new CondExpr[2];
-					innerRelFilterConditions[0] = new CondExpr();
-					innerRelFilterConditions[1] = new CondExpr();
-
-					setConditions(outFilter,innerRelFilterConditions, rule, 1, true);
-					inl = new NestedLoopsJoins(Ntypes, 2, Nsizes, Ntypes, 2, Nsizes, 10, am, "nodes.in", outFilter, innerRelFilterConditions, proj,
-							4);
-					listNLJ.add(inl);
-				} catch (Exception e) {
-					System.err.println("*** Error preparing for nested_loop_join");
-					System.err.println("" + e);
-					e.printStackTrace();
-					Runtime.getRuntime().exit(1);
-				}
+				innerRelFilterConditions[1] = null;
+				am = new FileScan("temp.in", Ntypes, Nsizes, (short) 2, (short) 2, Nprojection, innerRelFilterConditions);
+			} catch (Exception e) {
+				status = FAIL;
+				System.err.println("" + e);
+				e.printStackTrace();
 			}
-			Rule prevRule = rules.get(0);
-			populateNodeOffsetMap(nodeOffsetMap, prevRule.outerTag, nodeNumber);
-			nodeNumber++;
-			populateNodeOffsetMap(nodeOffsetMap, prevRule.innerTag, nodeNumber);
-			nodeNumber++;
-			Iterator prevSM = listNLJ.get(0);
-			int index = 2;
-			for (int x = 1; x < listNLJ.size(); ++x) {
-				if (!nodeOffsetMap.containsKey(rules.get(x).outerTag)) {
-					//Technically, this should never happen.
-					populateNodeOffsetMap(nodeOffsetMap, rules.get(x).outerTag, nodeNumber);
-					nodeNumber++;
-				}
+			NestedLoopsJoins inl = null;
+			try {
+				CondExpr[] outFilter = new CondExpr[4];
+				outFilter[0] = new CondExpr();
+				outFilter[1] = new CondExpr();
+				outFilter[2] = new CondExpr();
+				outFilter[3] = new CondExpr();
 
-				if (!nodeOffsetMap.containsKey(rules.get(x).innerTag)) {
-					populateNodeOffsetMap(nodeOffsetMap, rules.get(x).innerTag, nodeNumber);
-					nodeNumber++;
-				}
-				try {
-					CondExpr[] outFilter = new CondExpr[2];
-					outFilter[0] = new CondExpr();
-					outFilter[1] = null;
+				CondExpr[] innerRelFilterConditions = new CondExpr[2];
+				innerRelFilterConditions[0] = new CondExpr();
+				innerRelFilterConditions[1] = new CondExpr();
 
-					Project4_CondExpr(outFilter, rules.get(x), nodeOffsetMap.get(rules.get(x).outerTag));
-					AttrType[] NtypesFix = {new AttrType(AttrType.attrString),
-							new AttrType(AttrType.attrInterval), new AttrType(AttrType.attrString), new AttrType(AttrType.attrInterval)};
-					short[] NsizesFix = new short[2];
-					NsizesFix[0] = TAG_LENGTH;
-					NsizesFix[1] = TAG_LENGTH;
-					AttrType[] Ntypes2 = new AttrType[2 * index];
-					for (int i = 0; i < 2 * index; i++) {
-						if (i % 2 == 0) {
-							Ntypes2[i] = new AttrType(AttrType.attrString);
-						} else {
-							Ntypes2[i] = new AttrType(AttrType.attrInterval);
-						}
+				setConditions(outFilter,innerRelFilterConditions, rule, 1, true);
+				inl = new NestedLoopsJoins(Ntypes, 2, Nsizes, Ntypes, 2, Nsizes, 10, am, "temp.in", outFilter, innerRelFilterConditions, proj,
+						4);
+				listNLJ.add(inl);
+			} catch (Exception e) {
+				System.err.println("*** Error preparing for nested_loop_join");
+				System.err.println("" + e);
+				e.printStackTrace();
+				Runtime.getRuntime().exit(1);
+			}
+		}
+		Rule prevRule = rules.get(0);
+		populateNodeOffsetMap(nodeOffsetMap, prevRule.outerTag, nodeNumber);
+		nodeNumber++;
+		populateNodeOffsetMap(nodeOffsetMap, prevRule.innerTag, nodeNumber);
+		nodeNumber++;
+		Iterator prevSM = listNLJ.get(0);
+		int index = 2;
+		String prevSortedTag = "";
+		for (int x = 1; x < listNLJ.size(); ++x) {
+			if (!nodeOffsetMap.containsKey(rules.get(x).outerTag)) {
+				//Technically, this should never happen.
+				populateNodeOffsetMap(nodeOffsetMap, rules.get(x).outerTag, nodeNumber);
+				nodeNumber++;
+			}
+
+			if (!nodeOffsetMap.containsKey(rules.get(x).innerTag)) {
+				populateNodeOffsetMap(nodeOffsetMap, rules.get(x).innerTag, nodeNumber);
+				nodeNumber++;
+			}
+			try {
+				CondExpr[] outFilter = new CondExpr[2];
+				outFilter[0] = new CondExpr();
+				outFilter[1] = null;
+
+				Project4_CondExpr(outFilter, rules.get(x), nodeOffsetMap.get(rules.get(x).outerTag));
+				AttrType[] NtypesFix = {new AttrType(AttrType.attrString),
+						new AttrType(AttrType.attrInterval), new AttrType(AttrType.attrString), new AttrType(AttrType.attrInterval)};
+				short[] NsizesFix = new short[2];
+				NsizesFix[0] = TAG_LENGTH;
+				NsizesFix[1] = TAG_LENGTH;
+				AttrType[] Ntypes2 = new AttrType[2 * index];
+				for (int i = 0; i < 2 * index; i++) {
+					if (i % 2 == 0) {
+						Ntypes2[i] = new AttrType(AttrType.attrString);
+					} else {
+						Ntypes2[i] = new AttrType(AttrType.attrInterval);
 					}
-					short[] Nsizes2 = new short[index];
-					for (int i = 0; i < index; i++) {
-						Nsizes2[i] = TAG_LENGTH;
-					}
-					FldSpec[] proj2 = new FldSpec[2 * index + 2];
-					for (int i = 0; i < 2 * index; i++) {
-						proj2[i] = new FldSpec(new RelSpec(RelSpec.outer), i + 1);
-					}
-					proj2[2 * index] = new FldSpec(new RelSpec(RelSpec.innerRel), 3);
-					proj2[2 * index + 1] = new FldSpec(new RelSpec(RelSpec.innerRel), 4);
-					SortMerge sm = new SortMerge(Ntypes2, index * 2, Nsizes2,
+				}
+				short[] Nsizes2 = new short[index];
+				for (int i = 0; i < index; i++) {
+					Nsizes2[i] = TAG_LENGTH;
+				}
+				FldSpec[] proj2 = new FldSpec[2 * index + 2];
+				for (int i = 0; i < 2 * index; i++) {
+					proj2[i] = new FldSpec(new RelSpec(RelSpec.outer), i + 1);
+				}
+				proj2[2 * index] = new FldSpec(new RelSpec(RelSpec.innerRel), 3);
+				proj2[2 * index + 1] = new FldSpec(new RelSpec(RelSpec.innerRel), 4);
+				SortMerge sm = null;
+				if(!prevSortedTag.equalsIgnoreCase(rules.get(x).outerTag)) {
+					sm = new SortMerge(Ntypes2, index * 2, Nsizes2,
 							NtypesFix, 4, NsizesFix,
 							nodeOffsetMap.get(rules.get(x).outerTag), 4,
 							2, 4,
-							10,
+							100,
+							prevSM, listNLJ.get(x),
+							false, false, order,
+							outFilter, proj2, 2 * index + 2);
+				} else {
+					sm = new SortMerge(Ntypes2, index * 2, Nsizes2,
+							NtypesFix, 4, NsizesFix,
+							nodeOffsetMap.get(rules.get(x).outerTag), 4,
+							2, 4,
+							100,
 							prevSM, listNLJ.get(x),
 							true, false, order,
 							outFilter, proj2, 2 * index + 2);
-					if (rules.get(x).ruleType == Rule.RULE_TYPE_ANCESTRAL_DESCENDENT && (!prevRule.innerTag.equals(rules.get(x).outerTag))) {
-						sm.setCheckFlag(true);
-					} else
-						sm.setCheckFlag(false);
-					index++;
-					prevSM = sm;
-					prevRule = rules.get(x);
-				} catch (Exception e) {
-					System.err.println("*** join error in SortMerge constructor ***");
-					status = FAIL;
-					System.err.println("" + e);
-					e.printStackTrace();
 				}
-			}
-			Tuple t = new Tuple();
-			AttrType[] jtype = new AttrType[2 * index + 2];
-
-			for (int i = 0; i < 2 * index; i++) {
-				if (i % 2 == 0) {
-					jtype[i] = new AttrType(AttrType.attrString);
-				} else {
-					jtype[i] = new AttrType(AttrType.attrInterval);
-				}
-			}
-
-			try {
-				int count = 1;
-				while ((t = prevSM.get_next()) != null) {
-					System.out.println("Result " + count++ + ":");
-					t.print(jtype);
-				}
+				if (!prevRule.innerTag.equals(rules.get(x).outerTag)) {
+					sm.setCheckFlag(true);
+				} else
+					sm.setCheckFlag(false);
+				index++;
+				prevSM = sm;
+				prevRule = rules.get(x);
 			} catch (Exception e) {
-				System.err.println("*** Error preparing for get_next tuple");
+				System.err.println("*** join error in SortMerge constructor ***");
+				status = FAIL;
 				System.err.println("" + e);
-				Runtime.getRuntime().exit(1);
+				e.printStackTrace();
 			}
-
 		}
+		Tuple t = new Tuple();
+		AttrType[] jtype = new AttrType[2 * index + 2];
+
+		for (int i = 0; i < 2 * index; i++) {
+			if (i % 2 == 0) {
+				jtype[i] = new AttrType(AttrType.attrString);
+			} else {
+				jtype[i] = new AttrType(AttrType.attrInterval);
+			}
+		}
+
+		try {
+			int count = 1;
+			while ((t = prevSM.get_next()) != null) {
+				System.out.println("Result " + count++ + ":");
+				t.print(jtype);
+			}
+		} catch (Exception e) {
+			System.err.println("*** Error preparing for get_next tuple");
+			System.err.println("" + e);
+			Runtime.getRuntime().exit(1);
+		}
+
 	}
 
 
@@ -756,7 +754,7 @@ public class Phase1 {
 			String[] file_contents = readFile(input_file_base + file);
 			List<Rule> rules = getRuleList(file_contents);
 			createQueryHeapFile("nodes.in", rules);
-			compute(rules);
+			//compute(rules);
 			System.out.println("Number of page accessed = " + BufMgr.page_access_counter);
 			//sysdef = new SystemDefs(dbpath, 1000, NUMBUF, "Clock");
 			BufMgr.page_access_counter = 0;
@@ -766,8 +764,8 @@ public class Phase1 {
 			//sysdef = new SystemDefs(dbpath, 1000, NUMBUF, "Clock");
 			BufMgr.page_access_counter = 0;
 			System.out.println("QUERY PLAN---3");
-			computeSM(rules, new TupleOrder(TupleOrder.Descending));
-			System.out.println("Number of page accessed = " + BufMgr.page_access_counter);
+//			computeSM(rules, new TupleOrder(TupleOrder.Descending));
+//			System.out.println("Number of page accessed = " + BufMgr.page_access_counter);
 			System.out.println("Press N to stop");
 			choice = scanner.next();
 			System.out.print(choice);
