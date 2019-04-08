@@ -3,12 +3,18 @@ package project;
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.OutputStream;
 import java.util.*;
+
+import global.GlobalConst.*;
 
 import btree.BTreeFile;
 import btree.IntegerKey;
@@ -47,7 +53,7 @@ class Rule {
 	}
 
 	public String getRelationship() {
-		if(ruleType == RULE_TYPE_PARENT_CHILD) {
+		if (ruleType == RULE_TYPE_PARENT_CHILD) {
 			return "PC";
 		}
 		return "AD";
@@ -55,7 +61,7 @@ class Rule {
 
 	@Override
 	public String toString() {
-		return "Rule :["+ outerTag + " " + innerTag + " " + getRelationship() + "]";
+		return "Rule :[" + outerTag + " " + innerTag + " " + getRelationship() + "]";
 	}
 }
 
@@ -67,20 +73,22 @@ public class Phase1 {
 	public Vector<NodeTable> nodes;
 	private String input_file_base = "/home/renil/github/dbmsi/input/";
 	private Map<String, String> tagMapping = new HashMap<>(); // contains id to tag name mapping
-	public Phase1() {
-/*		nodes = new Vector<NodeTable>();
-		nodes.addElement(new NodeTable("A", new IntervalType(1, 14, 1)));
-		nodes.addElement(new NodeTable("B", new IntervalType(2, 9, 2)));
-		nodes.addElement(new NodeTable("B", new IntervalType(10, 11, 2)));
-		nodes.addElement(new NodeTable("B", new IntervalType(12, 13, 2)));
-		nodes.addElement(new NodeTable("C", new IntervalType(3, 6, 3)));
-		nodes.addElement(new NodeTable("D", new IntervalType(7, 8, 3)));
-		nodes.addElement(new NodeTable("E", new IntervalType(4, 5, 4)));
-//
-*/
-//		nodes = XMLToIntervalTable.xmlToTreeConverter(input_file_base + "xml_sample_data.xml");
-		nodes = XMLToIntervalTable.xmlToTreeConverter(input_file_base + "sample.xml");
 
+	public Phase1() {
+		/*
+		 * nodes = new Vector<NodeTable>(); nodes.addElement(new NodeTable("A", new
+		 * IntervalType(1, 14, 1))); nodes.addElement(new NodeTable("B", new
+		 * IntervalType(2, 9, 2))); nodes.addElement(new NodeTable("B", new
+		 * IntervalType(10, 11, 2))); nodes.addElement(new NodeTable("B", new
+		 * IntervalType(12, 13, 2))); nodes.addElement(new NodeTable("C", new
+		 * IntervalType(3, 6, 3))); nodes.addElement(new NodeTable("D", new
+		 * IntervalType(7, 8, 3))); nodes.addElement(new NodeTable("E", new
+		 * IntervalType(4, 5, 4))); //
+		 */
+		nodes = XMLToIntervalTable.xmlToTreeConverter(input_file_base + "xml_sample_data.xml");
+//		nodes = XMLToIntervalTable.xmlToTreeConverter(input_file_base + "sample.xml");
+//		nodes = XMLToIntervalTable.xmlToTreeConverter(input_file_base + "queryBackUo.xml");
+		
 		boolean status = OK;
 
 		String dbpath = "/tmp/" + System.getProperty("user.name") + ".minibase.jointestdb";
@@ -107,7 +115,7 @@ public class Phase1 {
 		nodeTableAttrTypes[1] = new AttrType(AttrType.attrString);
 
 		short[] nodeTableStringSizes = new short[2];
-		nodeTableStringSizes[0] = 64;
+		nodeTableStringSizes[0] = GlobalConst.INTERVAL_LEN;
 		nodeTableStringSizes[1] = TAG_LENGTH;
 
 		Tuple t = new Tuple();
@@ -140,13 +148,14 @@ public class Phase1 {
 			status = FAIL;
 			e.printStackTrace();
 		}
-		
-		// ****************************sorting for debugging, comment out while running.*********************************
+
+		// ****************************sorting for debugging, comment out while
+		// running.*********************************
 //		nodes.sort((x,y) -> x.interval.s - y.interval.s);
 
 		int numnodes = nodes.size();
 		for (int i = 0; i < numnodes; i++) {
-			System.out.println(i +" "+ nodes.elementAt(i).toString());
+//			System.out.println(i +" "+ nodes.elementAt(i).toString());
 			try {
 				t.setIntervalFld(1, ((NodeTable) nodes.elementAt(i)).interval);
 				t.setStrFld(2, ((NodeTable) nodes.elementAt(i)).nodename);
@@ -158,6 +167,7 @@ public class Phase1 {
 
 			try {
 				rid = f.insertRecord(t.returnTupleByteArray());
+				System.out.println(i);
 			} catch (Exception e) {
 				System.err.println("*** error in Heapfile.insertRecord() ***");
 				status = FAIL;
@@ -169,153 +179,112 @@ public class Phase1 {
 			System.err.println("*** Error creating relation for nodes");
 			Runtime.getRuntime().exit(1);
 		}
-		
-		//*******************************************creating b tree index on tag*******************************************
+
+		// *******************************************creating b tree index on
+		// tag*******************************************
 		// create an scan on the heapfile
-	    Scan scan = null;
-	    
-	    try {
-	      scan = new Scan(f);
-	    }
-	    catch (Exception e) {
-	      status = FAIL;
-	      e.printStackTrace();
-	      Runtime.getRuntime().exit(1);
-	    }
 
-	    // create the index file on the integer field
-	    BTreeFile btf = null;
-	    try {
-	      btf = new BTreeFile("BTIndex", AttrType.attrString, 5, 1/*delete*/); 
-	    }
-	    catch (Exception e) {
-	      status = FAIL;
-	      e.printStackTrace();
-	      Runtime.getRuntime().exit(1);
-	    }
+		Scan scan = null;Tuple temp = null;
 
-	    System.out.println("BTreeIndex created successfully.\n"); 
-	    
-	    rid = new RID();
-	    String key = "";
-	    Tuple temp = null;
-	    
-	    try {
-	      temp = scan.getNext(rid);
-	    }
-	    catch (Exception e) {
-	      status = FAIL;
-	      e.printStackTrace();
-	    }
-	    while ( temp != null) {
-	      t.tupleCopy(temp);
-	      
-	      try {
-		key = t.getStrFld(2);
-		if(key.length() > 3) key = key.substring(0, 3);
-	      }
-	      catch (Exception e) {
-		status = FAIL;
-		e.printStackTrace();
-	      }
-	      
-	      try {
-		btf.insert(new StringKey(key), rid); 
-	      }
-	      catch (Exception e) {
-		status = FAIL;
-		e.printStackTrace();
-	      }
+		/*
+		 * try { scan = new Scan(f); } catch (Exception e) { status = FAIL;
+		 * e.printStackTrace(); Runtime.getRuntime().exit(1); }
+		 * 
+		 * // create the index file on the integer field BTreeFile btf = null; try { btf
+		 * = new BTreeFile("BTIndex", AttrType.attrString, 5, 1delete); } catch
+		 * (Exception e) { status = FAIL; e.printStackTrace();
+		 * Runtime.getRuntime().exit(1); }
+		 * 
+		 * System.out.println("BTreeIndex created successfully.\n");
+		 * 
+		 * rid = new RID(); String key = "";  temp = null;
+		 * 
+		 * try { temp = scan.getNext(rid); } catch (Exception e) { status = FAIL;
+		 * e.printStackTrace(); } while ( temp != null) { t.tupleCopy(temp);
+		 * 
+		 * try { key = t.getStrFld(2); if(key.length() > 3) key = key.substring(0, 3); }
+		 * catch (Exception e) { status = FAIL; e.printStackTrace(); }
+		 * 
+		 * try { btf.insert(new StringKey(key), rid); } catch (Exception e) { status =
+		 * FAIL; e.printStackTrace(); }
+		 * 
+		 * try { temp = scan.getNext(rid); } catch (Exception e) { status = FAIL;
+		 * e.printStackTrace(); } }
+		 * 
+		 * // close the file scan scan.closescan();
+		 */
 
-	      try {
-		temp = scan.getNext(rid);
-	      }
-	      catch (Exception e) {
-		status = FAIL;
-		e.printStackTrace();
-	      }
-	    }
-	    
-	    // close the file scan
-	    scan.closescan();
-	    
-	    System.out.println("---------------------------------BTreeIndex file on tag created successfully---------------------------------------.\n");
-	    //*******************************************end of creating b tree index on tag*******************************************
-	   
-	    
-	    //*******************************************creating b tree index on interval*********************************************
-	    // create an scan on the heapfile
-	    scan = null;
-	    
-	    try {
-	      scan = new Scan(f);
-	    }
-	    catch (Exception e) {
-	      status = FAIL;
-	      e.printStackTrace();
-	      Runtime.getRuntime().exit(1);
-	    }
+//	    System.out.println("---------------------------------BTreeIndex file on tag created successfully---------------------------------------.\n");
+		// *******************************************end of creating b tree index on
+		// tag*******************************************
 
-	    // create the index file on the integer field
-	    IntervalTreeFile btfInterval = null;
-	    try {
-	    	btfInterval = new IntervalTreeFile("IntervalIndex", 1/*delete*/); 
-	    }
-	    catch (Exception e) {
-	      status = FAIL;
-	      e.printStackTrace();
-	      Runtime.getRuntime().exit(1);
-	    }
+		// *******************************************creating b tree index on
+		// interval*********************************************
+		// create an scan on the heapfile
+		scan = null;
 
-	    System.out.println("BTreeIndex created successfully.\n"); 
-	    
-	    rid = new RID();
-	    IntervalType intervalType = null;
-	    temp = null;
-	    
-	    try {
-	      temp = scan.getNext(rid);
-	    }
-	    catch (Exception e) {
-	      status = FAIL;
-	      e.printStackTrace();
-	    }
-	    while ( temp != null) {
-	      t.tupleCopy(temp);
-	      
-	      try {
-	    	  
-	    	  String s = t.getStrFld(2);
-	    	  intervalType = t.getIntervalField(1);
-	      }
-	      catch (Exception e) {
-		status = FAIL;
-		e.printStackTrace();
-	      }
-	      
-	      try {
-	    	  btfInterval.insert(new IntervalKey(intervalType), rid); 
-	      }
-	      catch (Exception e) {
-		status = FAIL;
-		e.printStackTrace();
-	      }
+		try {
+			scan = new Scan(f);
+		} catch (Exception e) {
+			status = FAIL;
+			e.printStackTrace();
+			Runtime.getRuntime().exit(1);
+		}
 
-	      try {
-		temp = scan.getNext(rid);
-	      }
-	      catch (Exception e) {
-		status = FAIL;
-		e.printStackTrace();
-	      }
-	    }
-	    
-	    // close the file scan
-	    scan.closescan();
-	    
-	    System.out.println("BTreeIndex file created successfully.\n"); 
-	    
-	    
+		// create the index file on the integer field
+		IntervalTreeFile btfInterval = null;
+		try {
+			btfInterval = new IntervalTreeFile("IntervalIndex", 1/* delete */);
+		} catch (Exception e) {
+			status = FAIL;
+			e.printStackTrace();
+			Runtime.getRuntime().exit(1);
+		}
+
+		System.out.println("BTreeIndex created successfully.\n");
+
+		rid = new RID();
+		IntervalType intervalType = null;
+		temp = null;
+
+		try {
+			temp = scan.getNext(rid);
+		} catch (Exception e) {
+			status = FAIL;
+			e.printStackTrace();
+		}
+		while (temp != null) {
+			t.tupleCopy(temp);
+
+			try {
+
+				String s = t.getStrFld(2);
+				intervalType = t.getIntervalField(1);
+			} catch (Exception e) {
+				status = FAIL;
+				e.printStackTrace();
+			}
+
+			try {
+				btfInterval.insert(new IntervalKey(intervalType), rid);
+			} catch (Exception e) {
+				status = FAIL;
+				e.printStackTrace();
+			}
+
+			try {
+				temp = scan.getNext(rid);
+			} catch (Exception e) {
+				status = FAIL;
+				e.printStackTrace();
+			}
+		}
+
+		// close the file scan
+		scan.closescan();
+
+		System.out.println("BTreeIndex file created successfully.\n");
+
 //	    try {
 //			IntervalT.printintervalTree(btfInterval.getHeaderPage());
 //		} catch (HashEntryNotFoundException | InvalidFrameNumberException | PageUnpinnedException | ReplacerException
@@ -326,67 +295,66 @@ public class Phase1 {
 //		
 //		if(true)
 //			return;
-	    
-	    //*******************************************querying b tree index on interval*******************************************
-	    
-	    FldSpec[] projlist = new FldSpec[2];
-	    RelSpec rel = new RelSpec(RelSpec.outer); 
-	    projlist[0] = new FldSpec(rel, 1);
-	    projlist[1] = new FldSpec(rel, 2);
-	    
-	    // conditions
-	    CondExpr[] expr = new CondExpr[3]; 
-	    expr[0] = new CondExpr();
-	    expr[0].op = new AttrOperator(AttrOperator.aopGE);
-	    expr[0].type1 = new AttrType(AttrType.attrSymbol);
-	    expr[0].type2 = new AttrType(AttrType.attrInterval);
-	    expr[0].operand1.symbol = new FldSpec(new RelSpec(RelSpec.outer), 1);
-	    expr[0].operand2.interval = new IntervalType(2, 888, 3);
-	    expr[0].next = null;
+
+		// *******************************************querying b tree index on
+		// interval*******************************************
+
+		FldSpec[] projlist = new FldSpec[2];
+		RelSpec rel = new RelSpec(RelSpec.outer);
+		projlist[0] = new FldSpec(rel, 1);
+		projlist[1] = new FldSpec(rel, 2);
+
+		// conditions
+		CondExpr[] expr = new CondExpr[3];
+		expr[0] = new CondExpr();
+		expr[0].op = new AttrOperator(AttrOperator.aopGE);
+		expr[0].type1 = new AttrType(AttrType.attrSymbol);
+		expr[0].type2 = new AttrType(AttrType.attrInterval);
+		expr[0].operand1.symbol = new FldSpec(new RelSpec(RelSpec.outer), 1);
+		expr[0].operand2.interval = new IntervalType(100000, 1, 3);
+		expr[0].next = null;
 //	    expr[1] = null;
-	    
-	    expr[1] = new CondExpr();
-	    expr[1].op = new AttrOperator(AttrOperator.aopLE);
-	    expr[1].type1 = new AttrType(AttrType.attrSymbol);
-	    expr[1].type2 = new AttrType(AttrType.attrInterval);
-	    expr[1].operand1.symbol = new FldSpec(new RelSpec(RelSpec.outer), 1);
-	    expr[1].operand2.interval = new IntervalType(15, 908, 3);
-	    expr[1].next = null;
-	    expr[2] = null;
 
-	    // start index scan
-	    IndexScan iscan = null;
-	    try {
-	      iscan = new IndexScan(new IndexType(IndexType.interval_Index), "nodes.in", "IntervalIndex", nodeTableAttrTypes, nodeTableStringSizes, 2, 2, projlist, expr, 1, false);
-	    }
-	    catch (Exception e) {
-	      status = FAIL;
-	      e.printStackTrace();
-	    }
-	    
+		expr[1] = new CondExpr();
+		expr[1].op = new AttrOperator(AttrOperator.aopLE);
+		expr[1].type1 = new AttrType(AttrType.attrSymbol);
+		expr[1].type2 = new AttrType(AttrType.attrInterval);
+		expr[1].operand1.symbol = new FldSpec(new RelSpec(RelSpec.outer), 1);
+		expr[1].operand2.interval = new IntervalType(150000, 908, 3);
+		expr[1].next = null;
+		expr[2] = null;
 
-	    t = null;
-	    IntervalType iout = null;
-	    int ival = 100, count =0; // low key
-	    
-	    try {
-	      t = iscan.get_nextInterval();
-	    }
-	    catch (Exception e) {
-	      status = FAIL;
-	      e.printStackTrace(); 
-	    }
+		// start index scan
+		IndexScan iscan = null;
+		try {
+			iscan = new IndexScan(new IndexType(IndexType.interval_Index), "nodes.in", "IntervalIndex",
+					nodeTableAttrTypes, nodeTableStringSizes, 2, 2, projlist, expr, 1, false);
+		} catch (Exception e) {
+			status = FAIL;
+			e.printStackTrace();
+		}
 
-	    while (t != null) {
-	      try {
-		iout = t.getIntervalField(1);
-		System.out.println("count " + (++count));
-	      }
-	      catch (Exception e) {
-		status = FAIL;
-		e.printStackTrace();
-	      }
-	      
+		t = null;
+		IntervalType iout = null;
+		int ival = 100, count = 0; // low key
+
+		try {
+			t = iscan.get_nextInterval();
+		} catch (Exception e) {
+			status = FAIL;
+			e.printStackTrace();
+		}
+
+		while (t != null) {
+			try {
+				iout = t.getIntervalField(1);
+				++count;
+//				System.out.println("count " + (count));
+			} catch (Exception e) {
+				status = FAIL;
+				e.printStackTrace();
+			}
+
 //	      if (iout < ival) {
 //		System.err.println("count = "  + " iout = " + iout + " ival = " + ival);
 //		
@@ -399,32 +367,30 @@ public class Phase1 {
 //		status = FAIL;
 //		break;
 //	      }
-	      
-//	      ival = iout;
-	      System.out.println("result "+ iout.toString());
-	      
-	      try {
-		t = iscan.get_nextInterval();
-	      }
-	      catch (Exception e) {
-		status = FAIL;
-		e.printStackTrace();
-	      }
-	    }
-	    if (status) {
-	      System.err.println("total results : "+ count);
-	    }
 
-	    // clean up
-	    try {
-	      iscan.close();
-	    }
-	    catch (Exception e) {
-	      status = FAIL;
-	      e.printStackTrace();
-	    }
-	    
-		
+//	      ival = iout;
+
+	      System.out.println("result "+ iout.toString());
+
+			try {
+				t = iscan.get_nextInterval();
+			} catch (Exception e) {
+				status = FAIL;
+				e.printStackTrace();
+			}
+		}
+		if (status) {
+			System.err.println("total results : " + count);
+		}
+
+		// clean up
+		try {
+			iscan.close();
+		} catch (Exception e) {
+			status = FAIL;
+			e.printStackTrace();
+		}
+
 	}
 
 	private void Project2_CondExpr(CondExpr[] expr, Rule rule) {
@@ -459,7 +425,6 @@ public class Phase1 {
 		expr[3] = null;
 	}
 
-
 	private void Project4_CondExpr(CondExpr[] OutFilter, Rule rule, int offset) {
 
 		String outerNode = rule.outerTag;
@@ -470,10 +435,9 @@ public class Phase1 {
 		OutFilter[0].type2 = new AttrType(AttrType.attrSymbol);
 		OutFilter[0].operand1.symbol = new FldSpec(new RelSpec(RelSpec.outer), offset);
 		OutFilter[0].operand2.symbol = new FldSpec(new RelSpec(RelSpec.innerRel), 2);
-		OutFilter[0].flag =0;
+		OutFilter[0].flag = 0;
 
 	}
-
 
 	private CondExpr[] createFilterForQueryHeap(List<Rule> rules) {
 		Set<String> uniqueTags = new HashSet<>();
@@ -487,7 +451,7 @@ public class Phase1 {
 		CondExpr[] innerRelFilterConditions = new CondExpr[2];
 		CondExpr prev = null;
 		CondExpr curr = null;
-		CondExpr head =null;
+		CondExpr head = null;
 		for (String tag : uniqueTags) {
 			curr = new CondExpr();
 			curr.next = null;
@@ -497,7 +461,7 @@ public class Phase1 {
 			curr.operand1.symbol = new FldSpec(new RelSpec(RelSpec.outer), 2);
 			curr.operand2.string = tag;
 
-			//Inner table comparison.
+			// Inner table comparison.
 			if (prev != null) {
 				prev.next = curr;
 				prev = curr;
@@ -550,7 +514,7 @@ public class Phase1 {
 		}
 
 		try {
-			Tuple t =fileScanner.get_next();
+			Tuple t = fileScanner.get_next();
 
 			while (t != null) {
 				Tuple tuple = new Tuple(t.getLength());
@@ -565,20 +529,23 @@ public class Phase1 {
 		}
 	}
 
-	private void setConditions(CondExpr[] outFilter, CondExpr[] rightFilter, Rule rule, int offset, boolean isFirstRule) {
+	private void setConditions(CondExpr[] outFilter, CondExpr[] rightFilter, Rule rule, int offset,
+			boolean isFirstRule) {
 
 		int outerIntervalColNo = offset;
-		int outerTagNameColNo ;
-		// The original schema is Interval - Tag Name. Since the projection is Tag Name - Interval
-		// the column numbers are swapped. Since no projection has been applied to the first rule,
+		int outerTagNameColNo;
+		// The original schema is Interval - Tag Name. Since the projection is Tag Name
+		// - Interval
+		// the column numbers are swapped. Since no projection has been applied to the
+		// first rule,
 		// it retains the table schema.
-		if(isFirstRule) {
+		if (isFirstRule) {
 			outerTagNameColNo = offset + 1;
 		} else {
 			outerTagNameColNo = offset - 1;
 		}
 
-		//Join Condition
+		// Join Condition
 		outFilter[0].next = null;
 		outFilter[0].op = new AttrOperator(AttrOperator.aopEQ);
 		outFilter[0].type1 = new AttrType(AttrType.attrSymbol);
@@ -591,8 +558,8 @@ public class Phase1 {
 			outFilter[0].flag = CondExpr.FLAG_AD_CHECK;
 		}
 
-		//Outer table comparison. For eg: If rule is A B PC, this condition will return
-		//results for outer table where tag name equals to A.
+		// Outer table comparison. For eg: If rule is A B PC, this condition will return
+		// results for outer table where tag name equals to A.
 		outFilter[1].next = null;
 		outFilter[1].op = new AttrOperator(AttrOperator.aopEQ);
 		outFilter[1].type1 = new AttrType(AttrType.attrSymbol);
@@ -602,7 +569,7 @@ public class Phase1 {
 
 		outFilter[2] = null;
 
-		//Inner table comparison.
+		// Inner table comparison.
 		rightFilter[0].next = null;
 		rightFilter[0].op = new AttrOperator(AttrOperator.aopEQ);
 		rightFilter[0].type1 = new AttrType(AttrType.attrSymbol);
@@ -614,7 +581,7 @@ public class Phase1 {
 	}
 
 	private void populateNodeOffsetMap(Map<String, Integer> offsetMap, String nodeName, int nodeNumber) {
-		offsetMap.put(nodeName, 2*nodeNumber);
+		offsetMap.put(nodeName, 2 * nodeNumber);
 	}
 
 	public void compute(List<Rule> rules) {
@@ -647,7 +614,7 @@ public class Phase1 {
 		innerRelFilterConditions[0] = new CondExpr();
 		innerRelFilterConditions[1] = new CondExpr();
 
-		//Inner table comparison.
+		// Inner table comparison.
 		innerRelFilterConditions[0].next = null;
 		innerRelFilterConditions[0].op = new AttrOperator(AttrOperator.aopEQ);
 		innerRelFilterConditions[0].type1 = new AttrType(AttrType.attrSymbol);
@@ -668,7 +635,6 @@ public class Phase1 {
 			System.err.println("" + e);
 			e.printStackTrace();
 		}
-
 
 		populateNodeOffsetMap(tagOffsetMap, firstRule.outerTag, nodeNumber);
 		nodeNumber++;
@@ -694,15 +660,16 @@ public class Phase1 {
 		NestedLoopsJoins currIterator = null;
 		try {
 			prevIterator = new NestedLoopsJoins(baseTableAttrTypes, 2, baseTableStringLengths, baseTableAttrTypes, 2,
-					baseTableStringLengths, 10, fileScanner, "temp.in", filterConditions, innerRelFilterConditions, currProjection, 4);
+					baseTableStringLengths, 10, fileScanner, "temp.in", filterConditions, innerRelFilterConditions,
+					currProjection, 4);
 		} catch (Exception e) {
 			System.err.println("*** Error preparing for nested_loop_join");
 			System.err.println("" + e);
 			e.printStackTrace();
 			Runtime.getRuntime().exit(1);
 		}
-		//Needs to iterate only from the second rule.
-		//rules.remove(0);
+		// Needs to iterate only from the second rule.
+		// rules.remove(0);
 		int ruleNumber = 2;
 		for (int index = 1; index < rules.size(); index++) {
 			Rule currRule = rules.get(index);
@@ -726,9 +693,10 @@ public class Phase1 {
 			innerRelFilterConditions = new CondExpr[2];
 			innerRelFilterConditions[0] = new CondExpr();
 			innerRelFilterConditions[1] = new CondExpr();
-			setConditions(filterConditions, innerRelFilterConditions, currRule, tagOffsetMap.get(currRule.outerTag), false);
+			setConditions(filterConditions, innerRelFilterConditions, currRule, tagOffsetMap.get(currRule.outerTag),
+					false);
 
-			//After each rule the 2 more columns will be added.
+			// After each rule the 2 more columns will be added.
 			AttrType[] joinedTableAttrTypes = new AttrType[2 * ruleNumber];
 			for (int i = 0; i < 2 * ruleNumber; i++) {
 				if (i % 2 == 0) {
@@ -742,11 +710,15 @@ public class Phase1 {
 				joinedTableStringLengths[i] = TAG_LENGTH;
 			}
 
-			//Projection size will also increase by 2 in every rule. Also, an additional 2 more columns will
-			//be added after the join with the inner table. This additional 2 columns will be of the tag id
-			//which has not occurred before in any of the rules. We can be assured that the outer tag of a rule
-			//will always be new since we have ordered the rules in a level wise fashion and also because of
-			//the assumption that there are no rules with a circular relationship.
+			// Projection size will also increase by 2 in every rule. Also, an additional 2
+			// more columns will
+			// be added after the join with the inner table. This additional 2 columns will
+			// be of the tag id
+			// which has not occurred before in any of the rules. We can be assured that the
+			// outer tag of a rule
+			// will always be new since we have ordered the rules in a level wise fashion
+			// and also because of
+			// the assumption that there are no rules with a circular relationship.
 			currProjection = new FldSpec[2 * ruleNumber + 2];
 			for (int i = 0; i < 2 * ruleNumber; i++) {
 				currProjection[i] = new FldSpec(new RelSpec(RelSpec.outer), i + 1);
@@ -755,9 +727,9 @@ public class Phase1 {
 			currProjection[2 * ruleNumber + 1] = new FldSpec(new RelSpec(RelSpec.innerRel), 1);
 
 			try {
-				currIterator = new NestedLoopsJoins(joinedTableAttrTypes, 2 * ruleNumber, joinedTableStringLengths, baseTableAttrTypes, 2,
-						baseTableStringLengths, 10, prevIterator, "temp.in", filterConditions, innerRelFilterConditions, currProjection,
-						2 * ruleNumber + 2);
+				currIterator = new NestedLoopsJoins(joinedTableAttrTypes, 2 * ruleNumber, joinedTableStringLengths,
+						baseTableAttrTypes, 2, baseTableStringLengths, 10, prevIterator, "temp.in", filterConditions,
+						innerRelFilterConditions, currProjection, 2 * ruleNumber + 2);
 			} catch (Exception e) {
 				System.err.println("*** Error preparing for nested_loop_join");
 				System.err.println("" + e);
@@ -769,7 +741,7 @@ public class Phase1 {
 
 		}
 
-		if(currIterator == null) {
+		if (currIterator == null) {
 			currIterator = prevIterator;
 		}
 		Tuple finalTuple = new Tuple();
@@ -803,22 +775,21 @@ public class Phase1 {
 
 	public void computeSM(List<Rule> rules, TupleOrder order) {
 		Map<String, Integer> nodeOffsetMap = new HashMap<>();
-		//rules.add(rule3);
+		// rules.add(rule3);
 		int nodeNumber = 1;
 		boolean status = OK;
 
 		Iterator am = null;
 		Iterator am1 = null;
-		AttrType[] Ntypes = {new AttrType(AttrType.attrInterval), new AttrType(AttrType.attrString)};
+		AttrType[] Ntypes = { new AttrType(AttrType.attrInterval), new AttrType(AttrType.attrString) };
 		short[] Nsizes = new short[1];
 		Nsizes[0] = TAG_LENGTH;
 
-		FldSpec[] Nprojection = {new FldSpec(new RelSpec(RelSpec.outer), 1),
-				new FldSpec(new RelSpec(RelSpec.outer), 2)};
+		FldSpec[] Nprojection = { new FldSpec(new RelSpec(RelSpec.outer), 1),
+				new FldSpec(new RelSpec(RelSpec.outer), 2) };
 
-
-		FldSpec[] proj = {new FldSpec(new RelSpec(RelSpec.outer), 2), new FldSpec(new RelSpec(RelSpec.outer), 1),
-				new FldSpec(new RelSpec(RelSpec.innerRel), 2), new FldSpec(new RelSpec(RelSpec.innerRel), 1)};
+		FldSpec[] proj = { new FldSpec(new RelSpec(RelSpec.outer), 2), new FldSpec(new RelSpec(RelSpec.outer), 1),
+				new FldSpec(new RelSpec(RelSpec.innerRel), 2), new FldSpec(new RelSpec(RelSpec.innerRel), 1) };
 		List<NestedLoopsJoins> listNLJ = new LinkedList<>();
 		for (Rule rule : rules) {
 			try {
@@ -826,7 +797,7 @@ public class Phase1 {
 				innerRelFilterConditions[0] = new CondExpr();
 				innerRelFilterConditions[1] = new CondExpr();
 
-				//Inner table comparison.
+				// Inner table comparison.
 				innerRelFilterConditions[0].next = null;
 				innerRelFilterConditions[0].op = new AttrOperator(AttrOperator.aopEQ);
 				innerRelFilterConditions[0].type1 = new AttrType(AttrType.attrSymbol);
@@ -835,7 +806,8 @@ public class Phase1 {
 				innerRelFilterConditions[0].operand2.string = tagMapping.get(rule.outerTag);
 
 				innerRelFilterConditions[1] = null;
-				am = new FileScan("temp.in", Ntypes, Nsizes, (short) 2, (short) 2, Nprojection, innerRelFilterConditions);
+				am = new FileScan("temp.in", Ntypes, Nsizes, (short) 2, (short) 2, Nprojection,
+						innerRelFilterConditions);
 			} catch (Exception e) {
 				status = FAIL;
 				System.err.println("" + e);
@@ -853,9 +825,9 @@ public class Phase1 {
 				innerRelFilterConditions[0] = new CondExpr();
 				innerRelFilterConditions[1] = new CondExpr();
 
-				setConditions(outFilter,innerRelFilterConditions, rule, 1, true);
-				inl = new NestedLoopsJoins(Ntypes, 2, Nsizes, Ntypes, 2, Nsizes, 10, am, "temp.in", outFilter, innerRelFilterConditions, proj,
-						4);
+				setConditions(outFilter, innerRelFilterConditions, rule, 1, true);
+				inl = new NestedLoopsJoins(Ntypes, 2, Nsizes, Ntypes, 2, Nsizes, 10, am, "temp.in", outFilter,
+						innerRelFilterConditions, proj, 4);
 				listNLJ.add(inl);
 			} catch (Exception e) {
 				System.err.println("*** Error preparing for nested_loop_join");
@@ -874,7 +846,7 @@ public class Phase1 {
 		String prevSortedTag = "";
 		for (int x = 1; x < listNLJ.size(); ++x) {
 			if (!nodeOffsetMap.containsKey(rules.get(x).outerTag)) {
-				//Technically, this should never happen.
+				// Technically, this should never happen.
 				populateNodeOffsetMap(nodeOffsetMap, rules.get(x).outerTag, nodeNumber);
 				nodeNumber++;
 			}
@@ -889,8 +861,8 @@ public class Phase1 {
 				outFilter[1] = null;
 
 				Project4_CondExpr(outFilter, rules.get(x), nodeOffsetMap.get(rules.get(x).outerTag));
-				AttrType[] NtypesFix = {new AttrType(AttrType.attrString),
-						new AttrType(AttrType.attrInterval), new AttrType(AttrType.attrString), new AttrType(AttrType.attrInterval)};
+				AttrType[] NtypesFix = { new AttrType(AttrType.attrString), new AttrType(AttrType.attrInterval),
+						new AttrType(AttrType.attrString), new AttrType(AttrType.attrInterval) };
 				short[] NsizesFix = new short[2];
 				NsizesFix[0] = TAG_LENGTH;
 				NsizesFix[1] = TAG_LENGTH;
@@ -913,24 +885,14 @@ public class Phase1 {
 				proj2[2 * index] = new FldSpec(new RelSpec(RelSpec.innerRel), 3);
 				proj2[2 * index + 1] = new FldSpec(new RelSpec(RelSpec.innerRel), 4);
 				SortMerge sm = null;
-				if(!prevSortedTag.equalsIgnoreCase(rules.get(x).outerTag)) {
-					sm = new SortMerge(Ntypes2, index * 2, Nsizes2,
-							NtypesFix, 4, NsizesFix,
-							nodeOffsetMap.get(rules.get(x).outerTag), 4,
-							2, 4,
-							100,
-							prevSM, listNLJ.get(x),
-							false, false, order,
-							outFilter, proj2, 2 * index + 2);
+				if (!prevSortedTag.equalsIgnoreCase(rules.get(x).outerTag)) {
+					sm = new SortMerge(Ntypes2, index * 2, Nsizes2, NtypesFix, 4, NsizesFix,
+							nodeOffsetMap.get(rules.get(x).outerTag), 4, 2, 4, 100, prevSM, listNLJ.get(x), false,
+							false, order, outFilter, proj2, 2 * index + 2);
 				} else {
-					sm = new SortMerge(Ntypes2, index * 2, Nsizes2,
-							NtypesFix, 4, NsizesFix,
-							nodeOffsetMap.get(rules.get(x).outerTag), 4,
-							2, 4,
-							100,
-							prevSM, listNLJ.get(x),
-							true, false, order,
-							outFilter, proj2, 2 * index + 2);
+					sm = new SortMerge(Ntypes2, index * 2, Nsizes2, NtypesFix, 4, NsizesFix,
+							nodeOffsetMap.get(rules.get(x).outerTag), 4, 2, 4, 100, prevSM, listNLJ.get(x), true, false,
+							order, outFilter, proj2, 2 * index + 2);
 				}
 				if (!prevRule.innerTag.equals(rules.get(x).outerTag)) {
 					sm.setCheckFlag(true);
@@ -971,7 +933,6 @@ public class Phase1 {
 
 	}
 
-
 	private String[] readFile(String filename) {
 		StringBuffer stringBuffer = new StringBuffer();
 		try {
@@ -1000,14 +961,16 @@ public class Phase1 {
 		for (String line : file_contents) {
 			if (index > 0 && index <= n) {
 				ruleMap.put(index, new ArrayList<>());
-                tagMapping.put(Integer.toString(index), XMLToIntervalTable.trimCharTags(line));
+				tagMapping.put(Integer.toString(index), XMLToIntervalTable.trimCharTags(line));
 			}
 
 			if (index > n) {
 				String[] rule_components = line.split(" ");
-				int relation = rule_components[2].equals("PC") ? Rule.RULE_TYPE_PARENT_CHILD : Rule.RULE_TYPE_ANCESTRAL_DESCENDENT;
+				int relation = rule_components[2].equals("PC") ? Rule.RULE_TYPE_PARENT_CHILD
+						: Rule.RULE_TYPE_ANCESTRAL_DESCENDENT;
 				rankIndex[Integer.parseInt(rule_components[1]) - 1]++;
-				ruleMap.get(Integer.parseInt(rule_components[0])).add(new Rule(rule_components[0], rule_components[1], relation));
+				ruleMap.get(Integer.parseInt(rule_components[0]))
+						.add(new Rule(rule_components[0], rule_components[1], relation));
 			}
 			index++;
 		}
@@ -1031,12 +994,12 @@ public class Phase1 {
 			createQueryHeapFile("nodes.in", rules);
 			compute(rules);
 			System.out.println("Number of page accessed = " + BufMgr.page_access_counter);
-			//sysdef = new SystemDefs(dbpath, 1000, NUMBUF, "Clock");
+			// sysdef = new SystemDefs(dbpath, 1000, NUMBUF, "Clock");
 			BufMgr.page_access_counter = 0;
 			System.out.println("QUERY PLAN---2");
 			computeSM(rules, new TupleOrder(TupleOrder.Ascending));
 			System.out.println("Number of page accessed = " + BufMgr.page_access_counter);
-			//sysdef = new SystemDefs(dbpath, 1000, NUMBUF, "Clock");
+			// sysdef = new SystemDefs(dbpath, 1000, NUMBUF, "Clock");
 			BufMgr.page_access_counter = 0;
 			System.out.println("QUERY PLAN---3");
 			computeSM(rules, new TupleOrder(TupleOrder.Descending));
@@ -1048,13 +1011,13 @@ public class Phase1 {
 	}
 
 	private void printRules(List<Rule> rules) {
-		System.out.print("Printing rules " + rules.size() );
+		System.out.print("Printing rules " + rules.size());
 		for (Rule rule : rules)
 			System.out.println(rule.outerTag + " " + rule.innerTag + rule.getRelationship());
 	}
 
 	List<Rule> getRulesInOrder(Integer root, Map<Integer, List<Rule>> ruleMap) {
-		List<Rule>  orderedList = new ArrayList<>();
+		List<Rule> orderedList = new ArrayList<>();
 		Queue<Integer> queue = new ArrayDeque<>();
 		queue.add(root);
 		while (!queue.isEmpty()) {
@@ -1070,8 +1033,6 @@ public class Phase1 {
 		return orderedList;
 	}
 
-
-
 	private Integer getRoot(int[] rankIndex) {
 		for (int i = 0; i < rankIndex.length; i++)
 			if (rankIndex[i] == 0)
@@ -1080,13 +1041,57 @@ public class Phase1 {
 	}
 
 	public static void main(String[] args) {
-		
+
+//		IntervalType interval = null, value = null;
+//		try {
+//			OutputStream out = new ByteArrayOutputStream();
+//			DataOutputStream outstr = new DataOutputStream(out);
+//			
+//			value = new IntervalType(2,3,4);
+//			
+//			outstr.writeInt(value.s);
+//			outstr.writeInt(value.e);
+//			outstr.writeInt(value.l);
+//
+//			byte[] B = ((ByteArrayOutputStream) out).toByteArray();
+//
+//			int len = outstr.size();
+//			System.out.println(len);
+//			
+//			
+//			byte tmp[] = new byte[4];
+//
+//			// copy the value from data array out to a tmp byte array
+//			InputStream in;
+//			DataInputStream instr;
+//			System.arraycopy(B, 0, tmp, 0, 4);
+//			in = new ByteArrayInputStream(tmp);
+//			instr = new DataInputStream(in);
+//			int s = instr.readInt();
+//			
+//			System.arraycopy(B, 4, tmp, 0, 4);
+//			in = new ByteArrayInputStream(tmp);
+//			instr = new DataInputStream(in);
+//			int e = instr.readInt();
+//			
+//			System.arraycopy(B, 8, tmp, 0, 4);
+//			in = new ByteArrayInputStream(tmp);
+//			instr = new DataInputStream(in);
+//			int l = instr.readInt();
+//			
+//			System.out.println(s + " "+ e + " "+ l);
+//
+//
+//		} catch (IOException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		}
 		
 		
 		Phase1 phase1 = new Phase1();
 //		phase1.input();
-		
-		//phase1.compute();
-		//phase1.computeSM();
+
+		// phase1.compute();
+		// phase1.computeSM();
 	}
 }

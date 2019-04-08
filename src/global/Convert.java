@@ -159,39 +159,44 @@ public class Convert {
 	 * @throws ClassNotFoundException
 	 */
 	public static IntervalType getIntervalValue(int position, byte[] data, int length) throws java.io.IOException {
-//		InputStream in;
-//		DataInputStream instr;
-//		int startInterval;
-//		int endInterval;
-//		int level;
-		IntervalType interval = null;
-		try {
-			byte tmp[] = new byte[length];
-
-			// copy the value from data array out to a tmp byte array
-			System.arraycopy(data, position, tmp, 0, length);
-
-			ByteArrayInputStream in = new ByteArrayInputStream(tmp);
-			ObjectInputStream is = new ObjectInputStream(in);
-
-			interval = (IntervalType) (is.readObject());
-
-//			System.out.println(interval.toString());
-
-			/*
-			 * creates a new data input stream to read data from the specified input stream
-			 */
-//		in = new ByteArrayInputStream(tmp);
-//		instr = new DataInputStream(in);
-//		startInterval = instr.readInt();
-//		endInterval = instr.readInt();
-//		level = instr.readInt();
-//		IntervalType interval = new IntervalType(startInterval, endInterval, level);
-		} catch (ClassNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		return interval;
+		InputStream in;
+		DataInputStream instr;
+//		IntervalType interval = null;
+//		try {
+//			byte tmp[] = new byte[length];
+//
+//			// copy the value from data array out to a tmp byte array
+//			System.arraycopy(data, position, tmp, 0, length);
+//
+//			ByteArrayInputStream in = new ByteArrayInputStream(tmp);
+//			ObjectInputStream is = new ObjectInputStream(in);
+//
+//			interval = (IntervalType) (is.readObject());
+//
+//		} catch (ClassNotFoundException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		}
+//		return interval;
+		
+		byte tmp[] = new byte[4];
+		
+		System.arraycopy(data, position, tmp, 0, 4);
+		in = new ByteArrayInputStream(tmp);
+		instr = new DataInputStream(in);
+		int s = instr.readInt();
+		
+		System.arraycopy(data, position + 4, tmp, 0, 4);
+		in = new ByteArrayInputStream(tmp);
+		instr = new DataInputStream(in);
+		int e = instr.readInt();
+		
+		System.arraycopy(data, position + 8, tmp, 0, 4);
+		in = new ByteArrayInputStream(tmp);
+		instr = new DataInputStream(in);
+		int l = instr.readInt();
+		
+		return new IntervalType(s,e,l);
 	}
 
 	/**
@@ -349,24 +354,29 @@ public class Convert {
 		 * creates a new data output stream to write data to underlying output stream
 		 */
 
-		ByteArrayOutputStream out = new ByteArrayOutputStream();
-		ObjectOutputStream outstr = new ObjectOutputStream(out);
-
-		outstr.writeObject(value);
+//		ByteArrayOutputStream out = new ByteArrayOutputStream();
+//		ObjectOutputStream outstr = new ObjectOutputStream(out);
+//
+//		outstr.writeObject(value);
+//
+//		byte[] B = ((ByteArrayOutputStream) out).toByteArray();
+//
+//		// copies the contents of this byte array into data[]
+//		int len = out.toByteArray().length;
+//		System.arraycopy(B, 0, data, position, len);
 		
-//		outstr.writeInt(value.s);
-//		outstr.writeInt(value.e);
-//		outstr.writeInt(value.l);
+		OutputStream out = new ByteArrayOutputStream();
+		DataOutputStream outstr = new DataOutputStream(out);
+		
+		outstr.writeInt(value.s);
+		outstr.writeInt(value.e);
+		outstr.writeInt(value.l);
 
-		// write the value to the output stream
-		// outstr.writeObject(value);
-		// creates a byte array with this output stream size and the
-		// valid contents of the buffer have been copied into it
 		byte[] B = ((ByteArrayOutputStream) out).toByteArray();
 
-		// int sz =((ByteArrayOutputStream) out).toByteArray().length;
-		// copies the contents of this byte array into data[]
-		int len = out.toByteArray().length;
+//		int len = outstr.size();
+		int len = GlobalConst.INTERVAL_LEN;
+//		System.out.println(len + " asd");
 		System.arraycopy(B, 0, data, position, len);
 
 	}
