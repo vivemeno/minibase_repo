@@ -155,7 +155,7 @@ public class Phase1 {
 
 		int numnodes = nodes.size();
 		for (int i = 0; i < numnodes; i++) {
-//			System.out.println(i +" "+ nodes.elementAt(i).toString());
+			System.out.println(i /* +" "+ nodes.elementAt(i).toString() */);
 			try {
 				t.setIntervalFld(1, ((NodeTable) nodes.elementAt(i)).interval);
 				t.setStrFld(2, ((NodeTable) nodes.elementAt(i)).nodename);
@@ -167,7 +167,7 @@ public class Phase1 {
 
 			try {
 				rid = f.insertRecord(t.returnTupleByteArray());
-				System.out.println(i);
+//				System.out.println(i);
 			} catch (Exception e) {
 				System.err.println("*** error in Heapfile.insertRecord() ***");
 				status = FAIL;
@@ -283,7 +283,7 @@ public class Phase1 {
 		// close the file scan
 		scan.closescan();
 
-		System.out.println("BTreeIndex file created successfully.\n");
+		System.out.println("BTreeIndex file insertion successfully completed.\n");
 
 //	    try {
 //			IntervalT.printintervalTree(btfInterval.getHeaderPage());
@@ -311,7 +311,7 @@ public class Phase1 {
 		expr[0].type1 = new AttrType(AttrType.attrSymbol);
 		expr[0].type2 = new AttrType(AttrType.attrInterval);
 		expr[0].operand1.symbol = new FldSpec(new RelSpec(RelSpec.outer), 1);
-		expr[0].operand2.interval = new IntervalType(100000, 1, 3);
+		expr[0].operand2.interval = new IntervalType(376663, 1, 3);
 		expr[0].next = null;
 //	    expr[1] = null;
 
@@ -320,12 +320,13 @@ public class Phase1 {
 		expr[1].type1 = new AttrType(AttrType.attrSymbol);
 		expr[1].type2 = new AttrType(AttrType.attrInterval);
 		expr[1].operand1.symbol = new FldSpec(new RelSpec(RelSpec.outer), 1);
-		expr[1].operand2.interval = new IntervalType(150000, 908, 3);
+		expr[1].operand2.interval = new IntervalType(386663, 908, 3);
 		expr[1].next = null;
 		expr[2] = null;
 
 		// start index scan
 		IndexScan iscan = null;
+		status = OK;
 		try {
 			iscan = new IndexScan(new IndexType(IndexType.interval_Index), "nodes.in", "IntervalIndex",
 					nodeTableAttrTypes, nodeTableStringSizes, 2, 2, projlist, expr, 1, false);
@@ -380,9 +381,10 @@ public class Phase1 {
 			}
 		}
 		if (status) {
-			System.err.println("total results : " + count);
+			System.err.println("in status check block");
 		}
 
+		System.err.println("total results : " + count);
 		// clean up
 		try {
 			iscan.close();

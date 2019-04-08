@@ -100,23 +100,6 @@ public class IndexScan extends Iterator {
     
     switch(index.indexType) {
       // linear hashing is not yet implemented
-    case IndexType.B_Index:
-      // error check the select condition
-      // must be of the type: value op symbol || symbol op value
-      // but not symbol op symbol || value op value
-      try {
-	indFile = new BTreeFile(indName); 
-      }
-      catch (Exception e) {
-	throw new IndexException(e, "IndexScan.java: BTreeFile exceptions caught from BTreeFile constructor");
-      }
-      
-      try {
-	indScan = (BTFileScan) IndexUtils.BTree_scan(selects, indFile);
-      }
-      catch (Exception e) {
-	throw new IndexException(e, "IndexScan.java: BTreeFile exceptions caught from IndexUtils.BTree_scan().");
-      }
       
     case IndexType.interval_Index:
         // error check the select condition
