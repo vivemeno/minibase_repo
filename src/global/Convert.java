@@ -108,7 +108,7 @@ public class Convert {
 		String value;
 		byte tmp[] = new byte[length];
 		
-		System.out.println(data.length);
+//		System.out.println(data.length);
 
 		// copy the value from data array out to a tmp byte array
 		System.arraycopy(data, position, tmp, 0, length);

@@ -14,13 +14,20 @@ import btree.BTreeFile;
 import btree.IntegerKey;
 import btree.StringKey;
 import bufmgr.BufMgr;
+import bufmgr.HashEntryNotFoundException;
+import bufmgr.InvalidFrameNumberException;
+import bufmgr.PageUnpinnedException;
+import bufmgr.ReplacerException;
 import global.*;
 import heap.Heapfile;
 import heap.Scan;
 import heap.Tuple;
 import index.IndexScan;
+import intervalTree.ConstructPageException;
 import intervalTree.IntervalKey;
+import intervalTree.IntervalT;
 import intervalTree.IntervalTreeFile;
+import intervalTree.IteratorException;
 import iterator.*;
 import iterator.Iterator;
 import xmlparser.XMLToIntervalTable;
@@ -133,6 +140,9 @@ public class Phase1 {
 			status = FAIL;
 			e.printStackTrace();
 		}
+		
+		// ****************************sorting for debugging, comment out while running.*********************************
+//		nodes.sort((x,y) -> x.interval.s - y.interval.s);
 
 		int numnodes = nodes.size();
 		for (int i = 0; i < numnodes; i++) {
@@ -160,7 +170,7 @@ public class Phase1 {
 			Runtime.getRuntime().exit(1);
 		}
 		
-		//-----------------------------------------creating b tree index----------------------------------
+		//*******************************************creating b tree index on tag*******************************************
 		// create an scan on the heapfile
 	    Scan scan = null;
 	    
@@ -230,8 +240,10 @@ public class Phase1 {
 	    scan.closescan();
 	    
 	    System.out.println("---------------------------------BTreeIndex file on tag created successfully---------------------------------------.\n");
+	    //*******************************************end of creating b tree index on tag*******************************************
 	   
 	    
+	    //*******************************************creating b tree index on interval*********************************************
 	    // create an scan on the heapfile
 	    scan = null;
 	    
@@ -303,6 +315,20 @@ public class Phase1 {
 	    
 	    System.out.println("BTreeIndex file created successfully.\n"); 
 	    
+	    
+//	    try {
+//			IntervalT.printintervalTree(btfInterval.getHeaderPage());
+//		} catch (HashEntryNotFoundException | InvalidFrameNumberException | PageUnpinnedException | ReplacerException
+//				| ConstructPageException | IteratorException | IOException e1) {
+//			// TODO Auto-generated catch block
+//			e1.printStackTrace();
+//		}
+//		
+//		if(true)
+//			return;
+	    
+	    //*******************************************querying b tree index on interval*******************************************
+	    
 	    FldSpec[] projlist = new FldSpec[2];
 	    RelSpec rel = new RelSpec(RelSpec.outer); 
 	    projlist[0] = new FldSpec(rel, 1);
@@ -315,7 +341,7 @@ public class Phase1 {
 	    expr[0].type1 = new AttrType(AttrType.attrSymbol);
 	    expr[0].type2 = new AttrType(AttrType.attrInterval);
 	    expr[0].operand1.symbol = new FldSpec(new RelSpec(RelSpec.outer), 1);
-	    expr[0].operand2.interval = new IntervalType(207, 888, 3);
+	    expr[0].operand2.interval = new IntervalType(2, 888, 3);
 	    expr[0].next = null;
 //	    expr[1] = null;
 	    
@@ -324,7 +350,7 @@ public class Phase1 {
 	    expr[1].type1 = new AttrType(AttrType.attrSymbol);
 	    expr[1].type2 = new AttrType(AttrType.attrInterval);
 	    expr[1].operand1.symbol = new FldSpec(new RelSpec(RelSpec.outer), 1);
-	    expr[1].operand2.interval = new IntervalType(210, 908, 3);
+	    expr[1].operand2.interval = new IntervalType(15, 908, 3);
 	    expr[1].next = null;
 	    expr[2] = null;
 
@@ -386,7 +412,7 @@ public class Phase1 {
 	      }
 	    }
 	    if (status) {
-	      System.err.println("Test3 -- Index scan on int key OK\n");
+	      System.err.println("total results : "+ count);
 	    }
 
 	    // clean up
