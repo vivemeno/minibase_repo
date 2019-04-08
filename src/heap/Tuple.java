@@ -292,13 +292,16 @@ public class Tuple implements GlobalConst {
 	 *                I/O errors
 	 * @exception FieldNumberOutOfBoundException
 	 *                Tuple field number out of bound
+	 * @throws ClassNotFoundException 
 	 */
 
 	public IntervalType getIntervalField(int fldNo)
 			throws IOException, FieldNumberOutOfBoundException {
 		IntervalType val;
 		if ((fldNo > 0) && (fldNo <= fldCnt)) {
-			val = Convert.getIntervalValue(fldOffset[fldNo - 1], data);
+//			int len = data.length;
+
+			val = Convert.getIntervalValue(fldOffset[fldNo - 1], data, fldOffset[fldNo] - fldOffset[fldNo - 1]);
 			return val;
 		} else
 			throw new FieldNumberOutOfBoundException(null, "TUPLE:TUPLE_FLDNO_OUT_OF_BOUND");
@@ -441,7 +444,7 @@ public class Tuple implements GlobalConst {
 				break;
 			
 			case AttrType.attrInterval:
-				incr = 12;
+				incr = (short) 64;
 				break;
 
 			case AttrType.attrString:
@@ -468,7 +471,7 @@ public class Tuple implements GlobalConst {
 			break;
 		
 		case AttrType.attrInterval:
-			incr = 12;
+			incr = (short) (strSizes[strSizes.length-1]);
 			break;
 
 		case AttrType.attrString:
@@ -549,7 +552,7 @@ public class Tuple implements GlobalConst {
 				break;
 			
 			case AttrType.attrInterval:
-				ival = Convert.getIntervalValue(fldOffset[i], data);
+				ival = Convert.getIntervalValue(fldOffset[i], data, fldOffset[i + 1] - fldOffset[i]);
 				System.out.print("[" + ival.s + " " + ival.e + "]");
 				break;
 
@@ -578,7 +581,7 @@ public class Tuple implements GlobalConst {
 			break;
 		
 		case AttrType.attrInterval:
-			ival = Convert.getIntervalValue(fldOffset[i], data);
+			ival = Convert.getIntervalValue(fldOffset[i], data, fldOffset[i + 1] - fldOffset[i]);
 			System.out.print("[" + ival.s + "  " + ival.e + "]");
 			break;
 

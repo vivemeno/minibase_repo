@@ -15,4 +15,11 @@ public class NodeTable {
 	public NodeTable() {
 		
 	}
+
+	@Override
+	public String toString() {
+		return "NodeTable [nodename=" + nodename + ", interval=" + interval + "]";
+	}
+	
+	
 }

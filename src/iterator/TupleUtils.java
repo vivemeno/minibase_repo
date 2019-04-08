@@ -31,6 +31,7 @@ public class TupleUtils
 	 *@return   0        if the two are equal,
 	 *          1        if the tuple is greater,
 	 *         -1        if the tuple is smaller,
+	 * @throws ClassNotFoundException 
 	 */
 	public static int CompareTupleWithTuple(AttrType fldType,
 											Tuple  t1, int t1_fld_no,
@@ -136,13 +137,14 @@ public class TupleUtils
 	 *@exception UnknowAttrType don't know the attribute type
 	 *@exception IOException some I/O fault
 	 *@exception TupleUtilsException exception from this class
+	 * @throws ClassNotFoundException 
 	 */
 	public static int CompareTupleWithValue(AttrType fldType,
 											Tuple  t1, int t1_fld_no,
 											Tuple  value)
 			throws IOException,
 			UnknowAttrType,
-			TupleUtilsException
+			TupleUtilsException, ClassNotFoundException
 	{
 		int comp_res = fldType.attrType == AttrType.attrInterval? TupleUtils.CompareTupleWithTuple(t1, t1_fld_no, value, t1_fld_no):
 				TupleUtils.CompareTupleWithTuple(fldType, t1, t1_fld_no, value, t1_fld_no);
@@ -153,7 +155,7 @@ public class TupleUtils
 											Tuple  t2, int t2_fld_no)
 			throws IOException,
 			UnknowAttrType,
-			TupleUtilsException
+			TupleUtilsException, ClassNotFoundException
 	{
 		try {
 			IntervalType t1_it, t2_it;
@@ -209,10 +211,11 @@ public class TupleUtils
 	 *@exception UnknowAttrType don't know the attribute type
 	 *@exception IOException some I/O fault
 	 *@exception TupleUtilsException exception from this class
+	 * @throws ClassNotFoundException 
 	 */
 
 	public static boolean Equal(Tuple t1, Tuple t2, AttrType types[], int len)
-			throws IOException,UnknowAttrType,TupleUtilsException
+			throws IOException,UnknowAttrType,TupleUtilsException, ClassNotFoundException
 	{
 		int i;
 
@@ -253,11 +256,12 @@ public class TupleUtils
 	 *@exception UnknowAttrType don't know the attribute type
 	 *@exception IOException some I/O fault
 	 *@exception TupleUtilsException exception from this class
+	 * @throws ClassNotFoundException 
 	 */
 	public static void SetValue(Tuple value, Tuple  tuple, int fld_no, AttrType fldType)
 			throws IOException,
 			UnknowAttrType,
-			TupleUtilsException
+			TupleUtilsException, ClassNotFoundException
 	{
 
 		switch (fldType.attrType)

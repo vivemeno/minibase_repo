@@ -73,6 +73,7 @@ public abstract class pnodePQ
    * @exception UnknowAttrType <code>attrSymbol</code> or 
    *                           <code>attrNull</code> encountered
    * @exception TupleUtilsException error in tuple compare routines
+ * @throws ClassNotFoundException 
    */
   public int pnodeCMP(pnode a, pnode b) 
          throws IOException, UnknowAttrType, TupleUtilsException {
@@ -90,8 +91,9 @@ public abstract class pnodePQ
    * @exception UnknowAttrType <code>attrSymbol</code> or 
    *                           <code>attrNull</code> encountered
    * @exception TupleUtilsException error in tuple compare routines
+ * @throws ClassNotFoundException 
    */  
-  public boolean pnodeEQ(pnode a, pnode b) throws IOException, UnknowAttrType, TupleUtilsException {
+  public boolean pnodeEQ(pnode a, pnode b) throws IOException, UnknowAttrType, TupleUtilsException, ClassNotFoundException {
     return pnodeCMP(a, b) == 0;
   }
   

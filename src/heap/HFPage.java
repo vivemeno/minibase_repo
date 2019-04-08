@@ -710,4 +710,72 @@ public class HFPage extends Page
 	}
     }
   
+  
+  
+//  ------------------------------------------------------------------------------
+  public RID insertRecord ( byte [] record, RID rid)		
+		    throws IOException
+		    {
+		      
+		      int recLen = record.length;
+		      int spaceNeeded = recLen + SIZE_OF_SLOT;
+		      
+		      // Start by checking if sufficient space exists.
+		      // This is an upper bound check. May not actually need a slot
+		      // if we can find an empty one.
+		      
+		      freeSpace = Convert.getShortValue (FREE_SPACE, data);
+		      if (spaceNeeded > freeSpace) {
+		        return null;
+			
+		      } else {
+			
+			// look for an empty slot
+			slotCnt = Convert.getShortValue (SLOT_CNT, data); 
+			int i; 
+			short length;
+			for (i= 0; i < slotCnt; i++) 
+			  {
+			    length = getSlotLength(i); 
+			    if (length == EMPTY_SLOT)
+			      break;
+			  }
+			
+			if(i == slotCnt)   //use a new slot
+			  {           
+			    // adjust free space        
+			    freeSpace -= spaceNeeded;
+			    Convert.setShortValue (freeSpace, FREE_SPACE, data);
+			    
+			    slotCnt++;
+			    Convert.setShortValue (slotCnt, SLOT_CNT, data);
+			    
+			  }
+			else {
+			  // reusing an existing slot
+			  freeSpace -= recLen;
+			  Convert.setShortValue (freeSpace, FREE_SPACE, data);
+			}
+		        
+			usedPtr = Convert.getShortValue (USED_PTR, data);
+		        usedPtr -= recLen;    // adjust usedPtr
+			Convert.setShortValue (usedPtr, USED_PTR, data);
+			
+			//insert the slot info onto the data page
+			setSlot(i, recLen, usedPtr);   
+			
+			// insert data onto the data page
+			System.arraycopy (record, 0, data, usedPtr, recLen);
+			curPage.pid = Convert.getIntValue (CUR_PAGE, data);
+			rid.pageNo.pid = curPage.pid;
+			rid.slotNo = i;
+			return   rid ;
+		      }
+		    } 
+		  
+  
+  
+  
+  
+  
 }

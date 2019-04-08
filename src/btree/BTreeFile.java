@@ -174,7 +174,6 @@ public class BTreeFile extends IndexFile
 	   ConstructPageException        
     {      
       
-      
       headerPageId=get_file_entry(filename);   
       
       headerPage= new  BTreeHeaderPage( headerPageId);       

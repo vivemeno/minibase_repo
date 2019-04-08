@@ -3,6 +3,16 @@ import java.io.Serializable;
 
 public class IntervalType implements Serializable {
     
+	@Override
+	public String toString() {
+		return "IntervalType [s=" + s + ", e=" + e + ", l=" + l + "]";
+	}
+
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 2L;
 	public static int INTERVAL_CONTAINMENT = 1;
 	public static int INTERVAL_NO_OVERLAP = 0;
 	public static int INTERVAL_ENCLOSURE = 2;

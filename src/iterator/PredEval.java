@@ -21,6 +21,7 @@ public class PredEval
 	 *@exception InvalidTypeException type of tuple not valid
 	 *@exception FieldNumberOutOfBoundException field number exceeds limit
 	 *@exception PredEvalException exception from this method
+	 * @throws ClassNotFoundException 
 	 */
 	public static boolean Eval(CondExpr p[], Tuple t1, Tuple t2, AttrType in1[],
 							   AttrType in2[])
@@ -29,7 +30,7 @@ public class PredEval
 			InvalidTupleSizeException,
 			InvalidTypeException,
 			FieldNumberOutOfBoundException,
-			PredEvalException
+			PredEvalException, ClassNotFoundException
 	{
 		CondExpr temp_ptr;
 		int i = 0;
@@ -112,6 +113,12 @@ public class PredEval
 							tuple2 = t1;
 						else
 							tuple2 = t2;
+						break;
+					case AttrType.attrInterval:
+						str_size[0] = (short) (64 + 1);
+						value.setHdr((short) 1, val_type, str_size);
+						value.setIntervalFld(1, temp_ptr.operand2.interval);
+						tuple2 = value;
 						break;
 					default:
 						break;

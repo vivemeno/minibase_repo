@@ -24,6 +24,7 @@ public class Projection
    *@exception UnknowAttrType attrbute type does't match
    *@exception FieldNumberOutOfBoundException field number exceeds limit
    *@exception IOException some I/O fault 
+ * @throws ClassNotFoundException 
    */
   public static void Join( Tuple  t1, AttrType type1[],
                            Tuple  t2, AttrType type2[],
@@ -32,7 +33,7 @@ public class Projection
 			   )
     throws UnknowAttrType,
 	   FieldNumberOutOfBoundException,
-	   IOException
+	   IOException, ClassNotFoundException
 	{
 
 		for (int i = 0; i < nOutFlds; i++) {
@@ -99,6 +100,7 @@ public class Projection
    *@exception WrongPermat wrong FldSpec argument
    *@exception FieldNumberOutOfBoundException field number exceeds limit
    *@exception IOException some I/O fault 
+ * @throws ClassNotFoundException 
    */
   
   public static void Project(Tuple  t1, AttrType type1[], 
@@ -108,7 +110,7 @@ public class Projection
     throws UnknowAttrType,
 	   WrongPermat,
 	   FieldNumberOutOfBoundException,
-	   IOException
+	   IOException, ClassNotFoundException
     {
       
       
@@ -129,7 +131,7 @@ public class Projection
 		  Jtuple.setStrFld(i+1, t1.getStrFld(perm_mat[i].offset));
 		  break;
 		case AttrType.attrInterval:
-			  Jtuple.setIntervalFld(i+1, t1.getIntervalField(perm_mat[i].offset));
+			Jtuple = Jtuple.setIntervalFld(i+1, t1.getIntervalField(perm_mat[i].offset));
 			  break;
 		default:
 		  

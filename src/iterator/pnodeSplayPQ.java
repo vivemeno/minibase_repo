@@ -55,6 +55,7 @@ public class pnodeSplayPQ extends pnodePQ
    * @exception UnknowAttrType <code>attrSymbol</code> or 
    *                           <code>attrNull</code> encountered
    * @exception TupleUtilsException error in tuple compare routines
+ * @throws ClassNotFoundException 
    */
   public void enq(pnode item) throws IOException, UnknowAttrType, TupleUtilsException 
   {

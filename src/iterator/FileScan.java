@@ -111,6 +111,7 @@ public class FileScan extends  Iterator
    *@exception UnknowAttrType attribute type unknown
    *@exception FieldNumberOutOfBoundException array out of bounds
    *@exception WrongPermat exception for wrong FldSpec argument
+ * @throws ClassNotFoundException 
    */
   public Tuple get_next()
     throws JoinsException,
@@ -121,7 +122,7 @@ public class FileScan extends  Iterator
 	   PredEvalException,
 	   UnknowAttrType,
 	   FieldNumberOutOfBoundException,
-	   WrongPermat
+	   WrongPermat, ClassNotFoundException
 	{
 		RID rid = new RID();
 		;
