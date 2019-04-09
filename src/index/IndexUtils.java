@@ -246,7 +246,7 @@ public class IndexUtils {
 	      intervalTree.IndexFileScan indScan;
 	      
 	      if (selects == null || selects[0] == null) {
-		indScan = ((IntervalTreeFile)indFile).new_scan(null, 7);
+		indScan = ((IntervalTreeFile)indFile).new_scan(null, null, 7);
 		return indScan;
 	      }
 	      
@@ -261,11 +261,11 @@ public class IndexUtils {
 		if (selects[0].op.attrOperator == AttrOperator.aopEQ) {
 		  if (selects[0].type1.attrType != AttrType.attrSymbol) {
 		    key = getValueITree(selects[0], selects[0].type1, 1);
-		    indScan = ((IntervalTreeFile)indFile).new_scan(key, 7); //7 - means contains
+		    indScan = ((IntervalTreeFile)indFile).new_scan(key, null, 7); //7 - means contains
 		  }
 		  else {
 		    key = getValueITree(selects[0], selects[0].type2, 2);
-		    indScan = ((IntervalTreeFile)indFile).new_scan(key, 7);
+		    indScan = ((IntervalTreeFile)indFile).new_scan(key, null,  7);
 		  }
 		  return indScan;
 		}
@@ -274,11 +274,11 @@ public class IndexUtils {
 		if (selects[0].op.attrOperator == AttrOperator.aopGT || selects[0].op.attrOperator == AttrOperator.aopGE) {
 		  if (selects[0].type1.attrType != AttrType.attrSymbol) {
 		    key = getValueITree(selects[0], selects[0].type1, 1);
-		    indScan = ((IntervalTreeFile)indFile).new_scan(key, 7);
+		    indScan = ((IntervalTreeFile)indFile).new_scan(key, null, 7);
 		  }
 		  else {
 		    key = getValueITree(selects[0], selects[0].type2, 2);
-		    indScan = ((IntervalTreeFile)indFile).new_scan(key, 7);
+		    indScan = ((IntervalTreeFile)indFile).new_scan(key, null, 7);
 		  }
 		  return indScan;
 		}
@@ -318,10 +318,10 @@ public class IndexUtils {
 		switch (type.attrType) {
 		case AttrType.attrInterval:
 		  if (IntervalT.keyCompare(((IntervalKey)key1),((IntervalKey)key2) )  < 0) {
-		    indScan = ((IntervalTreeFile)indFile).new_scan(key1, 7);
+		    indScan = ((IntervalTreeFile)indFile).new_scan(key1, key2, 7);
 		  }
 		  else {
-		    indScan = ((IntervalTreeFile)indFile).new_scan(key2, 7);
+		    indScan = ((IntervalTreeFile)indFile).new_scan(key2, key1, 7);
 		  }
 		  return indScan;
 		  

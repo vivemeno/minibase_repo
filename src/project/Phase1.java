@@ -298,6 +298,8 @@ public class Phase1 {
 
 		// *******************************************querying b tree index on
 		// interval*******************************************
+		
+		long startTime = System.nanoTime();
 
 		FldSpec[] projlist = new FldSpec[2];
 		RelSpec rel = new RelSpec(RelSpec.outer);
@@ -311,7 +313,7 @@ public class Phase1 {
 		expr[0].type1 = new AttrType(AttrType.attrSymbol);
 		expr[0].type2 = new AttrType(AttrType.attrInterval);
 		expr[0].operand1.symbol = new FldSpec(new RelSpec(RelSpec.outer), 1);
-		expr[0].operand2.interval = new IntervalType(376663, 1, 3);
+		expr[0].operand2.interval = new IntervalType(110402, 1, 2);
 		expr[0].next = null;
 //	    expr[1] = null;
 
@@ -320,7 +322,7 @@ public class Phase1 {
 		expr[1].type1 = new AttrType(AttrType.attrSymbol);
 		expr[1].type2 = new AttrType(AttrType.attrInterval);
 		expr[1].operand1.symbol = new FldSpec(new RelSpec(RelSpec.outer), 1);
-		expr[1].operand2.interval = new IntervalType(386663, 908, 3);
+		expr[1].operand2.interval = new IntervalType(110577, 908, 2);
 		expr[1].next = null;
 		expr[2] = null;
 
@@ -372,6 +374,10 @@ public class Phase1 {
 //	      ival = iout;
 
 	      System.out.println("result "+ iout.toString());
+	      
+	      if(iout.s == 110574) {
+	    	  System.out.println();
+	      }
 
 			try {
 				t = iscan.get_nextInterval();
@@ -384,7 +390,11 @@ public class Phase1 {
 			System.err.println("in status check block");
 		}
 
+		long endTime = System.nanoTime();
+		long duration = (endTime - startTime);
+		
 		System.err.println("total results : " + count);
+		System.out.println("total time taken in ms : " + duration/1000000);
 		// clean up
 		try {
 			iscan.close();
