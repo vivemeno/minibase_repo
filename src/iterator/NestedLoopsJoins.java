@@ -1,11 +1,13 @@
 package iterator;
    
 
+import btree.BTreeFile;
 import heap.*;
 import global.*;
 import bufmgr.*;
-import diskmgr.*;
 import index.*;
+import project.ProjectUtils;
+
 import java.lang.*;
 import java.io.*;
 /** 
@@ -36,6 +38,10 @@ public class NestedLoopsJoins  extends Iterator
   private   int        nOutFlds;
   private   Heapfile  hf;
   private   Scan      inner;
+  private BTreeFile bTreeFile;
+  private Iterator innerIterator;
+  private String indexFileName;
+  private String relationName;
   
   
   /**constructor
@@ -72,6 +78,73 @@ public class NestedLoopsJoins  extends Iterator
 			   ) throws IOException,NestedLoopException
 	{
 
+		init(in1, len_in1, t1_str_sizes, in2, len_in2,t2_str_sizes, amt_of_mem,am1,outFilter, rightFilter,proj_list, n_out_flds);
+
+		try {
+			hf = new Heapfile(relationName);
+
+		} catch (Exception e) {
+			throw new NestedLoopException(e, "Create new heapfile failed.");
+		}
+	}
+
+	/**constructor
+	 *Initialize the two relations which are joined, including relation type,
+	 *@param in1  Array containing field types of R.
+	 *@param len_in1  # of columns in R.
+	 *@param t1_str_sizes shows the length of the string fields.
+	 *@param in2  Array containing field types of S
+	 *@param len_in2  # of columns in S
+	 *@param  t2_str_sizes shows the length of the string fields.
+	 *@param amt_of_mem  IN PAGES
+	 *@param am1  access method for left i/p to join
+	 *@param outFilter   select expressions
+	 *@param rightFilter reference to filter applied on right i/p
+	 *@param proj_list shows what input fields go where in the output tuple
+	 *@param n_out_flds number of outer relation fileds
+	 *@exception IOException some I/O fault
+	 *@exception NestedLoopException exception from this class
+	 */
+	public NestedLoopsJoins( AttrType    in1[],
+							 int     len_in1,
+							 short   t1_str_sizes[],
+							 AttrType    in2[],
+							 int     len_in2,
+							 short   t2_str_sizes[],
+							 int     amt_of_mem,
+							 Iterator     am1,
+							 String relationName,
+							 CondExpr outFilter[],
+							 CondExpr rightFilter[],
+							 FldSpec   proj_list[],
+							 int        n_out_flds,
+							 String bTreeFileName
+	) throws IOException,NestedLoopException
+	{
+
+		init(in1, len_in1, t1_str_sizes, in2, len_in2,t2_str_sizes, amt_of_mem,am1,outFilter, rightFilter,proj_list, n_out_flds);
+
+		try {
+			indexFileName = bTreeFileName;
+			this.relationName = relationName;
+
+		} catch (Exception e) {
+			throw new NestedLoopException(e, "Create new heapfile failed.");
+		}
+	}
+
+	private void init(AttrType    in1[],
+					  int     len_in1,
+					  short   t1_str_sizes[],
+					  AttrType    in2[],
+					  int     len_in2,
+					  short   t2_str_sizes[],
+					  int     amt_of_mem,
+					  Iterator     am1,
+					  CondExpr outFilter[],
+					  CondExpr rightFilter[],
+					  FldSpec   proj_list[],
+					  int        n_out_flds) throws IOException,NestedLoopException {
 		_in1 = new AttrType[in1.length];
 		_in2 = new AttrType[in2.length];
 		System.arraycopy(in1, 0, _in1, 0, in1.length);
@@ -103,13 +176,8 @@ public class NestedLoopsJoins  extends Iterator
 			throw new NestedLoopException(e, "TupleUtilsException is caught by NestedLoopsJoins.java");
 		}
 
-		try {
-			hf = new Heapfile(relationName);
-
-		} catch (Exception e) {
-			throw new NestedLoopException(e, "Create new heapfile failed.");
-		}
 	}
+
   
   /**  
    *@return The joined tuple is returned
@@ -163,7 +231,7 @@ public class NestedLoopsJoins  extends Iterator
 				}
 
 				try {
-					inner = hf.openScan();
+					innerIterator = new IndexScan(new IndexType(IndexType.B_Index), relationName, indexFileName, ProjectUtils.getNodeTableAttrType(), ProjectUtils.getNodeTableStringSizes(), 2, 2, ProjectUtils.getProjections(), RightFilter, 2, false);
 				} catch (Exception e) {
 					throw new NestedLoopException(e, "openScan failed");
 				}
@@ -184,7 +252,7 @@ public class NestedLoopsJoins  extends Iterator
 			// is no match (with pred),get a tuple from the inner.
 
 			RID rid = new RID();
-			while ((inner_tuple = inner.getNext(rid)) != null) {
+			while ((inner_tuple = innerIterator.get_next()) != null) {
 				inner_tuple.setHdr((short) in2_len, _in2, t2_str_sizescopy);
 				if (PredEval.Eval(RightFilter, inner_tuple, null, _in2, null) == true) {
 					if (PredEval.Eval(OutputFilter, outer_tuple, inner_tuple, _in1, _in2) == true) {
@@ -201,9 +269,86 @@ public class NestedLoopsJoins  extends Iterator
 
 			get_from_outer = true; // Loop back to top and get next outer tuple.
 		} while (true);
-	} 
- 
-  /**
+	}
+
+	public Tuple get_next_with_index()
+			throws IOException,
+			JoinsException ,
+			IndexException,
+			InvalidTupleSizeException,
+			InvalidTypeException,
+			PageNotReadException,
+			TupleUtilsException,
+			PredEvalException,
+			SortException,
+			LowMemException,
+			UnknowAttrType,
+			UnknownKeyTypeException,
+			Exception
+	{
+		// This is a DUMBEST form of a join, not making use of any key information...
+
+		if (done)
+			return null;
+
+		do {
+			// If get_from_outer is true, Get a tuple from the outer, delete
+			// an existing scan on the file, and reopen a new scan on the file.
+			// If a get_next on the outer returns DONE?, then the nested loops
+			// join is done too.
+
+			if (get_from_outer == true) {
+				get_from_outer = false;
+				if (innerIterator != null) // If this not the first time,
+				{
+					// close scan
+					inner = null;
+				}
+
+				try {
+
+				} catch (Exception e) {
+					throw new NestedLoopException(e, "openScan failed");
+				}
+
+				if ((outer_tuple = outer.get_next()) == null) {
+					done = true;
+					if (innerIterator != null) {
+
+						inner = null;
+					}
+
+					return null;
+				}
+			} // ENDS: if (get_from_outer == TRUE)
+
+			// The next step is to get a tuple from the inner,
+			// while the inner is not completely scanned && there
+			// is no match (with pred),get a tuple from the inner.
+
+			RID rid = new RID();
+			while ((inner_tuple = innerIterator.get_next()) != null) {
+				inner_tuple.setHdr((short) in2_len, _in2, t2_str_sizescopy);
+				if (PredEval.Eval(RightFilter, inner_tuple, null, _in2, null) == true) {
+					if (PredEval.Eval(OutputFilter, outer_tuple, inner_tuple, _in1, _in2) == true) {
+						// Apply a projection on the outer and inner tuples.
+						Projection.Join(outer_tuple, _in1, inner_tuple, _in2, Jtuple, perm_mat, nOutFlds);
+						return Jtuple;
+					}
+				}
+			}
+
+			// There has been no match. (otherwise, we would have
+			// returned from t//he while loop. Hence, inner is
+			// exhausted, => set get_from_outer = TRUE, go to top of loop
+
+			get_from_outer = true; // Loop back to top and get next outer tuple.
+		} while (true);
+	}
+
+
+
+	/**
    * implement the abstract method close() from super class Iterator
    *to finish cleaning up
    *@exception IOException I/O error from lower layers

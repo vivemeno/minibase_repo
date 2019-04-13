@@ -45,26 +45,18 @@ class Rule {
 }
 
 public class Phase1 {
-	public static final int NUMBUF = 50;
+	public static final int NUMBUF = 1000;
 	public static final int TAG_LENGTH = 5;
 	private boolean OK = true;
 	private boolean FAIL = false;
 	public Vector<NodeTable> nodes;
-	private String input_file_base = "/home/vivemeno/DBMSI/";
+	private String input_file_base = "/home/vivemeno/DBMSI/input/";
 	private Map<String, String> tagMapping = new HashMap<>(); // contains id to tag name mapping
+
 	public Phase1() {
-/*		nodes = new Vector<NodeTable>();
-		nodes.addElement(new NodeTable("A", new IntervalType(1, 14, 1)));
-		nodes.addElement(new NodeTable("B", new IntervalType(2, 9, 2)));
-		nodes.addElement(new NodeTable("B", new IntervalType(10, 11, 2)));
-		nodes.addElement(new NodeTable("B", new IntervalType(12, 13, 2)));
-		nodes.addElement(new NodeTable("C", new IntervalType(3, 6, 3)));
-		nodes.addElement(new NodeTable("D", new IntervalType(7, 8, 3)));
-		nodes.addElement(new NodeTable("E", new IntervalType(4, 5, 4)));
-//		
-*/	
+
+		//createDemoNodes();
 		nodes = XMLToIntervalTable.xmlToTreeConverter();
-		
 		boolean status = OK;
 
 		String dbpath = "/tmp/" + System.getProperty("user.name") + ".minibase.jointestdb";
@@ -83,24 +75,13 @@ public class Phase1 {
 			System.err.println("" + e);
 		}
 
-		SystemDefs sysdef = new SystemDefs(dbpath, 1000, NUMBUF, "Clock");
+		SystemDefs sysdef = new SystemDefs(dbpath, 10000, NUMBUF, "Clock");
 
 		// creating the node table relation
-		AttrType[] nodeTableAttrTypes = new AttrType[2];
-		nodeTableAttrTypes[0] = new AttrType(AttrType.attrInterval);
-		nodeTableAttrTypes[1] = new AttrType(AttrType.attrString);
 
-		short[] nodeTableStringSizes = new short[1];
-		nodeTableStringSizes[0] = TAG_LENGTH; 
 
 		Tuple t = new Tuple();
-		try {
-			t.setHdr((short) 2, nodeTableAttrTypes, nodeTableStringSizes);
-		} catch (Exception e) {
-			System.err.println("*** error in Tuple.setHdr() ***");
-			status = FAIL;
-			e.printStackTrace();
-		}
+		ProjectUtils.setTupleHeader(t);
 
 		int size = t.size();
 
@@ -116,13 +97,7 @@ public class Phase1 {
 		}
 
 		t = new Tuple(size);
-		try {
-			t.setHdr((short) 2, nodeTableAttrTypes, nodeTableStringSizes);
-		} catch (Exception e) {
-			System.err.println("*** error in Tuple.setHdr() ***");
-			status = FAIL;
-			e.printStackTrace();
-		}
+		ProjectUtils.setTupleHeader(t);
 		
 		int numnodes = nodes.size();
 		for (int i = 0; i < numnodes; i++) {
@@ -144,11 +119,35 @@ public class Phase1 {
 				e.printStackTrace();
 			}
 		}
+
+		ProjectUtils.createIndex(f, "nodeIndex.in");
+	//	ProjectUtils.testScan("nodes.in", "nodeIndex.in");
+		System.out.println("BTreeIndex created successfully.\n");
 		if (status != OK) {
 			// bail out
 			System.err.println("*** Error creating relation for nodes");
 			Runtime.getRuntime().exit(1);
 		}
+	}
+
+	private void testIndex() {
+
+	}
+
+
+
+	private void createDemoNodes() {
+		nodes = new Vector<NodeTable>();
+		nodes.addElement(new NodeTable("B", new IntervalType(2, 9, 2)));
+		nodes.addElement(new NodeTable("C", new IntervalType(3, 6, 3)));
+		nodes.addElement(new NodeTable("A", new IntervalType(1, 14, 1)));
+
+		nodes.addElement(new NodeTable("B", new IntervalType(10, 11, 2)));
+		nodes.addElement(new NodeTable("B", new IntervalType(12, 13, 2)));
+
+		nodes.addElement(new NodeTable("D", new IntervalType(7, 8, 3)));
+		nodes.addElement(new NodeTable("E", new IntervalType(4, 5, 4)));
+
 	}
 
 	private void Project2_CondExpr(CondExpr[] expr, Rule rule) {
@@ -213,6 +212,23 @@ public class Phase1 {
 		OutFilter[3] = null;
 	}
 
+	private void checkNodeTree() {
+		Map<String, Integer> countMap = new HashMap<>();
+		for (NodeTable node : nodes) {
+			if (node.nodename.equals("root"))
+				countMap.put(node.nodename, 1);
+			if (node.nodename.equals("Entry"))
+				countMap.put(node.nodename, 1);
+			if (node.nodename.equals("Ref"))
+				countMap.put(node.nodename, 1);
+			if (countMap.size() == 3)
+				break;
+		}
+
+		if (countMap.size() < 3)
+			System.out.println("Invalida node tree");
+	}
+
 	private void setConditions(CondExpr[] outFilter, CondExpr[] rightFilter, Rule rule, int offset, boolean isFirstRule) {
 		
 		int outerIntervalColNo = offset;
@@ -264,20 +280,104 @@ public class Phase1 {
 	private void populateNodeOffsetMap(Map<String, Integer> offsetMap, String nodeName, int nodeNumber) {
 		offsetMap.put(nodeName, 2*nodeNumber);
 	}
+
+	private CondExpr[] createFilterForQueryHeap(List<Rule> rules) {
+		Set<String> uniqueTags = new HashSet<>();
+		for (Rule rule : rules) {
+			String tag1 = tagMapping.get(rule.outerTag);
+			String tag2 = tagMapping.get(rule.innerTag);
+			uniqueTags.add(tag1);
+			uniqueTags.add(tag2);
+		}
+
+		CondExpr[] innerRelFilterConditions = new CondExpr[2];
+		CondExpr prev = null;
+		CondExpr curr = null;
+		CondExpr head =null;
+		for (String tag : uniqueTags) {
+			curr = new CondExpr();
+			curr.next = null;
+			curr.op = new AttrOperator(AttrOperator.aopEQ);
+			curr.type1 = new AttrType(AttrType.attrSymbol);
+			curr.type2 = new AttrType(AttrType.attrString);
+			curr.operand1.symbol = new FldSpec(new RelSpec(RelSpec.outer), 2);
+			curr.operand2.string = tag;
+
+			//Inner table comparison.
+			if (prev != null) {
+				prev.next = curr;
+				prev = curr;
+			} else {
+				prev = curr;
+				head = curr;
+			}
+
+		}
+
+		innerRelFilterConditions[0] = head;
+		return innerRelFilterConditions;
+
+	}
+
+	private void createQueryHeapFile(String file, List<Rule> rules) {
+		Iterator fileScanner = null;
+		System.out.println("Creating temp heap file for query");
+		AttrType[] baseTableAttrTypes = { new AttrType(AttrType.attrInterval), new AttrType(AttrType.attrString) };
+		short[] baseTableStringLengths = new short[1];
+		baseTableStringLengths[0] = TAG_LENGTH;
+
+		AttrType[] nodeTableAttrTypes = new AttrType[2];
+		nodeTableAttrTypes[0] = new AttrType(AttrType.attrInterval);
+		nodeTableAttrTypes[1] = new AttrType(AttrType.attrString);
+
+		short[] nodeTableStringSizes = new short[1];
+		nodeTableStringSizes[0] = TAG_LENGTH;
+
+		CondExpr[] innerRelFilterConditions = createFilterForQueryHeap(rules);
+
+		FldSpec[] initialProjection = { new FldSpec(new RelSpec(RelSpec.outer), 1),
+				new FldSpec(new RelSpec(RelSpec.outer), 2) };
+		try {
+
+			fileScanner = new FileScan(file, baseTableAttrTypes, baseTableStringLengths, (short) 2, (short) 2,
+					initialProjection, innerRelFilterConditions);
+		} catch (Exception e) {
+			System.err.println("" + e);
+			e.printStackTrace();
+		}
+
+		Heapfile temp = null;
+
+		try {
+			temp = new Heapfile("temp.in");
+		} catch (Exception e) {
+			System.err.println("*** error in Heapfile constructor ***");
+			e.printStackTrace();
+		}
+
+		try {
+			Tuple t =fileScanner.get_next();
+
+			while (t != null) {
+				Tuple tuple = new Tuple(t.getLength());
+				tuple.setHdr((short) 2, nodeTableAttrTypes, nodeTableStringSizes);
+				tuple.setIntervalFld(1, t.getIntervalField(1));
+				tuple.setStrFld(2, t.getStrFld(2));
+				temp.insertRecord(tuple.returnTupleByteArray());
+				t = fileScanner.get_next();
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+	}
 	
 	public void compute(List<Rule> rules) {
-//		Rule rule1 = new Rule("A", "B", Rule.RULE_TYPE_PARENT_CHILD);
-//		Rule rule2 = new Rule("A", "E", Rule.RULE_TYPE_ANCESTRAL_DESCENDENT);
-//		Rule rule3 = new Rule("B", "C", Rule.RULE_TYPE_PARENT_CHILD);
-//		
-//		//Rule rule3 = new Rule("B", "D", Rule.RULE_TYPE_ANCESTRAL_DESCENDENT);
-//		ArrayList<Rule> rules = new ArrayList<>();
-//		rules.add(rule1);
-//		rules.add(rule2);
-//		rules.add(rule3);
+
  
 		// Map containing the corresponding column number for the
 		// given tag Id in the joined table.
+
 		HashMap<String, Integer> tagOffsetMap = new HashMap<>();
 
 		int nodeNumber = 1;
@@ -342,7 +442,7 @@ public class Phase1 {
 		NestedLoopsJoins currIterator = null;
 		try {
 			prevIterator = new NestedLoopsJoins(baseTableAttrTypes, 2, baseTableStringLengths, baseTableAttrTypes, 2,
-					baseTableStringLengths, 10, fileScanner, "nodes.in", filterConditions, innerRelFilterConditions, currProjection, 4);
+					baseTableStringLengths, 10, fileScanner, "nodes.in", filterConditions, innerRelFilterConditions, currProjection, 4, "nodeIndex.in");
 		} catch (Exception e) {
 			System.err.println("*** Error preparing for nested_loop_join");
 			System.err.println("" + e);
@@ -404,7 +504,7 @@ public class Phase1 {
 			try {
 				currIterator = new NestedLoopsJoins(joinedTableAttrTypes, 2 * ruleNumber, joinedTableStringLengths, baseTableAttrTypes, 2,
 						baseTableStringLengths, 10, prevIterator, "nodes.in", filterConditions, innerRelFilterConditions, currProjection,
-						2 * ruleNumber + 2);
+						2 * ruleNumber + 2, "nodeIndex.in");
 			} catch (Exception e) {
 				System.err.println("*** Error preparing for nested_loop_join");
 				System.err.println("" + e);
@@ -649,6 +749,7 @@ public class Phase1 {
 		int n = Integer.parseInt(file_contents[0]);
 		int index = 0;
 		int[] rankIndex = new int[n];
+		tagMapping.clear();
 		Map<Integer, List<Rule>> ruleMap = new HashMap<>();
 		for (String line : file_contents) {
 			if (index > 0 && index <= n) {
@@ -658,7 +759,6 @@ public class Phase1 {
 
 			if (index > n) {
 				String[] rule_components = line.split(" ");
-				System.out.print(rule_components[2]);
 				int relation = rule_components[2].equals("PC") ? Rule.RULE_TYPE_PARENT_CHILD : Rule.RULE_TYPE_ANCESTRAL_DESCENDENT;
 				rankIndex[Integer.parseInt(rule_components[1]) - 1]++;
 				ruleMap.get(Integer.parseInt(rule_components[0])).add(new Rule(rule_components[0], rule_components[1], relation));
@@ -673,14 +773,21 @@ public class Phase1 {
 		String choice = "Y";
 		System.out.println("Number of page accessed = " + BufMgr.page_access_counter);
 		while (!choice.equals("N") && !choice.equals("n")) {
+			long start = System.currentTimeMillis();
 			BufMgr.page_access_counter = 0;
+
 			System.out.println("Enter input filename for query");
 			Scanner scanner = new Scanner(System.in);
 			String file = scanner.next();
 			String[] file_contents = readFile(input_file_base + file);
 			List<Rule> rules = getRuleList(file_contents);
+			//List<Rule> rules = getDemoRUles();
+			createQueryHeapFile("nodes.in", rules);
+
 			compute(rules);
 			System.out.println("Number of page accessed = " + BufMgr.page_access_counter);
+			long timeTaken = (System.currentTimeMillis() - start)/1000;
+			System.out.println("Time taken = " + timeTaken);
 			System.out.println("Press N to stop");
 			choice = scanner.next();
 			System.out.print(choice);
@@ -711,6 +818,27 @@ public class Phase1 {
 		return orderedList;
 	}
 
+	private List<Rule> getDemoRUles()  {
+		tagMapping.put("1", "A");
+		tagMapping.put("2", "B");
+		tagMapping.put("3", "C");
+		tagMapping.put("4", "D");
+		tagMapping.put("4", "E");
+		Rule rule1 = new Rule("1", "2", Rule.RULE_TYPE_PARENT_CHILD);
+		Rule rule2 = new Rule("1", "4", Rule.RULE_TYPE_ANCESTRAL_DESCENDENT);
+		Rule rule3 = new Rule("2", "3", Rule.RULE_TYPE_PARENT_CHILD);
+
+		//Rule rule3 = new Rule("B", "D", Rule.RULE_TYPE_ANCESTRAL_DESCENDENT);
+		ArrayList<Rule> rules = new ArrayList<>();
+		rules.add(rule1);
+		rules.add(rule2);
+		rules.add(rule3);
+		return rules;
+
+
+
+
+	}
 
 
 	private Integer getRoot(int[] rankIndex) {
