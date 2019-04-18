@@ -185,10 +185,7 @@ public class Phase1 {
 	}
 
 
-	private void Project4_CondExpr(CondExpr[] OutFilter, Rule rule, int offset) {
-
-		String outerNode = rule.outerTag;
-
+	 private void SortMergeCondition(CondExpr[] OutFilter, int offset) {
 		OutFilter[0].next = null;
 		OutFilter[0].op = new AttrOperator(AttrOperator.aopEQ);
 		OutFilter[0].type1 = new AttrType(AttrType.attrSymbol);
@@ -197,7 +194,7 @@ public class Phase1 {
 		OutFilter[0].operand2.symbol = new FldSpec(new RelSpec(RelSpec.innerRel), 2);
 		OutFilter[0].flag =0;
 
-	}
+	 }
 
 
 	private CondExpr[] createFilterForQueryHeap(List<Rule> rules) {
@@ -527,31 +524,27 @@ public class Phase1 {
 	}
 
 	public void computeSM(List<Rule> rules, TupleOrder order) {
+
 		Map<String, Integer> nodeOffsetMap = new HashMap<>();
-		//rules.add(rule3);
 		int nodeNumber = 1;
 		boolean status = OK;
-
-		Iterator am = null;
-		Iterator am1 = null;
+		Iterator fileScan = null;
 		AttrType[] Ntypes = {new AttrType(AttrType.attrInterval), new AttrType(AttrType.attrString)};
 		short[] Nsizes = new short[1];
 		Nsizes[0] = TAG_LENGTH;
-
 		FldSpec[] Nprojection = {new FldSpec(new RelSpec(RelSpec.outer), 1),
 				new FldSpec(new RelSpec(RelSpec.outer), 2)};
-
-
-		FldSpec[] proj = {new FldSpec(new RelSpec(RelSpec.outer), 2), new FldSpec(new RelSpec(RelSpec.outer), 1),
+		FldSpec[] nljOutProj = {new FldSpec(new RelSpec(RelSpec.outer), 2), new FldSpec(new RelSpec(RelSpec.outer), 1),
 				new FldSpec(new RelSpec(RelSpec.innerRel), 2), new FldSpec(new RelSpec(RelSpec.innerRel), 1)};
 		List<NestedLoopsJoins> listNLJ = new LinkedList<>();
+		//takes ordered rules one by one perform nested loop join
 		for (Rule rule : rules) {
 			try {
 				CondExpr[] innerRelFilterConditions = new CondExpr[2];
 				innerRelFilterConditions[0] = new CondExpr();
 				innerRelFilterConditions[1] = new CondExpr();
 
-				//Inner table comparison.
+				//filter conditions to retrict join evaluation to valid tuples
 				innerRelFilterConditions[0].next = null;
 				innerRelFilterConditions[0].op = new AttrOperator(AttrOperator.aopEQ);
 				innerRelFilterConditions[0].type1 = new AttrType(AttrType.attrSymbol);
@@ -560,7 +553,7 @@ public class Phase1 {
 				innerRelFilterConditions[0].operand2.string = tagMapping.get(rule.outerTag);
 
 				innerRelFilterConditions[1] = null;
-				am = new FileScan("temp.in", Ntypes, Nsizes, (short) 2, (short) 2, Nprojection, innerRelFilterConditions);
+				fileScan = new FileScan("temp.in", Ntypes, Nsizes, (short) 2, (short) 2, Nprojection, innerRelFilterConditions);
 			} catch (Exception e) {
 				status = FAIL;
 				System.err.println("" + e);
@@ -579,8 +572,8 @@ public class Phase1 {
 				innerRelFilterConditions[1] = new CondExpr();
 
 				setConditions(outFilter,innerRelFilterConditions, rule, 1, true);
-				inl = new NestedLoopsJoins(Ntypes, 2, Nsizes, Ntypes, 2, Nsizes, 10, am, "temp.in", outFilter, innerRelFilterConditions, proj,
-						4);
+				inl = new NestedLoopsJoins(Ntypes, 2, Nsizes, Ntypes, 2, Nsizes, 10, fileScan, "temp.in", outFilter,
+						innerRelFilterConditions, nljOutProj, 4);
 				listNLJ.add(inl);
 			} catch (Exception e) {
 				System.err.println("*** Error preparing for nested_loop_join");
@@ -613,12 +606,13 @@ public class Phase1 {
 				outFilter[0] = new CondExpr();
 				outFilter[1] = null;
 
-				Project4_CondExpr(outFilter, rules.get(x), nodeOffsetMap.get(rules.get(x).outerTag));
-				AttrType[] NtypesFix = {new AttrType(AttrType.attrString),
+				SortMergeCondition(outFilter, nodeOffsetMap.get(rules.get(x).outerTag));
+				//This is fixed
+				AttrType[] typesInner = {new AttrType(AttrType.attrString),
 						new AttrType(AttrType.attrInterval), new AttrType(AttrType.attrString), new AttrType(AttrType.attrInterval)};
-				short[] NsizesFix = new short[2];
-				NsizesFix[0] = TAG_LENGTH;
-				NsizesFix[1] = TAG_LENGTH;
+				short[] sizesInner= new short[2];
+				sizesInner[0] = TAG_LENGTH;
+				sizesInner[1] = TAG_LENGTH;
 				AttrType[] Ntypes2 = new AttrType[2 * index];
 				for (int i = 0; i < 2 * index; i++) {
 					if (i % 2 == 0) {
@@ -638,26 +632,29 @@ public class Phase1 {
 				proj2[2 * index] = new FldSpec(new RelSpec(RelSpec.innerRel), 3);
 				proj2[2 * index + 1] = new FldSpec(new RelSpec(RelSpec.innerRel), 4);
 				SortMerge sm = null;
+				//need to check if previously sorted tag is outer tag, if yes we don't have to sort outer
 				if(!prevSortedTag.equalsIgnoreCase(rules.get(x).outerTag)) {
 					sm = new SortMerge(Ntypes2, index * 2, Nsizes2,
-							NtypesFix, 4, NsizesFix,
+							typesInner, 4, sizesInner,
 							nodeOffsetMap.get(rules.get(x).outerTag), 4,
 							2, 4,
-							100,
+							10,
 							prevSM, listNLJ.get(x),
 							false, false, order,
 							outFilter, proj2, 2 * index + 2);
 				} else {
 					sm = new SortMerge(Ntypes2, index * 2, Nsizes2,
-							NtypesFix, 4, NsizesFix,
+							typesInner, 4, sizesInner,
 							nodeOffsetMap.get(rules.get(x).outerTag), 4,
 							2, 4,
-							100,
+							10,
 							prevSM, listNLJ.get(x),
 							true, false, order,
 							outFilter, proj2, 2 * index + 2);
 				}
+				prevSortedTag = rules.get(x).outerTag;
 				if (!prevRule.innerTag.equals(rules.get(x).outerTag)) {
+					//if this condition is SM join works just like NLJ (example when it is required - A B PC, A E - AD)
 					sm.setCheckFlag(true);
 				} else
 					sm.setCheckFlag(false);
