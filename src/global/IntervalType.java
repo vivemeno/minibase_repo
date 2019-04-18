@@ -16,6 +16,11 @@ public class IntervalType implements Serializable {
     public IntervalType() {
 
     }
+    
+    @Override
+	public String toString() {
+		return "IntervalType [s=" + s + ", e=" + e + ", l=" + l + "]";
+	}
 
     public IntervalType(int start, int end, int level) {
         this.s = start;

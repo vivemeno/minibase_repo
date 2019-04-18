@@ -4,7 +4,11 @@ import bufmgr.*;
 import diskmgr.*; 
 import btree.*;
 import iterator.*;
-import heap.*; 
+import heap.*;
+import intervalTree.IntervalKey;
+import intervalTree.IntervalTreeFile;
+import intervalTree.IntervalFileScan;
+
 import java.io.*;
 
 
@@ -115,6 +119,27 @@ public class IndexScan extends Iterator {
       }
       
       break;
+     
+    case IndexType.interval_Index:
+        // error check the select condition
+        // must be of the type: value op symbol || symbol op value
+        // but not symbol op symbol || value op value
+	        try {
+	  	ITIndexFile = new IntervalTreeFile(indName); 
+	        }
+	        catch (Exception e) {
+	  	throw new IndexException(e, "IndexScan.java: BTreeFile exceptions caught from BTreeFile constructor");
+	        }
+	        
+	        try {
+	  	ITIndexScan = (IntervalFileScan) IndexUtils.intervalTree_scan(selects, ITIndexFile);
+	        }
+	        catch (Exception e) {
+	  	throw new IndexException(e, "IndexScan.java: BTreeFile exceptions caught from IndexUtils.BTree_scan().");
+	        }
+	      
+  break;
+      
     case IndexType.None:
     default:
       throw new UnknownIndexTypeException("Only BTree index is supported so far");
@@ -273,9 +298,113 @@ public class IndexScan extends Iterator {
     }
   }
   
+  
+  /**
+   * returns the next tuple.
+   * if <code>index_only</code>, only returns the key value 
+   * (as the first field in a tuple)
+   * otherwise, retrive the tuple and returns the whole tuple
+   * @return the tuple
+   * @exception IndexException error from the lower layer
+   * @exception UnknownKeyTypeException key type unknown
+   * @exception IOException from the lower layer
+   */
+  public Tuple get_nextInterval() throws IndexException, UnknownKeyTypeException 
+  {
+    RID rid;
+    int unused;
+    intervalTree.KeyDataEntry nextentry = null;
+
+    try {
+      nextentry = ITIndexScan.get_next();
+    }
+    catch (Exception e) {
+      throw new IndexException(e, "IndexScan.java: BTree error");
+    }	  
+    
+    while(nextentry != null) {
+      if (index_only) {
+	// only need to return the key 
+
+	AttrType[] attrType = new AttrType[1];
+	short[] s_sizes = new short[1];
+	
+	if (_types[_fldNum -1].attrType == AttrType.attrInterval) {
+	  attrType[0] = new AttrType(AttrType.attrInterval);
+	  try {
+	    Jtuple.setHdr((short) 1, attrType, s_sizes);
+	  }
+	  catch (Exception e) {
+	    throw new IndexException(e, "IndexScan.java: Heapfile error");
+	  }
+	  
+	  try {
+	    Jtuple.setIntervalFld(1, ((IntervalKey)nextentry.key).getKey());
+	  }
+	  catch (Exception e) {
+	    throw new IndexException(e, "IndexScan.java: Heapfile error");
+	  }	  
+	}
+	else {
+	  // attrReal not supported for now
+	  throw new UnknownKeyTypeException("Only Integer and String keys are supported so far"); 
+	}
+	return Jtuple;
+      }
+//      ****************************end of indexOnly if block******************************
+      // not index_only, need to return the whole tuple
+      rid = ((intervalTree.LeafData)nextentry.data).getData();
+      try {
+	tuple1 = f.getRecord(rid);
+      }
+      catch (Exception e) {
+	throw new IndexException(e, "IndexScan.java: getRecord failed");
+      }
+      
+      try {
+	tuple1.setHdr((short) _noInFlds, _types, _s_sizes);
+      }
+      catch (Exception e) {
+	throw new IndexException(e, "IndexScan.java: Heapfile error");
+      }
+    
+      boolean eval;
+      try {
+	eval = PredEval.Eval(_selects, tuple1, null, _types, null);
+      }
+      catch (Exception e) {
+	throw new IndexException(e, "IndexScan.java: Heapfile error");
+      }
+      
+      if (eval) {
+	// need projection.java
+	try {
+	  Projection.Project(tuple1, _types, Jtuple, perm_mat, _noOutFlds);
+	}
+	catch (Exception e) {
+	  throw new IndexException(e, "IndexScan.java: Heapfile error");
+	}
+
+	return Jtuple;
+      }
+
+      try {
+	nextentry = ITIndexScan.get_next();
+      }
+      catch (Exception e) {
+	throw new IndexException(e, "IndexScan.java: BTree error");
+      }	  
+    }
+    
+    return null; 
+  }
+  
+  
   public FldSpec[]      perm_mat;
   private IndexFile     indFile;
   private IndexFileScan indScan;
+  private intervalTree.IndexFile     ITIndexFile;
+  private intervalTree.IndexFileScan ITIndexScan;
   private AttrType[]    _types;
   private short[]       _s_sizes; 
   private CondExpr[]    _selects;

@@ -11,7 +11,11 @@ import bufmgr.BufMgr;
 import global.*;
 import global.NodeTable;
 import heap.Heapfile;
+import heap.Scan;
 import heap.Tuple;
+import index.IndexScan;
+import intervalTree.IntervalKey;
+import intervalTree.IntervalTreeFile;
 import iterator.*;
 import iterator.Iterator;
 import iterator.NestedLoopsJoins;
@@ -51,7 +55,7 @@ public class Phase1 {
 	private boolean OK = true;
 	private boolean FAIL = false;
 	public Vector<NodeTable> nodes;
-	private String input_file_base = "/home/vivemeno/DBMSI/input/";
+	private String input_file_base = "/home/renil/github/dbmsi/input/";
 	private Map<String, String> tagMapping = new HashMap<>(); // contains id to tag name mapping
 	public Phase1() {
 /*		nodes = new Vector<NodeTable>();
@@ -64,7 +68,9 @@ public class Phase1 {
 		nodes.addElement(new NodeTable("E", new IntervalType(4, 5, 4)));
 //
 */
-		nodes = XMLToIntervalTable.xmlToTreeConverter(input_file_base + "xml_sample_data.xml");
+//		nodes = XMLToIntervalTable.xmlToTreeConverter(input_file_base + "xml_sample_data.xml");
+//		nodes = XMLToIntervalTable.xmlToTreeConverter(input_file_base + "sample.xml");
+		nodes = XMLToIntervalTable.xmlToTreeConverter(input_file_base + "queryBackUo.xml");
 
 		boolean status = OK;
 
@@ -150,6 +156,163 @@ public class Phase1 {
 			System.err.println("*** Error creating relation for nodes");
 			Runtime.getRuntime().exit(1);
 		}
+		
+		
+//		******************************************interval indexing***************************************************************
+		// create the index file on the integer field
+			Tuple temp = null;Scan scan = null;
+			try {
+				scan = new Scan(f);
+			} catch (Exception e) {
+				status = FAIL;
+				e.printStackTrace();
+				Runtime.getRuntime().exit(1);
+			}
+			
+				IntervalTreeFile btfInterval = null;
+				try {
+					btfInterval = new IntervalTreeFile("IntervalIndex", 1/* delete */);
+				} catch (Exception e) {
+					status = FAIL;
+					e.printStackTrace();
+					Runtime.getRuntime().exit(1);
+				}
+
+				System.out.println("BTreeIndex created successfully.\n");
+
+				rid = new RID();
+				IntervalType intervalType = null;
+				
+
+				try {
+					temp = scan.getNext(rid);
+				} catch (Exception e) {
+					status = FAIL;
+					e.printStackTrace();
+				}
+				while (temp != null) {
+					t.tupleCopy(temp);
+
+					try {
+
+						String s = t.getStrFld(2);
+						intervalType = t.getIntervalField(1);
+					} catch (Exception e) {
+						status = FAIL;
+						e.printStackTrace();
+					}
+
+					try {
+						btfInterval.insert(new IntervalKey(intervalType), rid);
+					} catch (Exception e) {
+						status = FAIL;
+						e.printStackTrace();
+					}
+
+					try {
+						temp = scan.getNext(rid);
+					} catch (Exception e) {
+						status = FAIL;
+						e.printStackTrace();
+					}
+				}
+
+				// close the file scan
+				scan.closescan();
+
+				System.out.println("IntervalTree Index file insertion successfully completed.\n");
+
+				// *******************************************querying b tree index on
+				// interval*******************************************
+				
+				long startTime = System.nanoTime();
+		
+				FldSpec[] projlist = new FldSpec[2];
+				RelSpec rel = new RelSpec(RelSpec.outer);
+				projlist[0] = new FldSpec(rel, 1);
+				projlist[1] = new FldSpec(rel, 2);
+		
+				// conditions
+				CondExpr[] expr = new CondExpr[3];
+				expr[0] = new CondExpr();
+				expr[0].op = new AttrOperator(AttrOperator.aopGE);
+				expr[0].type1 = new AttrType(AttrType.attrSymbol);
+				expr[0].type2 = new AttrType(AttrType.attrInterval);
+				expr[0].operand1.symbol = new FldSpec(new RelSpec(RelSpec.outer), 1);
+				expr[0].operand2.interval = new IntervalType(5, 1, 2);
+				expr[0].next = null;
+//			    expr[1] = null;
+		
+				expr[1] = new CondExpr();
+				expr[1].op = new AttrOperator(AttrOperator.aopLE);
+				expr[1].type1 = new AttrType(AttrType.attrSymbol);
+				expr[1].type2 = new AttrType(AttrType.attrInterval);
+				expr[1].operand1.symbol = new FldSpec(new RelSpec(RelSpec.outer), 1);
+				expr[1].operand2.interval = new IntervalType(35, 908, 2);
+				expr[1].next = null;
+				expr[2] = null;
+		
+				// start index scan
+				IndexScan iscan = null;
+				status = OK;
+				try {
+					iscan = new IndexScan(new IndexType(IndexType.interval_Index), "nodes.in", "IntervalIndex",
+							nodeTableAttrTypes, nodeTableStringSizes, 2, 2, projlist, expr, 1, false);
+				} catch (Exception e) {
+					status = FAIL;
+					e.printStackTrace();
+				}
+		
+				t = null;
+				IntervalType iout = null;
+				int ival = 100, count = 0; // low key
+		
+				try {
+					t = iscan.get_nextInterval();
+				} catch (Exception e) {
+					status = FAIL;
+					e.printStackTrace();
+				}
+		
+				while (t != null) {
+					try {
+						iout = t.getIntervalField(1);
+						++count;
+//						System.out.println("count " + (count));
+					} catch (Exception e) {
+						status = FAIL;
+						e.printStackTrace();
+					}
+		
+			      System.out.println("result "+ iout.toString());
+			      
+			      if(iout.s == 110574) {
+			    	  System.out.println();
+			      }
+		
+					try {
+						t = iscan.get_nextInterval();
+					} catch (Exception e) {
+						status = FAIL;
+						e.printStackTrace();
+					}
+				}
+				if (status) {
+					System.err.println("in status check block");
+				}
+		
+				long endTime = System.nanoTime();
+				long duration = (endTime - startTime);
+				
+				System.err.println("total results : " + count);
+				System.out.println("total time taken in ms : " + duration/1000000);
+				// clean up
+				try {
+					iscan.close();
+				} catch (Exception e) {
+					status = FAIL;
+					e.printStackTrace();
+				}
 	}
 
 	private void Project2_CondExpr(CondExpr[] expr, Rule rule) {
@@ -803,7 +966,9 @@ public class Phase1 {
 
 	public static void main(String[] args) {
 		Phase1 phase1 = new Phase1();
-		phase1.input();
+		
+//		phase1.input();
+		
 		//phase1.compute();
 		//phase1.computeSM();
 	}
