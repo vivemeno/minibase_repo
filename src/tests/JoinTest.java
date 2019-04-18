@@ -354,15 +354,15 @@ class JoinsDriver implements GlobalConst {
   public boolean runTests() {
     
     Disclaimer();
-    Query1();
+//    Query1();
     
     Query2();
-    Query3();
-    
-   
-    Query4();
-    Query5();
-    Query6();
+//    Query3();
+//    
+//   
+//    Query4();
+//    Query5();
+//    Query6();
    
     System.out.print ("Finished joins testing"+"\n");
    
@@ -731,17 +731,21 @@ class JoinsDriver implements GlobalConst {
 
 		short[] Jsizes = new short[1];
 		Jsizes[0] = 30;
-		AttrType[] JJtype = { new AttrType(AttrType.attrString), };
+		AttrType[] JJtype = { new AttrType(AttrType.attrInteger), new AttrType(AttrType.attrString),
+				new AttrType(AttrType.attrInteger), new AttrType(AttrType.attrReal), new AttrType(AttrType.attrInteger), new AttrType(AttrType.attrInteger),
+				new AttrType(AttrType.attrString), };
 
 		short[] JJsize = new short[1];
 		JJsize[0] = 30;
-		FldSpec[] proj1 = { new FldSpec(new RelSpec(RelSpec.outer), 2), new FldSpec(new RelSpec(RelSpec.innerRel), 2) }; // S.sname,
+		FldSpec[] proj1 = {new FldSpec(new RelSpec(RelSpec.outer), 1), new FldSpec(new RelSpec(RelSpec.outer), 2), 
+				new FldSpec(new RelSpec(RelSpec.outer), 3), new FldSpec(new RelSpec(RelSpec.outer), 4),
+				new FldSpec(new RelSpec(RelSpec.innerRel), 1), new FldSpec(new RelSpec(RelSpec.innerRel), 2) }; // S.sname,
 		// R.bid
 
 		FldSpec[] proj2 = { new FldSpec(new RelSpec(RelSpec.outer), 1) };
 
 		FldSpec[] Sprojection = { new FldSpec(new RelSpec(RelSpec.outer), 1),
-				new FldSpec(new RelSpec(RelSpec.outer), 2),
+				new FldSpec(new RelSpec(RelSpec.outer), 2), new FldSpec(new RelSpec(RelSpec.outer), 3), new FldSpec(new RelSpec(RelSpec.outer), 4),
 				// new FldSpec(new RelSpec(RelSpec.outer), 3),
 				// new FldSpec(new RelSpec(RelSpec.outer), 4)
 		};
@@ -844,19 +848,20 @@ class JoinsDriver implements GlobalConst {
 
 		System.out.print("After Building btree index on sailors.sid.\n\n");
 		try {
-			am = new IndexScan(b_index, "sailors.in", "BTreeIndex", Stypes, Ssizes, 4, 2, Sprojection, null, 1, false);
+			am = new IndexScan(b_index, "sailors.in", "BTreeIndex", Stypes, Ssizes, 4, 4, Sprojection, null, 1, false);
 		}
 
 		catch (Exception e) {
 			System.err.println("*** Error creating scan for Index scan");
 			System.err.println("" + e);
+			e.printStackTrace();
 			Runtime.getRuntime().exit(1);
 		}
-
+		
 		NestedLoopsJoins nlj = null;
 		try {
-			nlj = new NestedLoopsJoins(Stypes2, 2, Ssizes, Rtypes, 3, Rsizes, 10, am, "reserves.in", outFilter, null,
-					proj1, 2);
+			nlj = new NestedLoopsJoins(Stypes, 4, Ssizes, Rtypes, 3, Rsizes, 10, am, "reserves.in", null, null,
+					proj1, 6);
 		} catch (Exception e) {
 			System.err.println("*** Error preparing for nested_loop_join");
 			System.err.println("" + e);
@@ -864,46 +869,76 @@ class JoinsDriver implements GlobalConst {
 			Runtime.getRuntime().exit(1);
 		}
 
-		NestedLoopsJoins nlj2 = null;
-		try {
-			nlj2 = new NestedLoopsJoins(Jtypes, 2, Jsizes, Btypes, 3, Bsizes, 10, nlj, "boats.in", outFilter2, null,
-					proj2, 1);
-		} catch (Exception e) {
-			System.err.println("*** Error preparing for nested_loop_join");
-			System.err.println("" + e);
-			Runtime.getRuntime().exit(1);
-		}
+//		NestedLoopsJoins nlj = null;
+//		try {
+//			nlj = new NestedLoopsJoins(Stypes2, 2, Ssizes, Rtypes, 3, Rsizes, 10, am, "reserves.in", outFilter, null,
+//					proj1, 2);
+//		} catch (Exception e) {
+//			System.err.println("*** Error preparing for nested_loop_join");
+//			System.err.println("" + e);
+//			e.printStackTrace();
+//			Runtime.getRuntime().exit(1);
+//		}
 
-		TupleOrder ascending = new TupleOrder(TupleOrder.Ascending);
-		Sort sort_names = null;
-		try {
-			sort_names = new Sort(JJtype, (short) 1, JJsize, (iterator.Iterator) nlj2, 1, ascending, JJsize[0], 10);
-		} catch (Exception e) {
-			System.err.println("*** Error preparing for nested_loop_join");
-			System.err.println("" + e);
-			Runtime.getRuntime().exit(1);
-		}
+//		NestedLoopsJoins nlj2 = null;
+//		try {
+//			nlj2 = new NestedLoopsJoins(Jtypes, 2, Jsizes, Btypes, 3, Bsizes, 10, nlj, "boats.in", outFilter2, null,
+//					proj2, 1);
+//		} catch (Exception e) {
+//			System.err.println("*** Error preparing for nested_loop_join");
+//			System.err.println("" + e);
+//			Runtime.getRuntime().exit(1);
+//		}
 
-		QueryCheck qcheck2 = new QueryCheck(2);
+//		TupleOrder ascending = new TupleOrder(TupleOrder.Ascending);
+//		Sort sort_names = null;
+//		try {
+//			sort_names = new Sort(JJtype, (short) 1, JJsize, (iterator.Iterator) nlj2, 1, ascending, JJsize[0], 10);
+//		} catch (Exception e) {
+//			System.err.println("*** Error preparing for nested_loop_join");
+//			System.err.println("" + e);
+//			Runtime.getRuntime().exit(1);
+//		}
+//
+//		QueryCheck qcheck2 = new QueryCheck(2);
 
+//		t = null;
+//		try {
+//
+//			while ((t = sort_names.get_next()) != null) {
+//				t.print(JJtype);
+//				qcheck2.Check(t);
+//			}
+//		} catch (Exception e) {
+//			System.err.println("" + e);
+//			e.printStackTrace();
+//			Runtime.getRuntime().exit(1);
+//		}
+//		qcheck2.report(2);
+//
+//		System.out.println("\n");
+//		try {
+//			sort_names.close();
+//		} catch (Exception e) {
+//			status = FAIL;
+//			e.printStackTrace();
+//		}
+		
 		t = null;
 		try {
 
-			while ((t = sort_names.get_next()) != null) {
+			while ((t = nlj.get_next()) != null) {
 				t.print(JJtype);
-				qcheck2.Check(t);
 			}
 		} catch (Exception e) {
 			System.err.println("" + e);
 			e.printStackTrace();
 			Runtime.getRuntime().exit(1);
 		}
-
-		qcheck2.report(2);
-
+		
 		System.out.println("\n");
 		try {
-			sort_names.close();
+			nlj.close();
 		} catch (Exception e) {
 			status = FAIL;
 			e.printStackTrace();

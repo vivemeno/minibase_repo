@@ -117,25 +117,25 @@ public class IndexScan extends Iterator {
       catch (Exception e) {
 	throw new IndexException(e, "IndexScan.java: BTreeFile exceptions caught from IndexUtils.BTree_scan().");
       }
-      
+      break;
     case IndexType.interval_Index:
-        // error check the select condition
-        // must be of the type: value op symbol || symbol op value
-        // but not symbol op symbol || value op value
-        try {
-  	ITIndexFile = new IntervalTreeFile(indName); 
-        }
-        catch (Exception e) {
-  	throw new IndexException(e, "IndexScan.java: BTreeFile exceptions caught from BTreeFile constructor");
-        }
-        
-        try {
-  	ITIndexScan = (IntervalFileScan) IndexUtils.intervalTree_scan(selects, ITIndexFile);
-        }
-        catch (Exception e) {
-  	throw new IndexException(e, "IndexScan.java: BTreeFile exceptions caught from IndexUtils.BTree_scan().");
-        }
-      
+	        // error check the select condition
+	        // must be of the type: value op symbol || symbol op value
+	        // but not symbol op symbol || value op value
+		        try {
+		  	ITIndexFile = new IntervalTreeFile(indName); 
+		        }
+		        catch (Exception e) {
+		  	throw new IndexException(e, "IndexScan.java: BTreeFile exceptions caught from BTreeFile constructor");
+		        }
+		        
+		        try {
+		  	ITIndexScan = (IntervalFileScan) IndexUtils.intervalTree_scan(selects, ITIndexFile);
+		        }
+		        catch (Exception e) {
+		  	throw new IndexException(e, "IndexScan.java: BTreeFile exceptions caught from IndexUtils.BTree_scan().");
+		        }
+		      
       break;
     case IndexType.None:
     default:

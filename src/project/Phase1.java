@@ -85,9 +85,9 @@ public class Phase1 {
 		 * IntervalType(7, 8, 3))); nodes.addElement(new NodeTable("E", new
 		 * IntervalType(4, 5, 4))); //
 		 */
-		nodes = XMLToIntervalTable.xmlToTreeConverter(input_file_base + "xml_sample_data.xml");
+//		nodes = XMLToIntervalTable.xmlToTreeConverter(input_file_base + "xml_sample_data.xml");
 //		nodes = XMLToIntervalTable.xmlToTreeConverter(input_file_base + "sample.xml");
-//		nodes = XMLToIntervalTable.xmlToTreeConverter(input_file_base + "queryBackUo.xml");
+		nodes = XMLToIntervalTable.xmlToTreeConverter(input_file_base + "queryBackUo.xml");
 		
 		boolean status = OK;
 
@@ -180,43 +180,7 @@ public class Phase1 {
 			Runtime.getRuntime().exit(1);
 		}
 
-		// *******************************************creating b tree index on
-		// tag*******************************************
-		// create an scan on the heapfile
-
 		Scan scan = null;Tuple temp = null;
-
-		/*
-		 * try { scan = new Scan(f); } catch (Exception e) { status = FAIL;
-		 * e.printStackTrace(); Runtime.getRuntime().exit(1); }
-		 * 
-		 * // create the index file on the integer field BTreeFile btf = null; try { btf
-		 * = new BTreeFile("BTIndex", AttrType.attrString, 5, 1delete); } catch
-		 * (Exception e) { status = FAIL; e.printStackTrace();
-		 * Runtime.getRuntime().exit(1); }
-		 * 
-		 * System.out.println("BTreeIndex created successfully.\n");
-		 * 
-		 * rid = new RID(); String key = "";  temp = null;
-		 * 
-		 * try { temp = scan.getNext(rid); } catch (Exception e) { status = FAIL;
-		 * e.printStackTrace(); } while ( temp != null) { t.tupleCopy(temp);
-		 * 
-		 * try { key = t.getStrFld(2); if(key.length() > 3) key = key.substring(0, 3); }
-		 * catch (Exception e) { status = FAIL; e.printStackTrace(); }
-		 * 
-		 * try { btf.insert(new StringKey(key), rid); } catch (Exception e) { status =
-		 * FAIL; e.printStackTrace(); }
-		 * 
-		 * try { temp = scan.getNext(rid); } catch (Exception e) { status = FAIL;
-		 * e.printStackTrace(); } }
-		 * 
-		 * // close the file scan scan.closescan();
-		 */
-
-//	    System.out.println("---------------------------------BTreeIndex file on tag created successfully---------------------------------------.\n");
-		// *******************************************end of creating b tree index on
-		// tag*******************************************
 
 		// *******************************************creating b tree index on
 		// interval*********************************************
@@ -285,17 +249,6 @@ public class Phase1 {
 
 		System.out.println("BTreeIndex file insertion successfully completed.\n");
 
-//	    try {
-//			IntervalT.printintervalTree(btfInterval.getHeaderPage());
-//		} catch (HashEntryNotFoundException | InvalidFrameNumberException | PageUnpinnedException | ReplacerException
-//				| ConstructPageException | IteratorException | IOException e1) {
-//			// TODO Auto-generated catch block
-//			e1.printStackTrace();
-//		}
-//		
-//		if(true)
-//			return;
-
 		// *******************************************querying b tree index on
 		// interval*******************************************
 		
@@ -357,21 +310,6 @@ public class Phase1 {
 				status = FAIL;
 				e.printStackTrace();
 			}
-
-//	      if (iout < ival) {
-//		System.err.println("count = "  + " iout = " + iout + " ival = " + ival);
-//		
-//		System.err.println("Test3 -- OOPS! index scan not in sorted order");
-//		status = FAIL;
-//		break; 
-//	      }
-//	      else if (iout > 900) {
-//		System.err.println("Test 3 -- OOPS! index scan passed high key");
-//		status = FAIL;
-//		break;
-//	      }
-
-//	      ival = iout;
 
 	      System.out.println("result "+ iout.toString());
 	      
@@ -519,7 +457,11 @@ public class Phase1 {
 		Heapfile temp = null;
 
 		try {
-			temp = new Heapfile("temp.in");
+			if(queryPlanNumber == 1)
+				temp = new Heapfile(ruleFile1);
+			else if(queryPlanNumber == 2)
+				temp = new Heapfile(ruleFile2);			
+			else temp = new Heapfile("temp.in");
 		} catch (Exception e) {
 			System.err.println("*** error in Heapfile constructor ***");
 			e.printStackTrace();
@@ -610,6 +552,14 @@ public class Phase1 {
 		// Map containing the corresponding column number for the
 		// given tag Id in the joined table.
 		HashMap<String, Integer> tagOffsetMap = new HashMap<>();
+		String ruleHeapFile = "";
+		if(queryPlanNumber == 1 ) {
+			ruleHeapFile = "temp1.in";
+		}else if(queryPlanNumber == 2 ) {
+			ruleHeapFile = "temp2.in";
+		}else {
+			ruleHeapFile = "temp.in";
+		}
 
 		int nodeNumber = 1;
 		boolean status = OK;
@@ -640,7 +590,9 @@ public class Phase1 {
 				new FldSpec(new RelSpec(RelSpec.outer), 2) };
 		try {
 
-			fileScanner = new FileScan("temp.in", baseTableAttrTypes, baseTableStringLengths, (short) 2, (short) 2,
+//			fileScanner = new FileScan("temp.in", baseTableAttrTypes, baseTableStringLengths, (short) 2, (short) 2,
+//					initialProjection, innerRelFilterConditions);
+			fileScanner = new FileScan(ruleHeapFile, baseTableAttrTypes, baseTableStringLengths, (short) 2, (short) 2,
 					initialProjection, innerRelFilterConditions);
 		} catch (Exception e) {
 			status = FAIL;
@@ -670,9 +622,13 @@ public class Phase1 {
 
 		NestedLoopsJoins prevIterator = null;
 		NestedLoopsJoins currIterator = null;
+		NestedLoopsJoins tmpIterator = null;
 		try {
+//				prevIterator = new NestedLoopsJoins(baseTableAttrTypes, 2, baseTableStringLengths, baseTableAttrTypes, 2,
+//						baseTableStringLengths, 10, fileScanner, "temp.in", filterConditions, innerRelFilterConditions,
+//						currProjection, 4);
 			prevIterator = new NestedLoopsJoins(baseTableAttrTypes, 2, baseTableStringLengths, baseTableAttrTypes, 2,
-					baseTableStringLengths, 10, fileScanner, "temp.in", filterConditions, innerRelFilterConditions,
+					baseTableStringLengths, 10, fileScanner, ruleHeapFile, filterConditions, innerRelFilterConditions,
 					currProjection, 4);
 		} catch (Exception e) {
 			System.err.println("*** Error preparing for nested_loop_join");
@@ -739,8 +695,11 @@ public class Phase1 {
 			currProjection[2 * ruleNumber + 1] = new FldSpec(new RelSpec(RelSpec.innerRel), 1);
 
 			try {
+//					currIterator = new NestedLoopsJoins(joinedTableAttrTypes, 2 * ruleNumber, joinedTableStringLengths,
+//							baseTableAttrTypes, 2, baseTableStringLengths, 10, prevIterator, "temp.in", filterConditions,
+//							innerRelFilterConditions, currProjection, 2 * ruleNumber + 2);
 				currIterator = new NestedLoopsJoins(joinedTableAttrTypes, 2 * ruleNumber, joinedTableStringLengths,
-						baseTableAttrTypes, 2, baseTableStringLengths, 10, prevIterator, "temp.in", filterConditions,
+						baseTableAttrTypes, 2, baseTableStringLengths, 10, prevIterator, ruleHeapFile, filterConditions,
 						innerRelFilterConditions, currProjection, 2 * ruleNumber + 2);
 			} catch (Exception e) {
 				System.err.println("*** Error preparing for nested_loop_join");
@@ -766,16 +725,53 @@ public class Phase1 {
 				finalTupleAttrTypes[i] = new AttrType(AttrType.attrInterval);
 			}
 		}
+		
+		RID rid;
+		Heapfile f = null;
+		try {
+			f = new Heapfile("witness.in");
+		} catch (Exception e) {
+			System.err.println("*** error in Heapfile constructor ***");
+			status = FAIL;
+			e.printStackTrace();
+		}
 
 		try {
 			int count = 1;
-			while ((finalTuple = currIterator.get_next()) != null) {
-				System.out.println("Result " + count++ + ":");
-				finalTuple.print(finalTupleAttrTypes);
+			if(queryPlanNumber == 1) {
+				it1 = currIterator;
+				if(wt1NoOfFlds == -1 )wt1NoOfFlds = currIterator.get_next().noOfFlds();
+//				firstTmpTuple = currIterator.get_next();
+//				wt1NoOfFlds = firstTmpTuple.noOfFlds();
+//				System.out.println(it1.get_next() + "***");
+				return; // since preserving the iterator
 			}
+//			it1.get_next().print(finalTupleAttrTypes);
+//			System.out.println(it1.get_next() + "**************");
+			Tuple tup = null;
+			while ((finalTuple = currIterator.get_next()) != null) {
+				System.out.println("Result in compute function " + count++ + ":");
+				finalTuple.print(finalTupleAttrTypes);
+				if(wt2NoOfFlds ==0 )wt2NoOfFlds = finalTuple.noOfFlds();
+				if(queryPlanNumber == 2) {
+					try {
+						int b = finalTuple.getLength();
+						tup = new Tuple(b);
+						tup.tupleCopy(finalTuple);
+						rid = f.insertRecord(tup.returnTupleByteArray());
+//						System.out.println(i);
+					} catch (Exception e) {
+						System.err.println("*** error in Heapfile.insertRecord() ***");
+						status = FAIL;
+						e.printStackTrace();
+					}
+				}
+			}
+			if(queryPlanNumber == 2) queryPlanNumber = 1;
 		} catch (Exception e) {
 			System.err.println("*** Error preparing for get_next tuple");
 			System.err.println("" + e);
+			e.printStackTrace();
 			Runtime.getRuntime().exit(1);
 		}
 
@@ -989,8 +985,111 @@ public class Phase1 {
 		Integer root = getRoot(rankIndex);
 		return getRulesInOrder(root, ruleMap);
 	}
+	
+	int queryPlanNumber = 1; 
+	Iterator it1 = null;
+	Iterator it2 = null;
+	String ruleFile1 = "temp1.in";
+	String ruleFile2 = "temp2.in";
+	String ruleFile  = "temp.in";
+	int physOp = 0; // 1 for cp
+	int wt2NoOfFlds = 0;
+	int wt1NoOfFlds = -1;
+	Tuple firstTmpTuple = null;
+	
+	private void complexPattern() {
+		
+		String choice = "Y";
+		System.out.println("Number of page accessed = " + BufMgr.page_access_counter);
+		Scanner scanner = null;
+		
+			while (!choice.equals("N") && !choice.equals("n")) {
+				// SystemDefs sysdef = new SystemDefs(dbpath, 1000, NUMBUF, "Clock");
+				BufMgr.page_access_counter = 0;
+
+				try {
+					String complexOperation = "";
+					int bufSize = 1000; //default
+					
+					System.out.println("Enter first input filename for query");
+					scanner = new Scanner(System.in);
+//					String file1 = scanner.next();
+					String file1 = "query.txt";
+					String[] file_contents1 = readFile(input_file_base + file1);
+					List<Rule> rules1 = getRuleList(file_contents1);
+					queryPlanNumber = 1;
+					createQueryHeapFile("nodes.in", rules1 );
+					
+					queryPlanNumber = 1;
+					System.out.println("pattern tree 1 processing");
+					compute(rules1);
+					compute(rules1);
+					System.out.println("Number of page accessed = " + BufMgr.page_access_counter);
+					
+					System.out.println("Enter second input filename for query");
+//					String file2 = scanner.next();
+					String file2 = "query1.txt";
+					String[] file_contents2 = readFile(input_file_base + file2);
+					queryPlanNumber = 2;
+					List<Rule> rules2 = getRuleList(file_contents2);
+					createQueryHeapFile("nodes.in", rules2);			
+					
+					queryPlanNumber = 2;
+					System.out.println("pattern tree 1 processing");
+					compute(rules2);
+					System.out.println("Number of page accessed = " + BufMgr.page_access_counter);
+					
+					TaskFourUtils taskutils = new TaskFourUtils(wt1NoOfFlds, wt2NoOfFlds);
+					int complexLoopChoice= 1;
+					while(complexLoopChoice != 0) {
+						physOp = 1;
+						System.out.println("Enter the operation");
+//						complexOperation = scanner.next();
+						complexOperation = "CP";
+						System.out.println("Enter the buffer size");
+//						bufSize = scanner.nextInt();
+						bufSize = 1000;
+						String[] chCOp = null;
+						
+						if(complexOperation.contains("CP")) {
+							taskutils.nestedLoop(it1);
+							
+						}else if(complexOperation.contains("TJ")) {
+							chCOp = complexOperation.split(" ");
+							int i = Integer.parseInt(chCOp[1]);
+							int j = Integer.parseInt(chCOp[2]);
+							
+						}else if(complexOperation.contains("NJ")) {
+							chCOp = complexOperation.split(" ");
+							int i = Integer.parseInt(chCOp[1]);
+							int j = Integer.parseInt(chCOp[2]);
+							
+						}else if(complexOperation.contains("SRT")) {
+							chCOp = complexOperation.split(" ");
+							int i = Integer.parseInt(chCOp[1]);
+							
+						}else if(complexOperation.contains("GRP")) {
+							chCOp = complexOperation.split(" ");
+							int i = Integer.parseInt(chCOp[1]);
+							
+						}
+						System.out.println("Press 1 to consider another complex pattern on the same pattern tree results");
+						complexLoopChoice = scanner.nextInt();
+					}
+					
+					System.out.println("Press N to stop");
+					choice = scanner.next();
+					
+					}
+				catch(Exception e) {
+					scanner.close();
+					e.printStackTrace();
+				}
+			}
+	}
 
 	private void input() {
+		queryPlanNumber = 3;
 		String choice = "Y";
 		System.out.println("Number of page accessed = " + BufMgr.page_access_counter);
 		while (!choice.equals("N") && !choice.equals("n")) {
@@ -1006,19 +1105,20 @@ public class Phase1 {
 			createQueryHeapFile("nodes.in", rules);
 			compute(rules);
 			System.out.println("Number of page accessed = " + BufMgr.page_access_counter);
-			// sysdef = new SystemDefs(dbpath, 1000, NUMBUF, "Clock");
-			BufMgr.page_access_counter = 0;
-			System.out.println("QUERY PLAN---2");
-			computeSM(rules, new TupleOrder(TupleOrder.Ascending));
-			System.out.println("Number of page accessed = " + BufMgr.page_access_counter);
-			// sysdef = new SystemDefs(dbpath, 1000, NUMBUF, "Clock");
-			BufMgr.page_access_counter = 0;
-			System.out.println("QUERY PLAN---3");
-			computeSM(rules, new TupleOrder(TupleOrder.Descending));
+//			 sysdef = new SystemDefs(dbpath, 1000, NUMBUF, "Clock");
+//			BufMgr.page_access_counter = 0;
+//			System.out.println("QUERY PLAN---2");
+//			computeSM(rules, new TupleOrder(TupleOrder.Ascending));
+//			System.out.println("Number of page accessed = " + BufMgr.page_access_counter);
+//			// sysdef = new SystemDefs(dbpath, 1000, NUMBUF, "Clock");
+//			BufMgr.page_access_counter = 0;
+//			System.out.println("QUERY PLAN---3");
+//			computeSM(rules, new TupleOrder(TupleOrder.Descending));
 //			System.out.println("Number of page accessed = " + BufMgr.page_access_counter);
 			System.out.println("Press N to stop");
 			choice = scanner.next();
 			System.out.print(choice);
+			
 		}
 	}
 
@@ -1053,56 +1153,11 @@ public class Phase1 {
 	}
 
 	public static void main(String[] args) {
-
-//		IntervalType interval = null, value = null;
-//		try {
-//			OutputStream out = new ByteArrayOutputStream();
-//			DataOutputStream outstr = new DataOutputStream(out);
-//			
-//			value = new IntervalType(2,3,4);
-//			
-//			outstr.writeInt(value.s);
-//			outstr.writeInt(value.e);
-//			outstr.writeInt(value.l);
-//
-//			byte[] B = ((ByteArrayOutputStream) out).toByteArray();
-//
-//			int len = outstr.size();
-//			System.out.println(len);
-//			
-//			
-//			byte tmp[] = new byte[4];
-//
-//			// copy the value from data array out to a tmp byte array
-//			InputStream in;
-//			DataInputStream instr;
-//			System.arraycopy(B, 0, tmp, 0, 4);
-//			in = new ByteArrayInputStream(tmp);
-//			instr = new DataInputStream(in);
-//			int s = instr.readInt();
-//			
-//			System.arraycopy(B, 4, tmp, 0, 4);
-//			in = new ByteArrayInputStream(tmp);
-//			instr = new DataInputStream(in);
-//			int e = instr.readInt();
-//			
-//			System.arraycopy(B, 8, tmp, 0, 4);
-//			in = new ByteArrayInputStream(tmp);
-//			instr = new DataInputStream(in);
-//			int l = instr.readInt();
-//			
-//			System.out.println(s + " "+ e + " "+ l);
-//
-//
-//		} catch (IOException e) {
-//			// TODO Auto-generated catch block
-//			e.printStackTrace();
-//		}
-		
 		
 		Phase1 phase1 = new Phase1();
-//		phase1.input();
-
+		phase1.complexPattern();
+//				phase1.input();
+//
 		// phase1.compute();
 		// phase1.computeSM();
 	}

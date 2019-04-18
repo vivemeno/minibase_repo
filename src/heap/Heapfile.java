@@ -566,6 +566,7 @@ public class Heapfile implements Filetype,  GlobalConst {
       if ((dpinfo.pageId).pid == INVALID_PAGE) // check error!
 	throw new HFException(null, "invalid PageId");
       
+      int a = currentDataPage.available_space();
       if (!(currentDataPage.available_space() >= recLen))
 	throw new SpaceNotAvailableException(null, "no available space");
       
