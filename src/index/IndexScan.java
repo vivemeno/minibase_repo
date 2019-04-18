@@ -53,75 +53,70 @@ public class IndexScan extends Iterator {
 	   InvalidTupleSizeException,
 	   UnknownIndexTypeException,
 	   IOException
-  {
-    _fldNum = fldNum;
-    _noInFlds = noInFlds;
-    _types = types;
-    _s_sizes = str_sizes;
-    
-    AttrType[] Jtypes = new AttrType[noOutFlds];
-    short[] ts_sizes;
-    Jtuple = new Tuple();
-    
-    try {
-      ts_sizes = TupleUtils.setup_op_tuple(Jtuple, Jtypes, types, noInFlds, str_sizes, outFlds, noOutFlds);
-    }
-    catch (TupleUtilsException e) {
-      throw new IndexException(e, "IndexScan.java: TupleUtilsException caught from TupleUtils.setup_op_tuple()");
-    }
-    catch (InvalidRelation e) {
-      throw new IndexException(e, "IndexScan.java: InvalidRelation caught from TupleUtils.setup_op_tuple()");
-    }
-     
-    _selects = selects;
-    perm_mat = outFlds;
-    _noOutFlds = noOutFlds;
-    tuple1 = new Tuple();    
-    try {
-      tuple1.setHdr((short) noInFlds, types, str_sizes);
-    }
-    catch (Exception e) {
-      throw new IndexException(e, "IndexScan.java: Heapfile error");
-    }
-    
-    t1_size = tuple1.size();
-    index_only = indexOnly;  // added by bingjie miao
-    
-    try {
-      f = new Heapfile(relName);
-    }
-    catch (Exception e) {
-      throw new IndexException(e, "IndexScan.java: Heapfile not created");
-    }
-    
-    switch(index.indexType) {
-      // linear hashing is not yet implemented
-    case IndexType.B_Index:
-      // error check the select condition
-      // must be of the type: value op symbol || symbol op value
-      // but not symbol op symbol || value op value
-      try {
-	indFile = new BTreeFile(indName); 
-      }
-      catch (Exception e) {
-	throw new IndexException(e, "IndexScan.java: BTreeFile exceptions caught from BTreeFile constructor");
-      }
-      
-      try {
-	indScan = (BTFileScan) IndexUtils.BTree_scan(selects, indFile);
-      }
-      catch (Exception e) {
-	throw new IndexException(e, "IndexScan.java: BTreeFile exceptions caught from IndexUtils.BTree_scan().");
-      }
-      
-      break;
-    case IndexType.None:
-    default:
-      throw new UnknownIndexTypeException("Only BTree index is supported so far");
-      
-    }
-    
-  }
+	{
+		_fldNum = fldNum;
+		_noInFlds = noInFlds;
+		_types = types;
+		_s_sizes = str_sizes;
+
+		AttrType[] Jtypes = new AttrType[noOutFlds];
+		short[] ts_sizes;
+		Jtuple = new Tuple();
+
+		try {
+			ts_sizes = TupleUtils.setup_op_tuple(Jtuple, Jtypes, types, noInFlds, str_sizes, outFlds, noOutFlds);
+		} catch (TupleUtilsException e) {
+			throw new IndexException(e, "IndexScan.java: TupleUtilsException caught from TupleUtils.setup_op_tuple()");
+		} catch (InvalidRelation e) {
+			throw new IndexException(e, "IndexScan.java: InvalidRelation caught from TupleUtils.setup_op_tuple()");
+		}
+
+		_selects = selects;
+		perm_mat = outFlds;
+		_noOutFlds = noOutFlds;
+		tuple1 = new Tuple();
+		try {
+			tuple1.setHdr((short) noInFlds, types, str_sizes);
+		} catch (Exception e) {
+			throw new IndexException(e, "IndexScan.java: Heapfile error");
+		}
+
+		t1_size = tuple1.size();
+		index_only = indexOnly; // added by bingjie miao
+
+		try {
+			f = new Heapfile(relName);
+		} catch (Exception e) {
+			throw new IndexException(e, "IndexScan.java: Heapfile not created");
+		}
+
+		switch (index.indexType) {
+		// linear hashing is not yet implemented
+		case IndexType.B_Index:
+			// error check the select condition
+			// must be of the type: value op symbol || symbol op value
+			// but not symbol op symbol || value op value
+			try {
+				indFile = new BTreeFile(indName);
+			} catch (Exception e) {
+				throw new IndexException(e, "IndexScan.java: BTreeFile exceptions caught from BTreeFile constructor");
+			}
+
+			try {
+				indScan = (BTFileScan) IndexUtils.BTree_scan(selects, indFile);
+			} catch (Exception e) {
+				throw new IndexException(e,
+						"IndexScan.java: BTreeFile exceptions caught from IndexUtils.BTree_scan().");
+			}
+
+			break;
+		case IndexType.None:
+		default:
+			throw new UnknownIndexTypeException("Only BTree index is supported so far");
+
+		}
+
+	}
   
   /**
    * returns the next tuple.

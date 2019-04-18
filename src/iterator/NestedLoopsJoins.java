@@ -252,7 +252,10 @@ public class NestedLoopsJoins  extends Iterator
 			// is no match (with pred),get a tuple from the inner.
 
 			RID rid = new RID();
+			int i = 0;
+			System.out.println();
 			while ((inner_tuple = innerIterator.get_next()) != null) {
+				System.out.println(i++);
 				inner_tuple.setHdr((short) in2_len, _in2, t2_str_sizescopy);
 				if (PredEval.Eval(RightFilter, inner_tuple, null, _in2, null) == true) {
 					if (PredEval.Eval(OutputFilter, outer_tuple, inner_tuple, _in1, _in2) == true) {

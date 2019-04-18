@@ -11,6 +11,7 @@ import bufmgr.BufMgr;
 import global.*;
 import heap.Heapfile;
 import heap.Tuple;
+import index.IndexScan;
 import iterator.*;
 import iterator.Iterator;
 import iterator.NestedLoopsJoins;
@@ -45,18 +46,19 @@ class Rule {
 }
 
 public class Phase1 {
-	public static final int NUMBUF = 1000;
+	public static final int NUMBUF = 10000;
 	public static final int TAG_LENGTH = 5;
 	private boolean OK = true;
 	private boolean FAIL = false;
 	public Vector<NodeTable> nodes;
-	private String input_file_base = "/home/vivemeno/DBMSI/input/";
+	private String input_file_base = "/home/akhil/MS/DBMS/";
 	private Map<String, String> tagMapping = new HashMap<>(); // contains id to tag name mapping
 
 	public Phase1() {
 
 		//createDemoNodes();
 		nodes = XMLToIntervalTable.xmlToTreeConverter();
+		//createDemoNodes();
 		boolean status = OK;
 
 		String dbpath = "/tmp/" + System.getProperty("user.name") + ".minibase.jointestdb";
@@ -373,8 +375,6 @@ public class Phase1 {
 	}
 	
 	public void compute(List<Rule> rules) {
-
- 
 		// Map containing the corresponding column number for the
 		// given tag Id in the joined table.
 
@@ -408,9 +408,10 @@ public class Phase1 {
 		FldSpec[] initialProjection = { new FldSpec(new RelSpec(RelSpec.outer), 1),
 				new FldSpec(new RelSpec(RelSpec.outer), 2) };
 		try {
-			
-			fileScanner = new FileScan("nodes.in", baseTableAttrTypes, baseTableStringLengths, (short) 2, (short) 2,
-					initialProjection, innerRelFilterConditions);
+
+			fileScanner = new IndexScan(new IndexType(IndexType.B_Index), "nodes.in", "nodeIndex.in",
+					ProjectUtils.getNodeTableAttrType(), ProjectUtils.getNodeTableStringSizes(), 2, 2,
+					ProjectUtils.getProjections(), innerRelFilterConditions, 2, false);	
 		} catch (Exception e) {
 			status = FAIL;
 			System.err.println("" + e);
@@ -545,7 +546,6 @@ public class Phase1 {
 		if (status != OK) {
 			System.out.println(" Error Occured !!");
 		}
-
 	}
 
 	public void computeSM() {
@@ -581,7 +581,7 @@ public class Phase1 {
 			FldSpec[] proj = { new FldSpec(new RelSpec(RelSpec.outer), 2), new FldSpec(new RelSpec(RelSpec.outer), 1),
 					new FldSpec(new RelSpec(RelSpec.innerRel), 2), new FldSpec(new RelSpec(RelSpec.innerRel), 1) };
 			List<SortMerge> listSM = new LinkedList<>();
-			for(Rule rule: rules) {
+			for (Rule rule : rules) {
 				try {
 					am = new FileScan("nodes.in", Ntypes, Nsizes, (short) 2, (short) 2, Nprojection, null);
 					am1 = new FileScan("nodes.in", Ntypes, Nsizes, (short) 2, (short) 2, Nprojection, null);
@@ -589,7 +589,8 @@ public class Phase1 {
 					status = FAIL;
 					System.err.println("" + e);
 					e.printStackTrace();
-				}				CondExpr[] outFilter = new CondExpr[4];
+				}
+				CondExpr[] outFilter = new CondExpr[4];
 				outFilter[0] = new CondExpr();
 				outFilter[1] = new CondExpr();
 				outFilter[2] = new CondExpr();
@@ -597,16 +598,10 @@ public class Phase1 {
 				Project2_CondExpr(outFilter, rule);
 				SortMerge sm = null;
 				try {
-					sm = new SortMerge(Ntypes, 2, Nsizes,
-							Ntypes, 2, Nsizes,
-							1, 4,
-							1, 4,
-							10,
-							am, am1,
-							false, false, ascending,
-							outFilter, proj, 4);
-					//Tuple t = sm.get_next();
-					//listSM.add(sm);
+					sm = new SortMerge(Ntypes, 2, Nsizes, Ntypes, 2, Nsizes, 1, 4, 1, 4, 10, am, am1, false, false,
+							ascending, outFilter, proj, 4);
+					// Tuple t = sm.get_next();
+					// listSM.add(sm);
 					Tuple t = new Tuple();
 					AttrType[] jtype = new AttrType[2 * 2];
 
@@ -627,12 +622,11 @@ public class Phase1 {
 						System.err.println("" + e);
 						Runtime.getRuntime().exit(1);
 					}
-				}
-				catch (Exception e) {
+				} catch (Exception e) {
 					System.err.println("*** join error in SortMerge constructor ***");
 					status = FAIL;
 
-					System.err.println (""+e);
+					System.err.println("" + e);
 					e.printStackTrace();
 				}
 
@@ -644,7 +638,7 @@ public class Phase1 {
 			nodeNumber++;
 			SortMerge prevSM = listSM.get(0);
 			int index = 2;
-			for(int x =1; x<listSM.size(); ++x) {
+			for (int x = 1; x < listSM.size(); ++x) {
 				if (!nodeOffsetMap.containsKey(rules.get(x).outerTag)) {
 					populateNodeOffsetMap(nodeOffsetMap, rules.get(x).outerTag, nodeNumber);
 					nodeNumber++;
@@ -662,8 +656,8 @@ public class Phase1 {
 					outFilter[3] = new CondExpr();
 
 					Project4_CondExpr(outFilter, rules.get(x), nodeOffsetMap.get(rules.get(x).outerTag));
-					AttrType[] NtypesFix = { new AttrType(AttrType.attrInterval),
-							new AttrType(AttrType.attrString), new AttrType(AttrType.attrInterval), new AttrType(AttrType.attrString)};
+					AttrType[] NtypesFix = { new AttrType(AttrType.attrInterval), new AttrType(AttrType.attrString),
+							new AttrType(AttrType.attrInterval), new AttrType(AttrType.attrString) };
 					short[] NsizesFix = new short[2];
 					NsizesFix[0] = 1;
 					NsizesFix[1] = 1;
@@ -681,24 +675,17 @@ public class Phase1 {
 					}
 					FldSpec[] proj2 = new FldSpec[2 * index + 2];
 					for (int i = 0; i < 2 * index; i++) {
-						proj2[i] = new FldSpec(new RelSpec(RelSpec.outer), i+1);
+						proj2[i] = new FldSpec(new RelSpec(RelSpec.outer), i + 1);
 					}
 					proj2[2 * index] = new FldSpec(new RelSpec(RelSpec.innerRel), 2);
 					proj2[2 * index + 1] = new FldSpec(new RelSpec(RelSpec.innerRel), 1);
-					SortMerge sm = new SortMerge(Ntypes2, index++*2, Nsizes2,
-							NtypesFix, 4, NsizesFix,
-							1, 4,
-							1, 4,
-							10,
-							prevSM, listSM.get(x),
-							true, true, ascending,
-							outFilter, proj2, 4);
+					SortMerge sm = new SortMerge(Ntypes2, index++ * 2, Nsizes2, NtypesFix, 4, NsizesFix, 1, 4, 1, 4, 10,
+							prevSM, listSM.get(x), true, true, ascending, outFilter, proj2, 4);
 					prevSM = sm;
-				}
-				catch (Exception e) {
+				} catch (Exception e) {
 					System.err.println("*** join error in SortMerge constructor ***");
 					status = FAIL;
-					System.err.println (""+e);
+					System.err.println("" + e);
 					e.printStackTrace();
 				}
 			}
