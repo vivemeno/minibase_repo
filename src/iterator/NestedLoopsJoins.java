@@ -42,6 +42,7 @@ public class NestedLoopsJoins  extends Iterator
   private Iterator innerIterator;
   private String indexFileName;
   private String relationName;
+  private int intervalOffset;
   
   
   /**constructor
@@ -118,7 +119,8 @@ public class NestedLoopsJoins  extends Iterator
 							 CondExpr rightFilter[],
 							 FldSpec   proj_list[],
 							 int        n_out_flds,
-							 String bTreeFileName
+							 String bTreeFileName,
+							 int offset
 	) throws IOException,NestedLoopException
 	{
 
@@ -127,7 +129,7 @@ public class NestedLoopsJoins  extends Iterator
 		try {
 			indexFileName = bTreeFileName;
 			this.relationName = relationName;
-
+			this.intervalOffset = offset;
 		} catch (Exception e) {
 			throw new NestedLoopException(e, "Create new heapfile failed.");
 		}
@@ -230,12 +232,6 @@ public class NestedLoopsJoins  extends Iterator
 					inner = null;
 				}
 
-				try {
-					innerIterator = new IndexScan(new IndexType(IndexType.B_Index), relationName, indexFileName, ProjectUtils.getNodeTableAttrType(), ProjectUtils.getNodeTableStringSizes(), 2, 2, ProjectUtils.getProjections(), RightFilter, 2, false);
-				} catch (Exception e) {
-					throw new NestedLoopException(e, "openScan failed");
-				}
-
 				if ((outer_tuple = outer.get_next()) == null) {
 					done = true;
 					if (inner != null) {
@@ -245,6 +241,17 @@ public class NestedLoopsJoins  extends Iterator
 
 					return null;
 				}
+				
+				try {
+					int indexType = IndexType.B_Index;
+					if(indexFileName.equals("IntervalIndex.in")) {
+						RightFilter = ProjectUtils.setIntervalIndexCond(outer_tuple.getIntervalField(perm_mat[this.intervalOffset].offset));
+						indexType = IndexType.interval_Index;
+					}
+					innerIterator = new IndexScan(new IndexType(indexType), relationName, indexFileName, ProjectUtils.getNodeTableAttrType(), ProjectUtils.getNodeTableStringSizes(), 2, 2, ProjectUtils.getProjections(), RightFilter, 2, false);
+				} catch (Exception e) {
+					throw new NestedLoopException(e, "openScan failed");
+				}
 			} // ENDS: if (get_from_outer == TRUE)
 
 			// The next step is to get a tuple from the inner,
@@ -253,9 +260,14 @@ public class NestedLoopsJoins  extends Iterator
 
 			RID rid = new RID();
 			int i = 0;
-			System.out.println();
-			while ((inner_tuple = innerIterator.get_next()) != null) {
-				System.out.println(i++);
+			//System.out.println();
+			if(indexFileName.equals("IntervalIndex.in")) {
+				inner_tuple = innerIterator.get_nextInterval();
+			} else {
+				inner_tuple = innerIterator.get_next();
+			}
+			while (inner_tuple != null) {
+				//System.out.println(i++);
 				inner_tuple.setHdr((short) in2_len, _in2, t2_str_sizescopy);
 				if (PredEval.Eval(RightFilter, inner_tuple, null, _in2, null) == true) {
 					if (PredEval.Eval(OutputFilter, outer_tuple, inner_tuple, _in1, _in2) == true) {
@@ -263,6 +275,11 @@ public class NestedLoopsJoins  extends Iterator
 						Projection.Join(outer_tuple, _in1, inner_tuple, _in2, Jtuple, perm_mat, nOutFlds);
 						return Jtuple;
 					}
+				}
+				if(indexFileName.equals("IntervalIndex.in")) {
+					inner_tuple = innerIterator.get_nextInterval();
+				} else {
+					inner_tuple = innerIterator.get_next();
 				}
 			}
 

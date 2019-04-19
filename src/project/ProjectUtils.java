@@ -107,6 +107,28 @@ public class ProjectUtils {
         nodeTableAttrTypes[1] = new AttrType(AttrType.attrString);
         return nodeTableAttrTypes;
     }
+    
+    public static CondExpr[] setIntervalIndexCond(IntervalType interval) {
+    	CondExpr[] expr = new CondExpr[3];
+		expr[0] = new CondExpr();
+		expr[0].op = new AttrOperator(AttrOperator.aopGE);
+		expr[0].type1 = new AttrType(AttrType.attrSymbol);
+		expr[0].type2 = new AttrType(AttrType.attrInterval);
+		expr[0].operand1.symbol = new FldSpec(new RelSpec(RelSpec.outer), 1);
+		expr[0].operand2.interval = new IntervalType(interval.s, interval.s, 2);
+		expr[0].next = null;
+//	    expr[1] = null;
+
+		expr[1] = new CondExpr();
+		expr[1].op = new AttrOperator(AttrOperator.aopLE);
+		expr[1].type1 = new AttrType(AttrType.attrSymbol);
+		expr[1].type2 = new AttrType(AttrType.attrInterval);
+		expr[1].operand1.symbol = new FldSpec(new RelSpec(RelSpec.outer), 1);
+		expr[1].operand2.interval = new IntervalType(interval.e, interval.e, 2);
+		expr[1].next = null;
+		expr[2] = null;
+		return expr;
+    }
 
 
     public static short[] getNodeTableStringSizes() {
@@ -183,7 +205,7 @@ public class ProjectUtils {
 		// create the index file on the integer field
 		IntervalTreeFile btfInterval = null;
 		try {
-			btfInterval = new IntervalTreeFile("IntervalIndex", 1/* delete */);
+			btfInterval = new IntervalTreeFile("IntervalIndex.in", 1/* delete */);
 		} catch (Exception e) {
 			e.printStackTrace();
 			Runtime.getRuntime().exit(1);

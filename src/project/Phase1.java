@@ -17,7 +17,7 @@ import intervalTree.IntervalKey;
 import intervalTree.IntervalTreeFile;
 import iterator.*;
 import iterator.Iterator;
-import iterator.NestedLoopsJoins;
+import iterator.NestedLoopsJoins; 
 import iterator.RelSpec;
 import xmlparser.XMLToIntervalTable;
 
@@ -161,7 +161,7 @@ public class Phase1 {
 			ProjectUtils.createIntervalIndex(f, t);
 
 		//querying b tree index on interval
-			ProjectUtils.doIntervalScan(100, 200, t);
+	//		ProjectUtils.doIntervalScan(100, 200, t);
 		
 	}
 
@@ -299,7 +299,15 @@ public class Phase1 {
 		outFilter[1].type2 = new AttrType(AttrType.attrString);
 		outFilter[1].operand2.string = tagMapping.get(rule.outerTag);
 		
-		outFilter[2] = null;
+		outFilter[2].next = null;
+		outFilter[2].op = new AttrOperator(AttrOperator.aopEQ);
+		outFilter[2].type1 = new AttrType(AttrType.attrSymbol);
+		outFilter[2].type2 = new AttrType(AttrType.attrString);
+		outFilter[2].operand1.symbol = new FldSpec(new RelSpec(RelSpec.innerRel), 2);
+		outFilter[2].operand2.string = tagMapping.get(rule.innerTag);
+		
+		
+		outFilter[3] = null;
 		
 		//Inner table comparison.
 		rightFilter[0].next = null;
@@ -476,7 +484,7 @@ public class Phase1 {
 		NestedLoopsJoins currIterator = null;
 		try {
 			prevIterator = new NestedLoopsJoins(baseTableAttrTypes, 2, baseTableStringLengths, baseTableAttrTypes, 2,
-					baseTableStringLengths, 10, fileScanner, "nodes.in", filterConditions, innerRelFilterConditions, currProjection, 4, "nodeIndex.in");
+					baseTableStringLengths, 10, fileScanner, "nodes.in", filterConditions, innerRelFilterConditions, currProjection, 4, "nodeIndex.in", 0);
 		} catch (Exception e) {
 			System.err.println("*** Error preparing for nested_loop_join");
 			System.err.println("" + e);
@@ -497,6 +505,8 @@ public class Phase1 {
 				populateNodeOffsetMap(tagOffsetMap, currRule.innerTag, nodeNumber);
 				nodeNumber++;
 			}
+			
+			String indexName = findIndex(currRule);
 
 			filterConditions = new CondExpr[4];
 			filterConditions[0] = new CondExpr();
@@ -538,7 +548,7 @@ public class Phase1 {
 			try {
 				currIterator = new NestedLoopsJoins(joinedTableAttrTypes, 2 * ruleNumber, joinedTableStringLengths, baseTableAttrTypes, 2,
 						baseTableStringLengths, 10, prevIterator, "nodes.in", filterConditions, innerRelFilterConditions, currProjection,
-						2 * ruleNumber + 2, "nodeIndex.in");
+						2 * ruleNumber + 2, indexName, tagOffsetMap.get(currRule.outerTag) - 1);
 			} catch (Exception e) {
 				System.err.println("*** Error preparing for nested_loop_join");
 				System.err.println("" + e);
@@ -867,10 +877,18 @@ public class Phase1 {
 				return i + 1;
 		return -1;
 	}
+	
+	private String findIndex(Rule rule) {
+		Statistics stats = tagStatistics.get(rule.outerTag);
+		if (stats.intervalRange < stats.totalCount) {
+			return "IntervalIndex.in";
+		}
+		return "nodeIndex.in";
+	}
 
 	public static void main(String[] args) {
 		Phase1 phase1 = new Phase1();
-//		phase1.input();
+		phase1.input();
 		//phase1.compute();
 		//phase1.computeSM();
 	}

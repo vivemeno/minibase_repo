@@ -130,4 +130,8 @@ public abstract class Iterator implements Flags {
     return tmpId;
 
   } // end of newPage
+  
+  public Tuple get_nextInterval() throws IndexException, UnknownKeyTypeException {
+	  return null;
+  }
 }
