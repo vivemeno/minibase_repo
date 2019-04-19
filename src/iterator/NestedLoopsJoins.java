@@ -262,8 +262,15 @@ public class NestedLoopsJoins  extends Iterator
 					RID rid = new RID();
 					while ((inner_tuple = inner.getNext(rid)) != null) {
 						inner_tuple.setHdr((short) in2_len, _in2, t2_str_sizescopy);
+						if(physOp == 2) {
+							if(TupleUtils.CompareTupleWithTuple(outer_tuple, RightFilter[0].operand1.integer, inner_tuple, RightFilter[0].operand2.integer) == 0) {
+								Projection.Join(outer_tuple, _in1, inner_tuple, _in2, Jtuple, perm_mat, nOutFlds);
+								return Jtuple;
+							}
+							continue;
+						}
 						if (PredEval.Eval(RightFilter, inner_tuple, null, _in2, null) == true || physOp == 1) {
-							if (PredEval.Eval(OutputFilter, outer_tuple, inner_tuple, _in1, _in2) == true || physOp == 1) {
+							if (PredEval.Eval(OutputFilter, outer_tuple, inner_tuple, _in1, _in2) == true || physOp == 1 ) {
 								// Apply a projection on the outer and inner tuples.
 								Projection.Join(outer_tuple, _in1, inner_tuple, _in2, Jtuple, perm_mat, nOutFlds);
 								return Jtuple;
@@ -278,6 +285,10 @@ public class NestedLoopsJoins  extends Iterator
 					get_from_outer = true; // Loop back to top and get next outer tuple.
 				} while (true);
 			}
+  
+  
+  
+  
  
   /**
    * implement the abstract method close() from super class Iterator

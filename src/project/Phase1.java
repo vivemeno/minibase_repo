@@ -166,7 +166,9 @@ public class Phase1 {
 			}
 
 			try {
-				rid = f.insertRecord(t.returnTupleByteArray());
+				byte[] ba = t.returnTupleByteArray();
+				int c = ba.length;
+				rid = f.insertRecord(ba);
 //				System.out.println(i);
 			} catch (Exception e) {
 				System.err.println("*** error in Heapfile.insertRecord() ***");
@@ -204,8 +206,6 @@ public class Phase1 {
 			e.printStackTrace();
 			Runtime.getRuntime().exit(1);
 		}
-
-		System.out.println("BTreeIndex created successfully.\n");
 
 		rid = new RID();
 		IntervalType intervalType = null;
@@ -266,7 +266,7 @@ public class Phase1 {
 		expr[0].type1 = new AttrType(AttrType.attrSymbol);
 		expr[0].type2 = new AttrType(AttrType.attrInterval);
 		expr[0].operand1.symbol = new FldSpec(new RelSpec(RelSpec.outer), 1);
-		expr[0].operand2.interval = new IntervalType(110402, 1, 2);
+		expr[0].operand2.interval = new IntervalType(100, 1, 2);
 		expr[0].next = null;
 //	    expr[1] = null;
 
@@ -275,7 +275,7 @@ public class Phase1 {
 		expr[1].type1 = new AttrType(AttrType.attrSymbol);
 		expr[1].type2 = new AttrType(AttrType.attrInterval);
 		expr[1].operand1.symbol = new FldSpec(new RelSpec(RelSpec.outer), 1);
-		expr[1].operand2.interval = new IntervalType(110577, 908, 2);
+		expr[1].operand2.interval = new IntervalType(200, 908, 2);
 		expr[1].next = null;
 		expr[2] = null;
 
@@ -1029,6 +1029,7 @@ public class Phase1 {
 					System.out.println("Enter second input filename for query");
 //					String file2 = scanner.next();
 					String file2 = "query1.txt";
+//					String file2 = "query3.txt";
 					String[] file_contents2 = readFile(input_file_base + file2);
 					queryPlanNumber = 2;
 					List<Rule> rules2 = getRuleList(file_contents2);
@@ -1045,7 +1046,10 @@ public class Phase1 {
 						physOp = 1;
 						System.out.println("Enter the operation");
 //						complexOperation = scanner.next();
-						complexOperation = "CP";
+//						complexOperation = "CP";
+//						complexOperation = "TJ 5 5";
+//						complexOperation = "NJ 6 6";
+						complexOperation = "SRT 6";
 						System.out.println("Enter the buffer size");
 //						bufSize = scanner.nextInt();
 						bufSize = 1000;
@@ -1058,15 +1062,18 @@ public class Phase1 {
 							chCOp = complexOperation.split(" ");
 							int i = Integer.parseInt(chCOp[1]);
 							int j = Integer.parseInt(chCOp[2]);
+							taskutils.nestedLoopNJOrTJ(it1, i, j, "TJ");
 							
 						}else if(complexOperation.contains("NJ")) {
 							chCOp = complexOperation.split(" ");
 							int i = Integer.parseInt(chCOp[1]);
 							int j = Integer.parseInt(chCOp[2]);
+							taskutils.nestedLoopNJOrTJ(it1, i, j, "NJ");
 							
 						}else if(complexOperation.contains("SRT")) {
 							chCOp = complexOperation.split(" ");
 							int i = Integer.parseInt(chCOp[1]);
+							taskutils.sortPhysOP(it1, i);
 							
 						}else if(complexOperation.contains("GRP")) {
 							chCOp = complexOperation.split(" ");

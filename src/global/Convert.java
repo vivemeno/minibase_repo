@@ -110,6 +110,7 @@ public class Convert {
 		
 //		System.out.println(data.length);
 
+		int a = data.length;
 		// copy the value from data array out to a tmp byte array
 		System.arraycopy(data, position, tmp, 0, length);
 
@@ -377,7 +378,7 @@ public class Convert {
 //		int len = outstr.size();
 		int len = GlobalConst.INTERVAL_LEN;
 //		System.out.println(len + " asd");
-		System.arraycopy(B, 0, data, position, len);
+		System.arraycopy(B, 0, data, position, GlobalConst.INTERVAL_LEN);
 
 	}
 }

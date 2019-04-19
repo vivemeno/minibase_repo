@@ -4,6 +4,9 @@ package heap;
 
 import java.io.*;
 import java.lang.*;
+import java.util.ArrayList;
+import java.util.Stack;
+
 import global.*;
 
 public class Tuple implements GlobalConst {
@@ -590,6 +593,112 @@ public class Tuple implements GlobalConst {
 			break;
 		}
 		System.out.println("]");
+
+	}
+	
+	public void printTreeFormat(AttrType type[], int wt1NoOfFlds) throws IOException, ClassNotFoundException {
+		int i, val;
+		float fval;
+		String sval = "";
+		IntervalType ival = new IntervalType();
+		Stack<NodeTable> st = new Stack<NodeTable>();
+
+		if(st.size() == 0)System.out.println("parent_root");
+		String sTemp = "";
+		NodeTable nt = new NodeTable();
+		boolean check  = false;
+//		for (i = 0; i < fldCnt - 1; i++) {
+		for (i = 0; i < fldCnt; i++) {
+			switch (type[i].attrType) {
+
+			case AttrType.attrInteger:
+				val = Convert.getIntValue(fldOffset[i], data);
+				//System.out.print(val);
+				break;
+
+			case AttrType.attrReal:
+				fval = Convert.getFloValue(fldOffset[i], data);
+				//System.out.print(fval);
+				break;
+
+			case AttrType.attrString:
+				sval = Convert.getStrValue(fldOffset[i], data, fldOffset[i + 1] - fldOffset[i]);
+				//System.out.print(sval);
+				break;
+			
+			case AttrType.attrInterval:
+				ival = Convert.getIntervalValue(fldOffset[i], data, fldOffset[i + 1] - fldOffset[i]);
+				//System.out.print("[" + ival.s + " " + ival.e + "]");
+				break;
+
+			case AttrType.attrNull:
+			case AttrType.attrSymbol:
+				break;
+			}
+			int tab = 4;
+			if(i % 2 == 0) {
+				sTemp+=sval;
+				sTemp+=", ";
+				nt = new NodeTable();
+				nt.nodename = sval;
+			}else {
+				sTemp+="["+ ival.s+", "+ ival.e + "]";
+				nt.interval = ival;
+				if(i > wt1NoOfFlds && check == false) {
+					check = true;
+					st.clear();
+				}
+				if(st.isEmpty()) {
+					for(int space =0; space < tab; space++) {
+						System.out.print(" ");
+					}
+				}else {
+					NodeTable tmpNT = st.pop();
+					if(nt.interval.s < tmpNT.interval.e){
+						for(int space =0; space < (tab+st.size()+tab); space++) {
+							System.out.print(" ");
+						}
+						st.push(tmpNT);
+					}else {
+						for(int space =0; space < (tab+st.size()); space++) {
+							System.out.print(" ");
+						}
+					}
+				}
+				st.push(nt);
+				System.out.println(nt.customToString());
+				
+			}
+		}
+
+//		switch (type[fldCnt - 1].attrType) {
+//
+//		case AttrType.attrInteger:
+//			val = Convert.getIntValue(fldOffset[i], data);
+//			System.out.print(val);
+//			break;
+//
+//		case AttrType.attrReal:
+//			fval = Convert.getFloValue(fldOffset[i], data);
+//			System.out.print(fval);
+//			break;
+//
+//		case AttrType.attrString:
+//			sval = Convert.getStrValue(fldOffset[i], data, fldOffset[i + 1] - fldOffset[i]);
+//			System.out.print(sval);
+//			break;
+//		
+//		case AttrType.attrInterval:
+//			ival = Convert.getIntervalValue(fldOffset[i], data, fldOffset[i + 1] - fldOffset[i]);
+//			System.out.print("[" + ival.s + "  " + ival.e + "]");
+//			break;
+//
+//		case AttrType.attrNull:
+//		case AttrType.attrSymbol:
+//			break;
+//		}
+		System.out.println("");System.out.println("");
+		System.out.println("");
 
 	}
 

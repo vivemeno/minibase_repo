@@ -21,5 +21,9 @@ public class NodeTable {
 		return "NodeTable [nodename=" + nodename + ", interval=" + interval + "]";
 	}
 	
+	public String customToString() {
+		return nodename+ "["+interval.s+","+interval.e+"]";
+	}
+	
 	
 }
