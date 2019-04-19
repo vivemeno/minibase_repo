@@ -64,7 +64,8 @@ public class Phase1 {
 	private boolean OK = true;
 	private boolean FAIL = false;
 	public Vector<NodeTable> nodes;
-	private String input_file_base = "/home/akhil/MS/DBMS/";
+//	private String input_file_base = "/home/akhil/MS/DBMS/";
+	private String input_file_base = "/home/renil/github/dbmsi/input/";
 	private Map<String, String> tagMapping = new HashMap<>(); // contains id to tag name mapping
 	private Map<String, Statistics> tagStatistics = new HashMap<>();
 		
@@ -420,6 +421,8 @@ public class Phase1 {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+		
+		System.out.println("Created heap file for query");
 
 	}
 	
@@ -778,7 +781,7 @@ public class Phase1 {
 			}
 			fileReader.close();
 		} catch (IOException e) {
-			e.printStackTrace();
+			System.err.println("readFailed: "+ e.getMessage());
 		}
 		return stringBuffer.toString().split("\n");
 	}
@@ -814,10 +817,15 @@ public class Phase1 {
 			long start = System.currentTimeMillis();
 			BufMgr.page_access_counter = 0;
 
-			System.out.println("Enter input filename for query");
+			String[] file_contents = null;
+			String file = null;
 			Scanner scanner = new Scanner(System.in);
-			String file = scanner.next();
-			String[] file_contents = readFile(input_file_base + file);
+			do {
+				System.out.println("Enter input filename for query");
+				file = scanner.next();
+				file_contents = readFile(input_file_base + file);
+			}while(file_contents.length==1 && "".equals(file_contents[0]));
+			
 			List<Rule> rules = getRuleList(file_contents);
 			//List<Rule> rules = getDemoRUles();
 			createQueryHeapFile("nodes.in", rules);
@@ -889,6 +897,9 @@ public class Phase1 {
 	private String findIndex(Rule rule) {
 		Statistics statsOuter = tagStatistics.get(rule.outerTag);
 		Statistics statsInner = tagStatistics.get(rule.innerTag);
+		if (statsInner == null || statsOuter == null) {
+			return "nodeIndex.in";
+		}
 		if (statsOuter.intervalRange < statsInner.totalCount) {
 			return "IntervalIndex.in";
 		}
