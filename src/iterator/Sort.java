@@ -82,9 +82,9 @@ public class Sort extends Iterator implements GlobalConst
             apage[0] = bufs[i];
 
             // need iobufs.java
-            i_buf[i].init((order.tupleOrder ==TupleOrder.Descending && _in[_sort_fld-1].attrType== AttrType.attrInterval) ?temp_files[n_R_runs-i-1]: temp_files[i],
+            i_buf[i].init(temp_files[i],
                     apage, 1,
-                    tuple_size, (order.tupleOrder ==TupleOrder.Descending && _in[_sort_fld-1].attrType== AttrType.attrInterval)? n_tuples[n_R_runs-i-1]:n_tuples[i]);
+                    tuple_size,n_tuples[i]);
 
             cur_node = new pnode();
             cur_node.run_num = i;
@@ -103,10 +103,10 @@ public class Sort extends Iterator implements GlobalConst
             temp_tuple =i_buf[i].Get(temp_tuple);  // need io_bufs.java
 
             if (temp_tuple != null) {
-   /*
-   System.out.print("Get tuple from run " + i);
-   temp_tuple.print(_in);
-   */
+	/*
+	System.out.print("Get tuple from run " + i);
+	temp_tuple.print(_in);
+	*/
                 cur_node.tuple = temp_tuple; // no copy needed
                 try {
                     Q.enq(cur_node);
@@ -230,8 +230,8 @@ public class Sort extends Iterator implements GlobalConst
                 // need tuple_utils.java
                 TupleUtils.SetValue(lastElem, cur_node.tuple, _sort_fld, sortFldType);
                 // write tuple to output file, need io_bufs.java, type cast???
-                // System.out.println("Putting tuple into run " + (run_num + 1));
-                // cur_node.tuple.print(_in);
+                //	System.out.println("Putting tuple into run " + (run_num + 1));
+                //	cur_node.tuple.print(_in);
 
                 o_buf.Put(cur_node.tuple);
             }
@@ -646,7 +646,7 @@ public class Sort extends Iterator implements GlobalConst
         o_buf.init(bufs, _n_pages, tuple_size, temp_files[0], false);
         //    output_tuple = null;
 
-        max_elems_in_heap = 200;
+        max_elems_in_heap = 200000;
         sortFldLen = sort_fld_len;
 
         Q = new pnodeSplayPQ(sort_fld, in[sort_fld - 1], order);
@@ -751,3 +751,5 @@ public class Sort extends Iterator implements GlobalConst
     }
 
 }
+
+
