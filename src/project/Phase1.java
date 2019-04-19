@@ -888,7 +888,7 @@ public class Phase1 {
 	
 	private String findIndex(Rule rule) {
 		Statistics stats = tagStatistics.get(rule.outerTag);
-		if (stats.intervalRange < stats.totalCount) {
+		if (stats != null && stats.intervalRange < stats.totalCount) {
 			return "IntervalIndex.in";
 		}
 		return "nodeIndex.in";
