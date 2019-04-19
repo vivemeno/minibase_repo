@@ -21,6 +21,16 @@ import iterator.NestedLoopsJoins;
 import iterator.RelSpec;
 import xmlparser.XMLToIntervalTable;
 
+
+class Statistics {
+	public int totalCount;
+	public double intervalRange;
+	public Statistics(int totalCount, double intervalRange) {
+		this.totalCount = totalCount;
+		this.intervalRange = intervalRange;
+	}
+}
+
 class Rule {
 	public String outerTag;
 	public String innerTag;
@@ -56,7 +66,8 @@ public class Phase1 {
 	public Vector<NodeTable> nodes;
 	private String input_file_base = "/home/akhil/MS/DBMS/";
 	private Map<String, String> tagMapping = new HashMap<>(); // contains id to tag name mapping
-
+	private Map<String, Statistics> tagStatistics = new HashMap<>();
+		
 	public Phase1() {
 
 		//createDemoNodes();
@@ -106,8 +117,20 @@ public class Phase1 {
 		for (int i = 0; i < numnodes; i++) {
 			System.out.println(i);
 			try {
-				t.setIntervalFld(1, ((NodeTable) nodes.elementAt(i)).interval);
-				t.setStrFld(2, ((NodeTable) nodes.elementAt(i)).nodename);
+				IntervalType interval = ((NodeTable) nodes.elementAt(i)).interval;
+				String nodeName = ((NodeTable) nodes.elementAt(i)).nodename;
+				Statistics currStatistics = tagStatistics.get(nodeName);
+				if (currStatistics != null) {
+					currStatistics.totalCount++;
+					currStatistics.intervalRange = (currStatistics.intervalRange
+							* ((double)(currStatistics.totalCount - 1) / currStatistics.totalCount))
+							+ ((double) (interval.e - interval.s)) / currStatistics.totalCount;
+				} else {
+					currStatistics = new Statistics(1, interval.e - interval.s);
+					tagStatistics.put(nodeName, currStatistics);
+				}
+				t.setIntervalFld(1, interval);
+				t.setStrFld(2, nodeName);
 			} catch (Exception e) {
 				System.err.println("*** Heapfile error in Tuple.setStrFld() ***");
 				status = FAIL;
