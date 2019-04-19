@@ -10,8 +10,11 @@ import java.util.*;
 import bufmgr.BufMgr;
 import global.*;
 import heap.Heapfile;
+import heap.Scan;
 import heap.Tuple;
 import index.IndexScan;
+import intervalTree.IntervalKey;
+import intervalTree.IntervalTreeFile;
 import iterator.*;
 import iterator.Iterator;
 import iterator.NestedLoopsJoins;
@@ -80,8 +83,6 @@ public class Phase1 {
 		SystemDefs sysdef = new SystemDefs(dbpath, 10000, NUMBUF, "Clock");
 
 		// creating the node table relation
-
-
 		Tuple t = new Tuple();
 		ProjectUtils.setTupleHeader(t);
 
@@ -114,7 +115,9 @@ public class Phase1 {
 			}
 
 			try {
-				rid = f.insertRecord(t.returnTupleByteArray());
+				byte[] ba = t.returnTupleByteArray();
+				int c = ba.length;
+				rid = f.insertRecord(ba);
 			} catch (Exception e) {
 				System.err.println("*** error in Heapfile.insertRecord() ***");
 				status = FAIL;
@@ -130,6 +133,13 @@ public class Phase1 {
 			System.err.println("*** Error creating relation for nodes");
 			Runtime.getRuntime().exit(1);
 		}
+		
+		//creating b tree index on interval
+			ProjectUtils.createIntervalIndex(f, t);
+
+		//querying b tree index on interval
+			ProjectUtils.doIntervalScan(100, 200, t);
+		
 	}
 
 	private void testIndex() {
@@ -837,7 +847,7 @@ public class Phase1 {
 
 	public static void main(String[] args) {
 		Phase1 phase1 = new Phase1();
-		phase1.input();
+//		phase1.input();
 		//phase1.compute();
 		//phase1.computeSM();
 	}

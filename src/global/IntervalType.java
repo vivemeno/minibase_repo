@@ -3,6 +3,7 @@ import java.io.Serializable;
 
 public class IntervalType implements Serializable {
     
+	private static final long serialVersionUID = 2L;
 	public static int INTERVAL_CONTAINMENT = 1;
 	public static int INTERVAL_NO_OVERLAP = 0;
 	public static int INTERVAL_ENCLOSURE = 2;
@@ -16,6 +17,11 @@ public class IntervalType implements Serializable {
     public IntervalType() {
 
     }
+    
+    @Override
+   	public String toString() {
+   		return "IntervalType [s=" + s + ", e=" + e + ", l=" + l + "]";
+   	}
 
     public IntervalType(int start, int end, int level) {
         this.s = start;

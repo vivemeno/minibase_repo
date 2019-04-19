@@ -4,12 +4,16 @@ import btree.BTreeFile;
 import btree.StringKey;
 import global.AttrOperator;
 import global.AttrType;
+import global.GlobalConst;
 import global.IndexType;
+import global.IntervalType;
 import global.RID;
 import heap.Heapfile;
 import heap.Scan;
 import heap.Tuple;
 import index.IndexScan;
+import intervalTree.IntervalKey;
+import intervalTree.IntervalTreeFile;
 import iterator.CondExpr;
 import iterator.FldSpec;
 import iterator.RelSpec;
@@ -106,7 +110,7 @@ public class ProjectUtils {
 
 
     public static short[] getNodeTableStringSizes() {
-        short[] nodeTableStringSizes = new short[1];
+        short[] nodeTableStringSizes = new short[2];
         nodeTableStringSizes[0] = STR_KEY_SIZE;
         return nodeTableStringSizes;
     }
@@ -154,5 +158,166 @@ public class ProjectUtils {
                 e.printStackTrace();
             }
         } while(t != null);
+    }
+    
+    public static void createIntervalIndex(Heapfile f, Tuple t) {
+    	
+    	// create an scan on the heapfile
+		Scan scan = null;Tuple temp = null;
+
+		// creating the node table relation
+		AttrType[] nodeTableAttrTypes = new AttrType[2];
+		nodeTableAttrTypes[0] = new AttrType(AttrType.attrInterval);
+		nodeTableAttrTypes[1] = new AttrType(AttrType.attrString);
+
+		short[] nodeTableStringSizes = new short[1];
+		nodeTableStringSizes[0] = 5;
+		
+		try {
+			scan = new Scan(f);
+		} catch (Exception e) {
+			e.printStackTrace();
+			Runtime.getRuntime().exit(1);
+		}
+
+		// create the index file on the integer field
+		IntervalTreeFile btfInterval = null;
+		try {
+			btfInterval = new IntervalTreeFile("IntervalIndex", 1/* delete */);
+		} catch (Exception e) {
+			e.printStackTrace();
+			Runtime.getRuntime().exit(1);
+		}
+
+		RID rid = new RID();
+		IntervalType intervalType = null;
+		temp = null;
+
+		try {
+			temp = scan.getNext(rid);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		while (temp != null) {
+			t.tupleCopy(temp);
+
+			try {
+
+				String s = t.getStrFld(2);
+				intervalType = t.getIntervalField(1);
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+
+			try {
+				btfInterval.insert(new IntervalKey(intervalType), rid);
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+
+			try {
+				temp = scan.getNext(rid);
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+
+		// close the file scan
+		scan.closescan();
+
+		System.out.println("BTreeIndex file insertion successfully completed.\n");
+    	
+    }
+    
+    public static void doIntervalScan(int initialStartValue, int endStartValue, Tuple t) {
+    	
+    	long startTime = System.nanoTime();
+
+		FldSpec[] projlist = new FldSpec[2];
+		RelSpec rel = new RelSpec(RelSpec.outer);
+		projlist[0] = new FldSpec(rel, 1);
+		projlist[1] = new FldSpec(rel, 2);
+
+		// conditions
+		CondExpr[] expr = new CondExpr[3];
+		expr[0] = new CondExpr();
+		expr[0].op = new AttrOperator(AttrOperator.aopGE);
+		expr[0].type1 = new AttrType(AttrType.attrSymbol);
+		expr[0].type2 = new AttrType(AttrType.attrInterval);
+		expr[0].operand1.symbol = new FldSpec(new RelSpec(RelSpec.outer), 1);
+		expr[0].operand2.interval = new IntervalType(initialStartValue, 1, 2);
+		expr[0].next = null;
+//	    expr[1] = null;
+
+		expr[1] = new CondExpr();
+		expr[1].op = new AttrOperator(AttrOperator.aopLE);
+		expr[1].type1 = new AttrType(AttrType.attrSymbol);
+		expr[1].type2 = new AttrType(AttrType.attrInterval);
+		expr[1].operand1.symbol = new FldSpec(new RelSpec(RelSpec.outer), 1);
+		expr[1].operand2.interval = new IntervalType(endStartValue, 908, 2);
+		expr[1].next = null;
+		expr[2] = null;
+
+		// creating the node table relation
+		AttrType[] nodeTableAttrTypes = new AttrType[2];
+		nodeTableAttrTypes[0] = new AttrType(AttrType.attrInterval);
+		nodeTableAttrTypes[1] = new AttrType(AttrType.attrString);
+
+		short[] nodeTableStringSizes = new short[1];
+		nodeTableStringSizes[0] = 5;
+		
+		// start index scan
+		IndexScan iscan = null;
+		try {
+			iscan = new IndexScan(new IndexType(IndexType.interval_Index), "nodes.in", "IntervalIndex",
+					nodeTableAttrTypes, nodeTableStringSizes, 2, 2, projlist, expr, 1, false);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+		t = null;
+		IntervalType iout = null;
+		int ival = 100, count = 0; // low key
+
+		try {
+			t = iscan.get_nextInterval();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+		while (t != null) {
+			try {
+				iout = t.getIntervalField(1);
+				++count;
+//				System.out.println("count " + (count));
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+
+	      System.out.println("result "+ iout.toString());
+	      
+	      if(iout.s == 110574) {
+	    	  System.out.println();
+	      }
+
+			try {
+				t = iscan.get_nextInterval();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+
+		long endTime = System.nanoTime();
+		long duration = (endTime - startTime);
+		
+		System.err.println("total results : " + count);
+		System.out.println("total time taken in ms : " + duration/1000000);
+		// clean up
+		try {
+			iscan.close();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+    	
     }
 }

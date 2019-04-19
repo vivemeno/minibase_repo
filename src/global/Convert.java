@@ -113,6 +113,7 @@ public class Convert{
       DataInputStream instr;
       String value;
       byte tmp[] = new byte[length];  
+      int a = data.length;
       
       // copy the value from data array out to a tmp byte array
       System.arraycopy (data, position, tmp, 0, length);

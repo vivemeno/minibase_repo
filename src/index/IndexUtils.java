@@ -1,5 +1,13 @@
 package index;
 import global.*;
+import intervalTree.ConstructPageException;
+import intervalTree.IntervalKey;
+import intervalTree.IntervalT;
+import intervalTree.IntervalTreeFile;
+import intervalTree.IteratorException;
+import intervalTree.KeyNotMatchException;
+import intervalTree.PinPageException;
+import intervalTree.UnpinPageException;
 import btree.*;
 import iterator.*;
 import java.io.*;
@@ -33,7 +41,7 @@ public class IndexUtils {
 	   UnpinPageException,
 	   PinPageException,
 	   IteratorException,
-	   ConstructPageException
+	   ConstructPageException, btree.KeyNotMatchException, btree.IteratorException, btree.ConstructPageException, btree.PinPageException, btree.UnpinPageException
 	{
 		IndexFileScan indScan;
 
@@ -183,5 +191,126 @@ public class IndexUtils {
     }
     
   }
+  
+  public static intervalTree.IndexFileScan intervalTree_scan(CondExpr[] selects, intervalTree.IndexFile indFile) 
+		  throws IOException, 
+		   UnknownKeyTypeException, 
+		   InvalidSelectionException,
+		   KeyNotMatchException,
+		   UnpinPageException,
+		   PinPageException,
+		   IteratorException,
+		   ConstructPageException, KeyNotMatchException, IteratorException, ConstructPageException, PinPageException, UnpinPageException, intervalTree.KeyNotMatchException, intervalTree.IteratorException, intervalTree.ConstructPageException, intervalTree.PinPageException, intervalTree.UnpinPageException
+	    {
+	      intervalTree.IndexFileScan indScan;
+	      
+	      if (selects == null || selects[0] == null) {
+		indScan = ((IntervalTreeFile)indFile).new_scan(null, null, 7);
+		return indScan;
+	      }
+	      
+	      if (selects[1] == null) {
+		if (selects[0].type1.attrType != AttrType.attrSymbol && selects[0].type2.attrType != AttrType.attrSymbol) {
+		  throw new InvalidSelectionException("IndexUtils.java: Invalid selection condition"); 
+		}
+		
+		intervalTree.KeyClass key;
+		
+		// symbol = value
+		if (selects[0].op.attrOperator == AttrOperator.aopEQ) {
+		  if (selects[0].type1.attrType != AttrType.attrSymbol) {
+		    key = getValueITree(selects[0], selects[0].type1, 1);
+		    indScan = ((IntervalTreeFile)indFile).new_scan(key, null, 7); //7 - means contains
+		  }
+		  else {
+		    key = getValueITree(selects[0], selects[0].type2, 2);
+		    indScan = ((IntervalTreeFile)indFile).new_scan(key, null,  7);
+		  }
+		  return indScan;
+		}
+		
+		// symbol > value or symbol >= value
+		if (selects[0].op.attrOperator == AttrOperator.aopGT || selects[0].op.attrOperator == AttrOperator.aopGE) {
+		  if (selects[0].type1.attrType != AttrType.attrSymbol) {
+		    key = getValueITree(selects[0], selects[0].type1, 1);
+		    indScan = ((IntervalTreeFile)indFile).new_scan(key, null, 7);
+		  }
+		  else {
+		    key = getValueITree(selects[0], selects[0].type2, 2);
+		    indScan = ((IntervalTreeFile)indFile).new_scan(key, null, 7);
+		  }
+		  return indScan;
+		}
+		
+		// error if reached here
+		System.err.println("Error -- in IndexUtils.BTree_scan()");
+		return null;
+	      }
+	      else {
+		// selects[1] != null, must be a range query
+		if (selects[0].type1.attrType != AttrType.attrSymbol && selects[0].type2.attrType != AttrType.attrSymbol) {
+		  throw new InvalidSelectionException("IndexUtils.java: Invalid selection condition"); 
+		}
+		if (selects[1].type1.attrType != AttrType.attrSymbol && selects[1].type2.attrType != AttrType.attrSymbol) {
+		  throw new InvalidSelectionException("IndexUtils.java: Invalid selection condition"); 
+		}
+		
+		// which symbol is higher??
+		intervalTree.KeyClass key1, key2;
+		AttrType type;
+		
+		if (selects[0].type1.attrType != AttrType.attrSymbol) {
+		  key1 = getValueITree(selects[0], selects[0].type1, 1);
+		  type = selects[0].type1;
+		}
+		else {
+		  key1 = getValueITree(selects[0], selects[0].type2, 2);
+		  type = selects[0].type2;
+		}
+		if (selects[1].type1.attrType != AttrType.attrSymbol) {
+		  key2 = getValueITree(selects[1], selects[1].type1, 1);
+		}
+		else {
+		  key2 = getValueITree(selects[1], selects[1].type2, 2);
+		}
+		
+		switch (type.attrType) {
+		case AttrType.attrInterval:
+		  if (IntervalT.keyCompare(((IntervalKey)key1),((IntervalKey)key2) )  < 0) {
+		    indScan = ((IntervalTreeFile)indFile).new_scan(key1, key2, 7);
+		  }
+		  else {
+		    indScan = ((IntervalTreeFile)indFile).new_scan(key2, key1, 7);
+		  }
+		  return indScan;
+		  
+		default:
+		  // error condition
+		  throw new UnknownKeyTypeException("IndexUtils.java: Only Integer and String keys are supported so far");	
+		}
+	      } // end of else 
+	      
+	    }
+  
+  private static intervalTree.KeyClass getValueITree(CondExpr cd, AttrType type, int choice)
+	       throws UnknownKeyTypeException
+	  {
+	    // error checking
+	    if (cd == null) {
+	      return null;
+	    }
+	    if (choice < 1 || choice > 2) {
+	      return null;
+	    }
+	    
+	    switch (type.attrType) {
+	    case AttrType.attrInterval:
+	      if (choice == 1) return new IntervalKey(cd.operand1.interval);
+	      else return new IntervalKey(cd.operand2.interval);
+	    default:
+		throw new UnknownKeyTypeException("IndexUtils.java: Only Integer and String keys are supported so far");
+	    }
+	    
+	  }
   
 }
