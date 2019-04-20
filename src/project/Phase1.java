@@ -65,7 +65,7 @@ public class Phase1 {
 	private boolean FAIL = false;
 	public Vector<NodeTable> nodes;
 //	private String input_file_base = "/home/akhil/MS/DBMS/";
-	private String input_file_base = "/home/renil/github/dbmsi/input/";
+	private String input_file_base = "/home/akhil/MS/DBMS/";
 	private Map<String, String> tagMapping = new HashMap<>(); // contains id to tag name mapping
 	private Map<String, Statistics> tagStatistics = new HashMap<>();
 		
@@ -162,7 +162,7 @@ public class Phase1 {
 			ProjectUtils.createIntervalIndex(f, t);
 
 		//querying b tree index on interval
-			ProjectUtils.doIntervalScan(1, 100, t);
+		//	ProjectUtils.doIntervalScan(1, 100, t);
 		
 	}
 
@@ -828,7 +828,7 @@ public class Phase1 {
 			
 			List<Rule> rules = getRuleList(file_contents);
 			//List<Rule> rules = getDemoRUles();
-			createQueryHeapFile("nodes.in", rules);
+		//	createQueryHeapFile("nodes.in", rules);
 
 			compute(rules);
 			System.out.println("Number of page accessed = " + BufMgr.page_access_counter);
@@ -908,7 +908,7 @@ public class Phase1 {
 
 	public static void main(String[] args) {
 		Phase1 phase1 = new Phase1();
-//		phase1.input();
+		phase1.input();
 		//phase1.compute();
 		//phase1.computeSM();
 	}

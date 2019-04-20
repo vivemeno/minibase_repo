@@ -155,211 +155,205 @@ public class IndexScan extends Iterator {
     throws IndexException, 
 	   UnknownKeyTypeException,
 	   IOException
-  {
-    RID rid;
-    int unused;
-    KeyDataEntry nextentry = null;
+	{
+		RID rid;
+		int unused;
+		KeyDataEntry nextentry = null;
 
-    try {
-      nextentry = indScan.get_next();
-    }
-    catch (Exception e) {
-      throw new IndexException(e, "IndexScan.java: BTree error");
-    }	  
-    
-    while(nextentry != null) {
-      if (index_only) {
-	// only need to return the key 
+		try {
+			nextentry = indScan.get_next();
+		} catch (Exception e) {
+			throw new IndexException(e, "IndexScan.java: BTree error");
+		}
 
-	AttrType[] attrType = new AttrType[1];
-	short[] s_sizes = new short[1];
-	
-	if (_types[_fldNum -1].attrType == AttrType.attrInteger) {
-	  attrType[0] = new AttrType(AttrType.attrInteger);
-	  try {
-	    Jtuple.setHdr((short) 1, attrType, s_sizes);
-	  }
-	  catch (Exception e) {
-	    throw new IndexException(e, "IndexScan.java: Heapfile error");
-	  }
-	  
-	  try {
-	    Jtuple.setIntFld(1, ((IntegerKey)nextentry.key).getKey().intValue());
-	  }
-	  catch (Exception e) {
-	    throw new IndexException(e, "IndexScan.java: Heapfile error");
-	  }	  
-	}
-	else if (_types[_fldNum -1].attrType == AttrType.attrString) {
-	  
-	  attrType[0] = new AttrType(AttrType.attrString);
-	  // calculate string size of _fldNum
-	  int count = 0;
-	  for (int i=0; i<_fldNum; i++) {
-	    if (_types[i].attrType == AttrType.attrString)
-	      count ++;
-	  } 
-	  s_sizes[0] = _s_sizes[count-1];
-	  
-	  try {
-	    Jtuple.setHdr((short) 1, attrType, s_sizes);
-	  }
-	  catch (Exception e) {
-	    throw new IndexException(e, "IndexScan.java: Heapfile error");
-	  }
-	  
-	  try {
-	    Jtuple.setStrFld(1, ((StringKey)nextentry.key).getKey());
-	  }
-	  catch (Exception e) {
-	    throw new IndexException(e, "IndexScan.java: Heapfile error");
-	  }	  
-	}
-	else {
-	  // attrReal not supported for now
-	  throw new UnknownKeyTypeException("Only Integer and String keys are supported so far"); 
-	}
-	return Jtuple;
-      }
-      
-      // not index_only, need to return the whole tuple
-      rid = ((LeafData)nextentry.data).getData();
-      try {
-	tuple1 = f.getRecord(rid);
-      }
-      catch (Exception e) {
-	throw new IndexException(e, "IndexScan.java: getRecord failed");
-      }
-      
-      try {
-	tuple1.setHdr((short) _noInFlds, _types, _s_sizes);
-      }
-      catch (Exception e) {
-	throw new IndexException(e, "IndexScan.java: Heapfile error");
-      }
-    
-      boolean eval;
-      try {
-	eval = PredEval.Eval(_selects, tuple1, null, _types, null);
-      }
-      catch (Exception e) {
-	throw new IndexException(e, "IndexScan.java: Heapfile error");
-      }
-      
-      if (eval) {
-	// need projection.java
-	try {
-	  Projection.Project(tuple1, _types, Jtuple, perm_mat, _noOutFlds);
-	}
-	catch (Exception e) {
-	  throw new IndexException(e, "IndexScan.java: Heapfile error");
-	}
+		while (nextentry != null) {
+			if (index_only) {
+				// only need to return the key
 
-	return Jtuple;
-      }
+				AttrType[] attrType = new AttrType[1];
+				short[] s_sizes = new short[1];
 
-      try {
-	nextentry = indScan.get_next();
-      }
-      catch (Exception e) {
-	throw new IndexException(e, "IndexScan.java: BTree error");
-      }	  
-    }
-    
-    return null; 
-  }
+				if (_types[_fldNum - 1].attrType == AttrType.attrInteger) {
+					attrType[0] = new AttrType(AttrType.attrInteger);
+					try {
+						Jtuple.setHdr((short) 1, attrType, s_sizes);
+					} catch (Exception e) {
+						throw new IndexException(e, "IndexScan.java: Heapfile error");
+					}
+
+					try {
+						Jtuple.setIntFld(1, ((IntegerKey) nextentry.key).getKey().intValue());
+					} catch (Exception e) {
+						throw new IndexException(e, "IndexScan.java: Heapfile error");
+					}
+				} else if (_types[_fldNum - 1].attrType == AttrType.attrString) {
+
+					attrType[0] = new AttrType(AttrType.attrString);
+					// calculate string size of _fldNum
+					int count = 0;
+					for (int i = 0; i < _fldNum; i++) {
+						if (_types[i].attrType == AttrType.attrString)
+							count++;
+					}
+					s_sizes[0] = _s_sizes[count - 1];
+
+					try {
+						Jtuple.setHdr((short) 1, attrType, s_sizes);
+					} catch (Exception e) {
+						throw new IndexException(e, "IndexScan.java: Heapfile error");
+					}
+
+					try {
+						Jtuple.setStrFld(1, ((StringKey) nextentry.key).getKey());
+					} catch (Exception e) {
+						throw new IndexException(e, "IndexScan.java: Heapfile error");
+					}
+				} else {
+					// attrReal not supported for now
+					throw new UnknownKeyTypeException("Only Integer and String keys are supported so far");
+				}
+				return Jtuple;
+			}
+
+			// not index_only, need to return the whole tuple
+			rid = ((LeafData) nextentry.data).getData();
+			try {
+				tuple1 = f.getRecord(rid);
+			} catch (Exception e) {
+				throw new IndexException(e, "IndexScan.java: getRecord failed");
+			}
+
+			try {
+				tuple1.setHdr((short) _noInFlds, _types, _s_sizes);
+			} catch (Exception e) {
+				throw new IndexException(e, "IndexScan.java: Heapfile error");
+			}
+
+			boolean eval;
+			try {
+				eval = PredEval.Eval(_selects, tuple1, null, _types, null);
+			} catch (Exception e) {
+				throw new IndexException(e, "IndexScan.java: Heapfile error");
+			}
+
+			if (eval) {
+				// need projection.java
+				try {
+					Projection.Project(tuple1, _types, Jtuple, perm_mat, _noOutFlds);
+				} catch (Exception e) {
+					throw new IndexException(e, "IndexScan.java: Heapfile error");
+				}
+
+				return Jtuple;
+			}
+
+			try {
+				nextentry = indScan.get_next();
+			} catch (Exception e) {
+				throw new IndexException(e, "IndexScan.java: BTree error");
+			}
+		}
+
+		return null;
+	}
   
   public Tuple get_nextInterval() throws IndexException, UnknownKeyTypeException 
-  {
-    RID rid;
-    int unused;
-    intervalTree.KeyDataEntry nextentry = null;
+	{
+		RID rid;
+		int unused;
+		intervalTree.KeyDataEntry nextentry = null;
 
-    try {
-      nextentry = ITIndexScan.get_next();
-    }
-    catch (Exception e) {
-      throw new IndexException(e, "IndexScan.java: BTree error");
-    }	  
-    
-    while(nextentry != null) {
-      if (index_only) {
-	// only need to return the key 
+		try {
+			nextentry = ITIndexScan.get_next();
+		} catch (Exception e) {
+			throw new IndexException(e, "IndexScan.java: BTree error");
+		}
 
-	AttrType[] attrType = new AttrType[2];
-	short[] s_sizes = new short[1];
-	s_sizes[0] = 5;
-	
-	if (_types[_fldNum -1].attrType == AttrType.attrInterval) {
-	  attrType[0] = new AttrType(AttrType.attrInterval);
-	  attrType[1] = new AttrType(AttrType.attrString);
-	  try {
-	    Jtuple.setHdr((short) 1, attrType, s_sizes);
-	  }
-	  catch (Exception e) {
-	    throw new IndexException(e, "IndexScan.java: Heapfile error");
-	  }
-	  
-	  try {
-	    Jtuple.setCompositeFld(1, ((IntervalKey)nextentry.key));
-	  }
-	  catch (Exception e) {
-	    throw new IndexException(e, "IndexScan.java: Heapfile error");
-	  }	  
-	}
-	else {
-	  // attrReal not supported for now
-	  throw new UnknownKeyTypeException("Only Integer and String keys are supported so far"); 
-	}
-	return Jtuple;
-      }
-//      ****************************end of indexOnly if block******************************
-      // not index_only, need to return the whole tuple
-      rid = ((intervalTree.LeafData)nextentry.data).getData();
-      try {
-	tuple1 = f.getRecord(rid);
-      }
-      catch (Exception e) {
-	throw new IndexException(e, "IndexScan.java: getRecord failed");
-      }
-      
-      try {
-	tuple1.setHdr((short) _noInFlds, _types, _s_sizes);
-      }
-      catch (Exception e) {
-	throw new IndexException(e, "IndexScan.java: Heapfile error");
-      }
-    
-      boolean eval;
-      try {
-	eval = PredEval.Eval(_selects, tuple1, null, _types, null);
-      }
-      catch (Exception e) {
-	throw new IndexException(e, "IndexScan.java: Heapfile error");
-      }
-      
-      if (eval) {
-	// need projection.java
-	try {
-	  Projection.Project(tuple1, _types, Jtuple, perm_mat, _noOutFlds);
-	}
-	catch (Exception e) {
-	  throw new IndexException(e, "IndexScan.java: Heapfile error");
-	}
+		while (nextentry != null) {
+			if (index_only) {
+				// only need to return the key
 
-	return Jtuple;
-      }
+				AttrType[] attrType = new AttrType[2];
+				short[] s_sizes = new short[1];
+				s_sizes[0] = 5;
 
-      try {
-	nextentry = ITIndexScan.get_next();
-      }
-      catch (Exception e) {
-	throw new IndexException(e, "IndexScan.java: BTree error");
-      }	  
-    }
-    
-    return null; 
-  }
+				attrType[0] = new AttrType(AttrType.attrInterval);
+				attrType[1] = new AttrType(AttrType.attrString);
+				try {
+					Jtuple.setHdr((short) 2, attrType, s_sizes);
+				} catch (Exception e) {
+					throw new IndexException(e, "IndexScan.java: Heapfile error");
+				}
+
+				try {
+					IntervalKey iKey = (IntervalKey) nextentry.key;
+					IntervalType interval = new IntervalType(iKey.key.s, iKey.key.e, iKey.key.l);
+					String tagName = iKey.name;
+					Jtuple.setIntervalFld(1, interval);
+					Jtuple.setStrFld(2, tagName);
+				} catch (Exception e) {
+					throw new IndexException(e, "IndexScan.java: Heapfile error");
+				}
+//				boolean eval;
+//				try {
+//					eval = PredEval.Eval(_selects, Jtuple, null, _types, null);
+//				} catch (Exception e) {
+//					throw new IndexException(e, "IndexScan.java: Heapfile error");
+//				}
+				
+				//if (eval) {
+					return Jtuple;
+			//	}
+				
+//				try {
+//					nextentry = ITIndexScan.get_next();
+//				} catch (Exception e) {
+//					throw new IndexException(e, "IndexScan.java: BTree error");
+//				}
+			}
+			// ****************************end of indexOnly if
+			// block******************************
+			// not index_only, need to return the whole tuple
+			rid = ((intervalTree.LeafData) nextentry.data).getData();
+			try {
+				tuple1 = f.getRecord(rid);
+			} catch (Exception e) {
+				throw new IndexException(e, "IndexScan.java: getRecord failed");
+			}
+
+			try {
+				tuple1.setHdr((short) _noInFlds, _types, _s_sizes);
+			} catch (Exception e) {
+				throw new IndexException(e, "IndexScan.java: Heapfile error");
+			}
+
+			boolean eval;
+			try {
+				eval = PredEval.Eval(_selects, tuple1, null, _types, null);
+			} catch (Exception e) {
+				throw new IndexException(e, "IndexScan.java: Heapfile error");
+			}
+
+			if (eval) {
+				// need projection.java
+				try {
+					Projection.Project(tuple1, _types, Jtuple, perm_mat, _noOutFlds);
+				} catch (Exception e) {
+					throw new IndexException(e, "IndexScan.java: Heapfile error");
+				}
+
+				return Jtuple;
+			}
+
+			try {
+				nextentry = ITIndexScan.get_next();
+			} catch (Exception e) {
+				throw new IndexException(e, "IndexScan.java: BTree error");
+			}
+		}
+
+		return null;
+	}
   
   /**
    * Cleaning up the index scan, does not remove either the original
