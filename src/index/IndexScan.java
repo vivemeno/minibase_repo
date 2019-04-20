@@ -286,11 +286,13 @@ public class IndexScan extends Iterator {
       if (index_only) {
 	// only need to return the key 
 
-	AttrType[] attrType = new AttrType[1];
+	AttrType[] attrType = new AttrType[2];
 	short[] s_sizes = new short[1];
+	s_sizes[0] = 5;
 	
 	if (_types[_fldNum -1].attrType == AttrType.attrInterval) {
 	  attrType[0] = new AttrType(AttrType.attrInterval);
+	  attrType[1] = new AttrType(AttrType.attrString);
 	  try {
 	    Jtuple.setHdr((short) 1, attrType, s_sizes);
 	  }
@@ -299,7 +301,7 @@ public class IndexScan extends Iterator {
 	  }
 	  
 	  try {
-	    Jtuple.setIntervalFld(1, ((IntervalKey)nextentry.key).getKey());
+	    Jtuple.setCompositeFld(1, ((IntervalKey)nextentry.key));
 	  }
 	  catch (Exception e) {
 	    throw new IndexException(e, "IndexScan.java: Heapfile error");

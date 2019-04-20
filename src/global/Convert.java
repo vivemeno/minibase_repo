@@ -6,6 +6,8 @@ import java.io.*;
 import java.lang.*;
 import java.nio.charset.StandardCharsets;
 
+import intervalTree.IntervalKey;
+
 public class Convert{
  
  /**
@@ -200,6 +202,69 @@ public class Convert{
 		IntervalType interval = new IntervalType(startInterval, endInterval, level);
 		return interval;
 	}
+  
+  public static NodeTable getNodeValue (int position, byte []data, int length)
+			throws java.io.IOException {
+		InputStream in;
+		DataInputStream instr;
+		int startInterval;
+		int endInterval;
+		int level;
+		byte tmp[] = new byte[GlobalConst.INTERVAL_LEN];
+		int c = data.length;
+
+		// copy the value from data array out to a tmp byte array
+		System.arraycopy(data, position, tmp, 0, GlobalConst.INTERVAL_LEN);
+
+		in = new ByteArrayInputStream(tmp);
+		instr = new DataInputStream(in);
+		startInterval = instr.readInt();
+		endInterval = instr.readInt();
+		level = instr.readInt();
+		
+		tmp = new byte[length];  
+	      // copy the value from data array out to a tmp byte array
+	      System.arraycopy (data, position+12, tmp, 0, 5+2);
+	      in = new ByteArrayInputStream(tmp);
+	      instr = new DataInputStream(in);
+	      String name = instr.readUTF();
+		
+		IntervalType interval = new IntervalType(startInterval, endInterval, level);
+		NodeTable tb = new NodeTable(name, interval);
+		return tb;
+	}
+  
+  public static void setNodelValue (IntervalKey value, int position, byte []data)
+          throws java.io.IOException
+  {
+      /* creates a new data output stream to write data to
+       * underlying output stream
+       */
+
+      OutputStream out = new ByteArrayOutputStream();
+      DataOutputStream outstr = new DataOutputStream (out);
+       
+      outstr.writeInt(value.key.s);
+      outstr.writeInt(value.key.e);
+      outstr.writeInt(value.key.l);
+      outstr.writeUTF(value.name);
+      
+      // write the value to the output stream
+     // outstr.writeObject(value);
+      // creates a byte array with this output stream size and the
+      // valid contents of the buffer have been copied into it
+      byte []B = ((ByteArrayOutputStream) out).toByteArray();
+      int a = B.length;
+      
+    //  int sz =((ByteArrayOutputStream) out).toByteArray().length;
+      // copies the contents of this byte array into data[]
+try {
+    System.arraycopy (B, 0, data, position, a);
+
+}catch(Exception e) {
+	System.out.println();
+}
+  }
   
   
   /**

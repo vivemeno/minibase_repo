@@ -4,10 +4,17 @@ import global.IntervalType;
 
 public class IntervalKey extends KeyClass {
 	
-	 IntervalType key;
+	 public IntervalType key;
+	 public String name;
 	
 	public IntervalKey(IntervalType value) {
 		key = new IntervalType(value.s, value.e, value.l);
+
+	}
+	
+	public IntervalKey(IntervalType value, String name) {
+		key = new IntervalType(value.s, value.e, value.l);
+		this.name = name;
 
 	}
 	
@@ -22,7 +29,7 @@ public class IntervalKey extends KeyClass {
 	@Override
 	public String toString() {
 		
-	     return "s: "+key.s+", \n e :" +key.e+", \n l :" +key.l;
+	     return "["+"s: "+key.s+", e :" +key.e+", l :" +key.l + "] tagName: "+ name;
 	}
 	
 }

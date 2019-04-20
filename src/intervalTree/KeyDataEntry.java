@@ -29,7 +29,7 @@ public class KeyDataEntry {
 
      data = new IndexData(pageNo); 
      if ( key instanceof IntervalKey ) 
-        this.key= new IntervalKey(((IntervalKey)key).getKey());
+        this.key= new IntervalKey(((IntervalKey)key).getKey(), ((IntervalKey)key).name);
 //     else if ( key instanceof StringKey ) 
 //        this.key= new StringKey(((StringKey)key).getKey());    
   };
@@ -46,7 +46,7 @@ public class KeyDataEntry {
   public KeyDataEntry(KeyClass key, RID rid){
      data = new LeafData(rid); 
      if ( key instanceof IntervalKey ) 
-        this.key= new IntervalKey(((IntervalKey)key).getKey());
+        this.key= new IntervalKey(((IntervalKey)key).getKey(), ((IntervalKey) key).name);
 //     else if ( key instanceof StringKey ) 
 //        this.key= new StringKey(((StringKey)key).getKey());    
   }; 
@@ -55,7 +55,7 @@ public class KeyDataEntry {
    */
   public KeyDataEntry( KeyClass key,  DataClass data) {
      if ( key instanceof IntervalKey ) 
-        this.key= new IntervalKey(((IntervalKey)key).getKey());
+        this.key= new IntervalKey(((IntervalKey)key).key, ((IntervalKey)key).name);
 
      if ( data instanceof IndexData ) 
         this.data= new IndexData(((IndexData)data).getData());

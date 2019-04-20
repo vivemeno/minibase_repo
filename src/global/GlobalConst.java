@@ -13,7 +13,8 @@ public interface GlobalConst {
 
   public static final int MAX_SPACE = 8096;   // in Frames
   
-  public static final int INTERVAL_LEN = 12;
+  public static final int INTERVAL_LEN = 19;
+  public static final int STR_LEN = 5;
 
   /**
    * in Pages => the DBMS Manager tells the DB how much disk 

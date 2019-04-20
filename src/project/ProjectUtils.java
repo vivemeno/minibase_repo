@@ -213,6 +213,7 @@ public class ProjectUtils {
 
 		RID rid = new RID();
 		IntervalType intervalType = null;
+		String s = null;
 		temp = null;
 
 		try {
@@ -220,19 +221,24 @@ public class ProjectUtils {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+		int c =0 ;
 		while (temp != null) {
 			t.tupleCopy(temp);
 
 			try {
 
-				String s = t.getStrFld(2);
+				s = t.getStrFld(2);
 				intervalType = t.getIntervalField(1);
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
 
 			try {
-				btfInterval.insert(new IntervalKey(intervalType), rid);
+//				if(s==null || c == 784) {
+//					System.out.println(s);
+//				}
+//				System.out.println(c++);
+				btfInterval.insert(new IntervalKey(intervalType, s), rid);
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
@@ -289,16 +295,18 @@ public class ProjectUtils {
 		nodeTableStringSizes[0] = 5;
 		
 		// start index scan
+		boolean isIndexOnly = true;
 		IndexScan iscan = null;
 		try {
-			iscan = new IndexScan(new IndexType(IndexType.interval_Index), "nodes.in", "IntervalIndex",
-					nodeTableAttrTypes, nodeTableStringSizes, 2, 2, projlist, expr, 1, false);
+			iscan = new IndexScan(new IndexType(IndexType.interval_Index), "nodes.in", "IntervalIndex.in",
+					nodeTableAttrTypes, nodeTableStringSizes, 2, 2, projlist, expr, 1, isIndexOnly);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 
 		t = null;
 		IntervalType iout = null;
+		IntervalKey ioutKey = null;
 		int ival = 100, count = 0; // low key
 
 		try {
@@ -309,18 +317,14 @@ public class ProjectUtils {
 
 		while (t != null) {
 			try {
-				iout = t.getIntervalField(1);
+				ioutKey = t.getCompositeField(1);
 				++count;
 //				System.out.println("count " + (count));
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
 
-	      System.out.println("result "+ iout.toString());
-	      
-	      if(iout.s == 110574) {
-	    	  System.out.println();
-	      }
+	      System.out.println("result "+ ioutKey.toString());
 
 			try {
 				t = iscan.get_nextInterval();

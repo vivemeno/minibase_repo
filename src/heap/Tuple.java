@@ -5,6 +5,7 @@ package heap;
 import java.io.*;
 import java.lang.*;
 import global.*;
+import intervalTree.IntervalKey;
 
 public class Tuple implements GlobalConst {
 
@@ -304,7 +305,26 @@ public class Tuple implements GlobalConst {
 			throw new FieldNumberOutOfBoundException(null, "TUPLE:TUPLE_FLDNO_OUT_OF_BOUND");
 
 	}
+	
+	public IntervalKey getCompositeField(int fldNo)
+			throws IOException, FieldNumberOutOfBoundException {
+		IntervalKey val;
+		if ((fldNo > 0) && (fldNo <= fldCnt)) {
+			NodeTable tb = Convert.getNodeValue(fldOffset[fldNo - 1], data, 7);
+			return new IntervalKey(tb.interval, tb.nodename);
+		} else
+			throw new FieldNumberOutOfBoundException(null, "TUPLE:TUPLE_FLDNO_OUT_OF_BOUND");
 
+	}
+
+	public Tuple setCompositeFld(int fldNo, IntervalKey val) throws IOException, FieldNumberOutOfBoundException {
+		if ((fldNo > 0) && (fldNo <= fldCnt)) {
+			Convert.setNodelValue(val, fldOffset[fldNo - 1], data);
+			return this;
+		} else
+			throw new FieldNumberOutOfBoundException(null, "TUPLE:TUPLE_FLDNO_OUT_OF_BOUND");
+	}
+	
 	/**
 	 * Set this field to integer value
 	 *

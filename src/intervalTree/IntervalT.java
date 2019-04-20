@@ -210,7 +210,7 @@ public class IntervalT implements GlobalConst {
 		        data=new byte[n];
 			
 		        if ( entry.key instanceof IntervalKey ) {
-			  Convert.setIntervalValue( ((IntervalKey)entry.key).getKey(),
+			  Convert.setNodelValue( ((IntervalKey)entry.key),
 					       0, data);
 		        }
 		        else throw new KeyNotMatchException(null, "key types do not match");
@@ -263,6 +263,7 @@ public class IntervalT implements GlobalConst {
 	      DataClass data;
 	      int n;
 	      try {
+	    	  int b = from.length;
 		
 		if ( nodeType==NodeType.index ) {
 		  n=4;
@@ -279,8 +280,9 @@ public class IntervalT implements GlobalConst {
 		else throw new NodeNotMatchException(null, "node types do not match"); 
 		
 		if ( keyType== AttrType.attrInterval) {
+			NodeTable tmpTB = Convert.getNodeValue(offset, from, length-n);
 		  key= new IntervalKey(
-				       (Convert.getIntervalValue(offset, from)));
+				  tmpTB.interval, tmpTB.nodename);
 		}
 		else 
 	          throw new KeyNotMatchException(null, "key types do not match");

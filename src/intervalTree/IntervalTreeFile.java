@@ -287,6 +287,9 @@ public class IntervalTreeFile extends IndexFile implements GlobalConst {
 		// ASSERTIONS:
 		// - newRootPage, newRootPageId valid and pinned
 		
+		if(((IntervalKey)key).name == null) {
+			System.out.println();
+		}
 		newRootPage.insertRecord(key, rid); 
 		
 		if ( trace!=null )
@@ -321,7 +324,9 @@ public class IntervalTreeFile extends IndexFile implements GlobalConst {
 		  trace.flush();
 		}
 	      
-	      
+	      if(((IntervalKey)key).name == null) {
+				System.out.println();
+			}
 	      newRootEntry= _insert(key, rid, headerPage.get_rootId());
 	      
 	      // TWO CASES:

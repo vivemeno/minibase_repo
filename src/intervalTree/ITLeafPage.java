@@ -86,9 +86,14 @@ public class ITLeafPage extends ITSortedPage {
     {
       KeyDataEntry entry;
       
+      if(((IntervalKey)key).name == null) {
+      	System.out.println();
+      }
+      
       try {
         entry = new KeyDataEntry( key,dataRid);
-	
+        
+        
         return insertRecord(entry);
       }
       catch(Exception e) {

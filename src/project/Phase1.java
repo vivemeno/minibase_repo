@@ -162,7 +162,7 @@ public class Phase1 {
 			ProjectUtils.createIntervalIndex(f, t);
 
 		//querying b tree index on interval
-	//		ProjectUtils.doIntervalScan(100, 200, t);
+			ProjectUtils.doIntervalScan(1, 100, t);
 		
 	}
 
@@ -896,7 +896,7 @@ public class Phase1 {
 
 	public static void main(String[] args) {
 		Phase1 phase1 = new Phase1();
-		phase1.input();
+//		phase1.input();
 		//phase1.compute();
 		//phase1.computeSM();
 	}
