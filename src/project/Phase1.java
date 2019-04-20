@@ -293,6 +293,7 @@ public class Phase1 {
 		
 		//Outer table comparison. For eg: If rule is A B PC, this condition will return 
 		//results for outer table where tag name equals to A.
+		
 		outFilter[1].next = null;
 		outFilter[1].op = new AttrOperator(AttrOperator.aopEQ);
 		outFilter[1].type1 = new AttrType(AttrType.attrSymbol);
@@ -300,16 +301,20 @@ public class Phase1 {
 		outFilter[1].type2 = new AttrType(AttrType.attrString);
 		outFilter[1].operand2.string = tagMapping.get(rule.outerTag);
 		
-		outFilter[2].next = null;
-		outFilter[2].op = new AttrOperator(AttrOperator.aopEQ);
-		outFilter[2].type1 = new AttrType(AttrType.attrSymbol);
-		outFilter[2].type2 = new AttrType(AttrType.attrString);
-		outFilter[2].operand1.symbol = new FldSpec(new RelSpec(RelSpec.innerRel), 2);
-		outFilter[2].operand2.string = tagMapping.get(rule.innerTag);
+		if (!tagMapping.get(rule.innerTag).equals("*")) {
+			outFilter[2].next = null;
+			outFilter[2].op = new AttrOperator(AttrOperator.aopEQ);
+			outFilter[2].type1 = new AttrType(AttrType.attrSymbol);
+			outFilter[2].type2 = new AttrType(AttrType.attrString);
+			outFilter[2].operand1.symbol = new FldSpec(new RelSpec(RelSpec.innerRel), 2);
+			outFilter[2].operand2.string = tagMapping.get(rule.innerTag);
+
+			outFilter[3] = null;
+		} else {
+			outFilter[2] = null;
+		}
 		
-		
-		outFilter[3] = null;
-		
+		if (!tagMapping.get(rule.innerTag).equals("*")) {
 		//Inner table comparison.
 		rightFilter[0].next = null;
 		rightFilter[0].op = new AttrOperator(AttrOperator.aopEQ);
@@ -319,6 +324,9 @@ public class Phase1 {
 		rightFilter[0].operand2.string = tagMapping.get(rule.innerTag);
 		
 		rightFilter[1] = null;
+		} else { 
+			rightFilter[0] = null;
+		}
 	}
 
 	private void populateNodeOffsetMap(Map<String, Integer> offsetMap, String nodeName, int nodeNumber) {
@@ -887,8 +895,12 @@ public class Phase1 {
 	}
 	
 	private String findIndex(Rule rule) {
-		Statistics stats = tagStatistics.get(rule.outerTag);
-		if (stats != null && stats.intervalRange < stats.totalCount) {
+		Statistics statsOuter = tagStatistics.get(rule.outerTag);
+		Statistics statsInner = tagStatistics.get(rule.innerTag);
+		if (statsInner == null || statsOuter == null) {
+			return "nodeIndex.in";
+		}
+		if (statsOuter.intervalRange < statsInner.totalCount) {
 			return "IntervalIndex.in";
 		}
 		return "nodeIndex.in";
