@@ -192,7 +192,7 @@ public class SortMerge extends Iterator implements GlobalConst
 		// Two buffer pages to store equivalence classes
 		// NOTE -- THESE PAGES ARE NOT OBTAINED FROM THE BUFFER POOL
 		// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-		_n_pages = 1;
+		_n_pages = 5;
 		_bufs1 = new byte [_n_pages][MINIBASE_PAGESIZE];
 		_bufs2 = new byte [_n_pages][MINIBASE_PAGESIZE];
 
@@ -327,8 +327,8 @@ public class SortMerge extends Iterator implements GlobalConst
 				TempTuple1.tupleCopy(tuple1);
 				TempTuple2.tupleCopy(tuple2);
 
-				io_buf1.init(_bufs1,       1, t1_size, temp_file_fd1);
-				io_buf2.init(_bufs2,       1, t2_size, temp_file_fd2);
+				io_buf1.init(_bufs1, 5, t1_size, temp_file_fd1);
+				io_buf2.init(_bufs2, 5, t2_size, temp_file_fd2);
 
 				int comp_res1 = sortFldType.attrType == AttrType.attrInterval? TupleUtils.CompareTupleWithTuple(tuple1, jc_in1, TempTuple1, jc_in1):
 						TupleUtils.CompareTupleWithTuple(sortFldType,  tuple1, jc_in1, TempTuple1, jc_in1);
