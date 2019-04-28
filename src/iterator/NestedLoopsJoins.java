@@ -390,6 +390,15 @@ public class NestedLoopsJoins  extends Iterator
       }
     }
   
+  public void updateJTUple(short len, short[] tsizes, AttrType[] ttypes) {
+	  try {
+		Jtuple.setHdr(len, ttypes, tsizes);
+	} catch (InvalidTypeException | InvalidTupleSizeException | IOException e) {
+		// TODO Auto-generated catch block
+		e.printStackTrace();
+	}
+  }
+  
   
   public Tuple get_next(int physOp)
 		    throws IOException,
@@ -451,7 +460,8 @@ public class NestedLoopsJoins  extends Iterator
 						inner_tuple.setHdr((short) in2_len, _in2, t2_str_sizescopy);
 						if(physOp == 2) {
 							if(TupleUtils.CompareTupleWithTuple(outer_tuple, RightFilter[0].operand1.integer, inner_tuple, RightFilter[0].operand2.integer) == 0) {
-								Projection.Join(outer_tuple, _in1, inner_tuple, _in2, Jtuple, perm_mat, nOutFlds);
+								Jtuple.setStrFld(1, "mroot");
+								Projection.Join(2, outer_tuple, _in1, inner_tuple, _in2, Jtuple, perm_mat, nOutFlds);
 								return Jtuple;
 							}
 							continue;
@@ -459,7 +469,8 @@ public class NestedLoopsJoins  extends Iterator
 						if (PredEval.Eval(RightFilter, inner_tuple, null, _in2, null) == true || physOp == 1) {
 							if (PredEval.Eval(OutputFilter, outer_tuple, inner_tuple, _in1, _in2) == true || physOp == 1 ) {
 								// Apply a projection on the outer and inner tuples.
-								Projection.Join(outer_tuple, _in1, inner_tuple, _in2, Jtuple, perm_mat, nOutFlds);
+								Jtuple.setStrFld(1, "mroot");
+								Projection.Join(1, outer_tuple, _in1, inner_tuple, _in2, Jtuple, perm_mat, nOutFlds);
 								return Jtuple;
 							}
 						}

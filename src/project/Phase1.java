@@ -851,7 +851,7 @@ public class Phase1 {
 		return getRulesInOrder(root, ruleMap);
 	}
 	
-	int queryPlanNumber = 1; 
+	int queryPlanNumber = 0; 
 	Iterator it1 = null;
 	Iterator it2 = null;
 	String ruleFile1 = "temp1.in";
@@ -882,7 +882,7 @@ public class Phase1 {
 					System.out.println("Enter first input filename for query");
 					scanner = new Scanner(System.in);
 //					String file1 = scanner.next();
-//					String file1 = "query.txt";
+//					String file1 = "query1.txt";
 					String file1 = "q6.txt";
 					String[] file_contents1 = readFile(input_file_base + file1);
 					List<Rule> rules1 = getRuleList(file_contents1);
@@ -913,9 +913,9 @@ public class Phase1 {
 					TaskFourUtils taskutils = new TaskFourUtils(wt1NoOfFlds, wt2NoOfFlds);
 					int complexLoopChoice= 1;
 					
-//					AttrType[] finalTupleAttrTypes = new AttrType[2 * 4];
+//					AttrType[] finalTupleAttrTypes = new AttrType[wt1NoOfFlds];
 //
-//					for (int i = 0; i < 2 * 4; i++) {
+//					for (int i = 0; i < wt1NoOfFlds; i++) {
 //						if (i % 2 == 0) {
 //							finalTupleAttrTypes[i] = new AttrType(AttrType.attrString);
 //						} else {
@@ -923,8 +923,9 @@ public class Phase1 {
 //						}
 //					}
 //					Tuple finalTuple = new Tuple();
+//					int tempcount = 0;
 //					while ((finalTuple = it1.get_next()) != null) {
-//						System.out.println("Result ");
+//						System.out.println("Result " + (++tempcount));
 //						finalTuple.print(finalTupleAttrTypes);
 //					}
 					
@@ -933,9 +934,9 @@ public class Phase1 {
 						System.out.println("Enter the operation");
 //						complexOperation = scanner.next();
 //						complexOperation = "CP";
-//						complexOperation = "TJ 5 5";
-						complexOperation = "NJ 4 4";
-//						complexOperation = "SRT 4";
+//						complexOperation = "TJ 4 4";
+//						complexOperation = "NJ 4 4";
+						complexOperation = "SRT 4";
 //						complexOperation = "GRP 4";
 						String[] chCOp = null;
 						
