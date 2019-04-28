@@ -473,7 +473,6 @@ public class Phase1 {
 			System.err.println("" + e);
 			e.printStackTrace();
 		}
-
 		
 		populateNodeOffsetMap(tagOffsetMap, firstRule.outerTag, nodeNumber);
 		nodeNumber++;
@@ -650,7 +649,6 @@ public class Phase1 {
 				new FldSpec(new RelSpec(RelSpec.innerRel), 2), new FldSpec(new RelSpec(RelSpec.innerRel), 1)};
 		List<NestedLoopsJoins> listNLJ = new LinkedList<>();
 		boolean isFirstRule = true;
-		findIndex(rules.get(0));
 		//takes ordered rules one by one perform nested loop join
 		for (Rule rule : rules) {
 			try {
@@ -1078,8 +1076,8 @@ public class Phase1 {
 	}
 	
 	private String findIndex(Rule rule) {
-		Statistics statsOuter = tagStatistics.get(rule.outerTag);
-		Statistics statsInner = tagStatistics.get(rule.innerTag);
+		Statistics statsOuter = tagStatistics.get(tagMapping.get(rule.outerTag));
+		Statistics statsInner = tagStatistics.get(tagMapping.get(rule.innerTag));
 		if (statsInner == null || statsOuter == null) {
 			return "nodeIndex.in";
 		}
@@ -1092,9 +1090,9 @@ public class Phase1 {
 	public static void main(String[] args) {
 		Phase1 phase1 = new Phase1();
 
-//		phase1.input();
+		phase1.input();
 		
-		phase1.complexPattern();
+//		phase1.complexPattern();
 		
 		//phase1.compute();
 		//phase1.computeSM();
