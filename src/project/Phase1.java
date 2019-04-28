@@ -561,7 +561,7 @@ public class Phase1 {
 
 			try {
 				currIterator = new NestedLoopsJoins(joinedTableAttrTypes, 2 * ruleNumber, joinedTableStringLengths, baseTableAttrTypes, 2,
-						baseTableStringLengths, 10, prevIterator, "nodes.in", filterConditions, innerRelFilterConditions, currProjection,
+						baseTableStringLengths, 10, prevIterator, indexName.equals("nodeIndex.in") ? "nodesSortedOnTag.in":"nodes.in", filterConditions, innerRelFilterConditions, currProjection,
 						2 * ruleNumber + 2, indexName, tagOffsetMap.get(currRule.outerTag) - 1);
 			} catch (Exception e) {
 				System.err.println("*** Error preparing for nested_loop_join");
@@ -684,10 +684,10 @@ public class Phase1 {
 				CondExpr[] innerRelFilterConditions = new CondExpr[2];
 				innerRelFilterConditions[0] = new CondExpr();
 				innerRelFilterConditions[1] = new CondExpr();
-
+				String indexName = findIndex(rule);
 				setConditions(outFilter,innerRelFilterConditions, rule, 1, true);
 				inl = new NestedLoopsJoins(Ntypes, 2, Nsizes, Ntypes, 2,
-						Nsizes, 10, fileScan, "nodes.in", outFilter, innerRelFilterConditions, nljOutProj, 4, findIndex(rule), 1);
+						Nsizes, 10, fileScan, indexName.equals("nodeIndex.in") ? "nodesSortedOnTag.in":"nodes.in", outFilter, innerRelFilterConditions, nljOutProj, 4, findIndex(rule), 1);
 				isFirstRule = false;
 				listNLJ.add(inl);
 			} catch (Exception e) {
