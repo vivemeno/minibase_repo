@@ -4,6 +4,8 @@ package heap;
 
 import java.io.*;
 import java.lang.*;
+import java.util.Stack;
+
 import global.*;
 import intervalTree.IntervalKey;
 
@@ -621,5 +623,251 @@ public class Tuple implements GlobalConst {
 
 	private short pad(short offset, AttrType type) {
 		return 0;
+	}
+	
+//	***********************************************************************
+	
+	public void printTreeFormat(AttrType type[], int wt1NoOfFlds) throws IOException, ClassNotFoundException {
+		int i, val;
+		float fval;
+		String sval = "";
+		IntervalType ival = new IntervalType();
+		Stack<NodeTable> st = new Stack<NodeTable>();
+
+//		if(st.size() == 0)System.out.println("parent_root");
+		String sTemp = "";
+		NodeTable nt = new NodeTable();
+		boolean check  = false;
+//		for (i = 0; i < fldCnt - 1; i++) {
+		for (i = 0; i < fldCnt; i++) {
+			switch (type[i].attrType) {
+
+			case AttrType.attrInteger:
+				val = Convert.getIntValue(fldOffset[i], data);
+				//System.out.print(val);
+				break;
+				
+			case AttrType.attrString:
+				sval = Convert.getStrValue(fldOffset[i], data, fldOffset[i+1] - fldOffset[i]);
+				//System.out.print(sval);
+				break;
+			
+			case AttrType.attrInterval:
+				ival = Convert.getIntervalValue(fldOffset[i], data);
+				//System.out.print("[" + ival.s + " " + ival.e + "]");
+				break;
+
+			case AttrType.attrNull:
+			case AttrType.attrSymbol:
+				break;
+			}
+			if(i==0) {
+				System.out.println(sval);
+				continue;
+			}
+			
+			int tab = 4;
+			if((i-1) % 2 == 0) {
+				sTemp+=sval;
+				sTemp+=", ";
+				nt = new NodeTable();
+				nt.nodename = sval;
+			}else {
+				sTemp+="["+ ival.s+", "+ ival.e + "]";
+				nt.interval = ival;
+				if(i > wt1NoOfFlds+1 && check == false) {
+					check = true;
+					st.clear();
+				}
+				if(st.isEmpty()) {
+					for(int space =0; space < tab; space++) {
+						System.out.print(" ");
+					}
+				}else {
+					NodeTable tmpNT = st.pop();
+					if(nt.interval.s < tmpNT.interval.e){
+						for(int space =0; space < (tab+st.size()+tab); space++) {
+							System.out.print(" ");
+						}
+						st.push(tmpNT);
+					}else {
+						for(int space =0; space < (tab+st.size()); space++) {
+							System.out.print(" ");
+						}
+					}
+				}
+				st.push(nt);
+				System.out.println(nt.customToString());
+				
+			}
+		}
+		System.out.println("");System.out.println("");
+		System.out.println("");
+
+	}
+
+	String prevGRPValue = "";
+	public void printTreeFormatGRP(AttrType type[], int wt1NoOfFlds, int nodeNo) throws IOException, ClassNotFoundException {
+		int i, val;
+		float fval;
+		String sval = "";
+		int tab = 4;
+		IntervalType ival = new IntervalType();
+		Stack<NodeTable> st = new Stack<NodeTable>();
+
+		String sTemp = "";		
+		
+		NodeTable nt = new NodeTable();
+		boolean check  = false;
+//		for (i = 0; i < fldCnt - 1; i++) {
+		for (i = 0; i < fldCnt; i++) {
+			switch (type[i].attrType) {
+
+			case AttrType.attrInteger:
+				val = Convert.getIntValue(fldOffset[i], data);
+				//System.out.print(val);
+				break;
+				
+			case AttrType.attrString:
+				sval = Convert.getStrValue(fldOffset[i], data, fldOffset[i + 1] - fldOffset[i]);
+				//System.out.print(sval);
+				break;
+			
+			case AttrType.attrInterval:
+				ival = Convert.getIntervalValue(fldOffset[i], data);
+				//System.out.print("[" + ival.s + " " + ival.e + "]");
+				break;
+
+			case AttrType.attrNull:
+			case AttrType.attrSymbol:
+				break;
+			}
+			int basicDstance = 8;
+			
+			if(i == 0) {
+				System.out.println(sval);
+				continue;
+			}
+			if(i==1) {
+				for(int space =0; space < tab; space++) {
+					System.out.print(" ");
+				}
+				System.out.println(sval);continue;
+			}
+			
+			if(i % 2 == 0) {
+				sTemp+=sval;
+				sTemp+=", ";
+				nt = new NodeTable();
+				nt.nodename = sval;
+			}else {
+				sTemp+="["+ ival.s+", "+ ival.e + "]";
+				nt.interval = ival;
+				if(i > wt1NoOfFlds && check == false) {
+					check = true;
+					st.clear();
+				}
+				if(st.isEmpty()) {
+					for(int space =0; space < tab + basicDstance; space++) {
+						System.out.print(" ");
+					}
+				}else {
+					NodeTable tmpNT = st.pop();
+					if(nt.interval.s == 1){
+						System.out.println("");
+					}
+					while(!st.isEmpty() && nt.interval.s < tmpNT.interval.s) {
+						tmpNT = st.pop();
+					}
+					if(nt.interval.s < tmpNT.interval.e && nt.interval.s > tmpNT.interval.s){
+						for(int space =0; space < (tab+st.size()+tab + basicDstance); space++) {
+							System.out.print(" ");
+						}
+						st.push(tmpNT);
+					}else {
+						for(int space =0; space < (tab+st.size() + basicDstance); space++) {
+							System.out.print(" ");
+						}
+					}
+				}
+				st.push(nt);
+				System.out.println(nt.customToString());
+				
+			}
+		}
+	}
+	
+	public void printTreeFormatSRT(AttrType type[], int wt1NoOfFlds) throws IOException, ClassNotFoundException {
+		int i, val;
+		float fval;
+		String sval = "";
+		IntervalType ival = new IntervalType();
+		Stack<NodeTable> st = new Stack<NodeTable>();
+
+		if(st.size() == 0)System.out.println("parent_root");
+		String sTemp = "";
+		NodeTable nt = new NodeTable();
+		boolean check  = false;
+//		for (i = 0; i < fldCnt - 1; i++) {
+		for (i = 0; i < fldCnt; i++) {
+			switch (type[i].attrType) {
+
+			case AttrType.attrInteger:
+				val = Convert.getIntValue(fldOffset[i], data);
+				//System.out.print(val);
+				break;
+				
+			case AttrType.attrString:
+				sval = Convert.getStrValue(fldOffset[i], data, fldOffset[i + 1] - fldOffset[i]);
+				//System.out.print(sval);
+				break;
+			
+			case AttrType.attrInterval:
+				ival = Convert.getIntervalValue(fldOffset[i], data);
+				//System.out.print("[" + ival.s + " " + ival.e + "]");
+				break;
+
+			case AttrType.attrNull:
+			case AttrType.attrSymbol:
+				break;
+			}
+			int tab = 4;
+			if(i % 2 == 0) {
+				sTemp+=sval;
+				sTemp+=", ";
+				nt = new NodeTable();
+				nt.nodename = sval;
+			}else {
+				sTemp+="["+ ival.s+", "+ ival.e + "]";
+				nt.interval = ival;
+				if(i > wt1NoOfFlds && check == false) {
+					check = true;
+					st.clear();
+				}
+				if(st.isEmpty()) {
+					for(int space =0; space < tab; space++) {
+						System.out.print(" ");
+					}
+				}else {
+					NodeTable tmpNT = st.pop();
+					if(nt.interval.s < tmpNT.interval.e){
+						for(int space =0; space < (tab+st.size()+tab); space++) {
+							System.out.print(" ");
+						}
+						st.push(tmpNT);
+					}else {
+						for(int space =0; space < (tab+st.size()); space++) {
+							System.out.print(" ");
+						}
+					}
+				}
+				st.push(nt);
+				System.out.println(nt.customToString());
+				
+			}
+		}
+		System.out.println("");System.out.println("");
+		System.out.println("");
+
 	}
 }

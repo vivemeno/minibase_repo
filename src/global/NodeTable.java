@@ -20,4 +20,8 @@ public class NodeTable {
 	public String toString() {
 		return "NodeTable [nodename=" + nodename + ", interval=" + interval + "]";
 	}
+	
+	public String customToString() {
+		return nodename+ "["+interval.s+","+interval.e+"]";
+	}
 }
