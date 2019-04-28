@@ -25,7 +25,7 @@ public class IndexUtils {
    * @param indFile the index (BTree) file
    * @return an instance of IndexFileScan (BTreeFileScan)
    * @exception IOException from lower layer
-   * @exception UnknownKeyTypeException only int and string keys are supported 
+   * @exception UnknownKeyTypeException only int and string keys are supported
    * @exception InvalidSelectionException selection conditions (selects) not valid
    * @exception KeyNotMatchException Keys do not match
    * @exception UnpinPageException unpin page failed
@@ -33,9 +33,9 @@ public class IndexUtils {
    * @exception IteratorException iterator exception
    * @exception ConstructPageException failed to construct a header page
    */
-  public static IndexFileScan BTree_scan(CondExpr[] selects, IndexFile indFile) 
-    throws IOException, 
-	   UnknownKeyTypeException, 
+  public static IndexFileScan BTree_scan(CondExpr[] selects, IndexFile indFile)
+    throws IOException,
+	   UnknownKeyTypeException,
 	   InvalidSelectionException,
 	   KeyNotMatchException,
 	   UnpinPageException,
@@ -152,7 +152,7 @@ public class IndexUtils {
 			}
 		} // end of else
 
-	} 
+	}
 
   /**
    * getValue returns the key value extracted from the selection condition.
@@ -160,7 +160,7 @@ public class IndexUtils {
    * @param type attribute type of the selection field
    * @param choice first (1) or second (2) operand is the value
    * @return an instance of the KeyClass (IntegerKey or StringKey)
-   * @exception UnknownKeyTypeException only int and string keys are supported 
+   * @exception UnknownKeyTypeException only int and string keys are supported
    */
   private static KeyClass getValue(CondExpr cd, AttrType type, int choice)
        throws UnknownKeyTypeException
@@ -172,7 +172,7 @@ public class IndexUtils {
     if (choice < 1 || choice > 2) {
       return null;
     }
-    
+
     switch (type.attrType) {
     case AttrType.attrString:
       if (choice == 1) return new StringKey(cd.operand1.string);
@@ -189,12 +189,12 @@ public class IndexUtils {
     default:
 	throw new UnknownKeyTypeException("IndexUtils.java: Only Integer and String keys are supported so far");
     }
-    
+
   }
-  
-  public static intervalTree.IndexFileScan intervalTree_scan(CondExpr[] selects, intervalTree.IndexFile indFile) 
-		  throws IOException, 
-		   UnknownKeyTypeException, 
+
+  public static intervalTree.IndexFileScan intervalTree_scan(CondExpr[] selects, intervalTree.IndexFile indFile)
+		  throws IOException,
+		   UnknownKeyTypeException,
 		   InvalidSelectionException,
 		   KeyNotMatchException,
 		   UnpinPageException,
@@ -203,19 +203,19 @@ public class IndexUtils {
 		   ConstructPageException, KeyNotMatchException, IteratorException, ConstructPageException, PinPageException, UnpinPageException, intervalTree.KeyNotMatchException, intervalTree.IteratorException, intervalTree.ConstructPageException, intervalTree.PinPageException, intervalTree.UnpinPageException
 	    {
 	      intervalTree.IndexFileScan indScan;
-	      
+
 	      if (selects == null || selects[0] == null) {
 		indScan = ((IntervalTreeFile)indFile).new_scan(null, null, 7);
 		return indScan;
 	      }
-	      
+
 	      if (selects[1] == null) {
 		if (selects[0].type1.attrType != AttrType.attrSymbol && selects[0].type2.attrType != AttrType.attrSymbol) {
-		  throw new InvalidSelectionException("IndexUtils.java: Invalid selection condition"); 
+		  throw new InvalidSelectionException("IndexUtils.java: Invalid selection condition");
 		}
-		
+
 		intervalTree.KeyClass key;
-		
+
 		// symbol = value
 		if (selects[0].op.attrOperator == AttrOperator.aopEQ) {
 		  if (selects[0].type1.attrType != AttrType.attrSymbol) {
@@ -228,7 +228,7 @@ public class IndexUtils {
 		  }
 		  return indScan;
 		}
-		
+
 		// symbol > value or symbol >= value
 		if (selects[0].op.attrOperator == AttrOperator.aopGT || selects[0].op.attrOperator == AttrOperator.aopGE) {
 		  if (selects[0].type1.attrType != AttrType.attrSymbol) {
@@ -241,7 +241,7 @@ public class IndexUtils {
 		  }
 		  return indScan;
 		}
-		
+
 		// error if reached here
 		System.err.println("Error -- in IndexUtils.BTree_scan()");
 		return null;
@@ -249,16 +249,16 @@ public class IndexUtils {
 	      else {
 		// selects[1] != null, must be a range query
 		if (selects[0].type1.attrType != AttrType.attrSymbol && selects[0].type2.attrType != AttrType.attrSymbol) {
-		  throw new InvalidSelectionException("IndexUtils.java: Invalid selection condition"); 
+		  throw new InvalidSelectionException("IndexUtils.java: Invalid selection condition");
 		}
 		if (selects[1].type1.attrType != AttrType.attrSymbol && selects[1].type2.attrType != AttrType.attrSymbol) {
-		  throw new InvalidSelectionException("IndexUtils.java: Invalid selection condition"); 
+		  throw new InvalidSelectionException("IndexUtils.java: Invalid selection condition");
 		}
-		
+
 		// which symbol is higher??
 		intervalTree.KeyClass key1, key2;
 		AttrType type;
-		
+
 		if (selects[0].type1.attrType != AttrType.attrSymbol) {
 		  key1 = getValueITree(selects[0], selects[0].type1, 1);
 		  type = selects[0].type1;
@@ -273,7 +273,7 @@ public class IndexUtils {
 		else {
 		  key2 = getValueITree(selects[1], selects[1].type2, 2);
 		}
-		
+
 		switch (type.attrType) {
 		case AttrType.attrInterval:
 		  if (IntervalT.keyCompare(((IntervalKey)key1),((IntervalKey)key2) )  < 0) {
@@ -283,15 +283,15 @@ public class IndexUtils {
 		    indScan = ((IntervalTreeFile)indFile).new_scan(key2, key1, 7);
 		  }
 		  return indScan;
-		  
+
 		default:
 		  // error condition
-		  throw new UnknownKeyTypeException("IndexUtils.java: Only Integer and String keys are supported so far");	
+		  throw new UnknownKeyTypeException("IndexUtils.java: Only Integer and String keys are supported so far");
 		}
-	      } // end of else 
-	      
+	      } // end of else
+
 	    }
-  
+
   private static intervalTree.KeyClass getValueITree(CondExpr cd, AttrType type, int choice)
 	       throws UnknownKeyTypeException
 	  {
@@ -302,7 +302,7 @@ public class IndexUtils {
 	    if (choice < 1 || choice > 2) {
 	      return null;
 	    }
-	    
+
 	    switch (type.attrType) {
 	    case AttrType.attrInterval:
 	      if (choice == 1) return new IntervalKey(cd.operand1.interval);
@@ -310,7 +310,7 @@ public class IndexUtils {
 	    default:
 		throw new UnknownKeyTypeException("IndexUtils.java: Only Integer and String keys are supported so far");
 	    }
-	    
+
 	  }
-  
+
 }
