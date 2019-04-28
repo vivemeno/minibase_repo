@@ -19,6 +19,7 @@ import iterator.FldSpec;
 import iterator.RelSpec;
 import org.w3c.dom.Attr;
 
+import java.util.Map;
 import java.util.concurrent.locks.Condition;
 
 public class ProjectUtils {
@@ -90,6 +91,10 @@ public class ProjectUtils {
 
     }
 
+    public static void populateNodeOffsetMap(Map<String, Integer> offsetMap, String nodeName, int nodeNumber) {
+		offsetMap.put(nodeName, 2*nodeNumber);
+	}
+    
     public static void setTupleHeader(Tuple t) {
         AttrType[] nodeTableAttrTypes = getNodeTableAttrType();
         short[] nodeTableStringSizes = getNodeTableStringSizes();
