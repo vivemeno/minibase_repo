@@ -241,16 +241,22 @@ public class NestedLoopsJoins  extends Iterator
 
 					return null;
 				}
-				
+
 				try {
 					int indexType = IndexType.B_Index;
 					boolean indexOnly = false;
-					if(indexFileName.equals("IntervalIndex.in")) {
-						RightFilter = ProjectUtils.setIntervalIndexCond(outer_tuple.getIntervalField(perm_mat[this.intervalOffset].offset));
+					if (indexFileName.equals("IntervalIndex.in")) {
+						RightFilter = ProjectUtils.setIntervalIndexCond(
+								outer_tuple.getIntervalField(perm_mat[this.intervalOffset].offset));
 						indexType = IndexType.interval_Index;
 						indexOnly = true;
 					}
-					innerIterator = new IndexScan(new IndexType(indexType), relationName, indexFileName, ProjectUtils.getNodeTableAttrType(), ProjectUtils.getNodeTableStringSizes(), 2, 2, ProjectUtils.getProjections(), RightFilter, 2, indexOnly);
+					if (outer_tuple != null && outer_tuple.getStrFld(2).equals("root")) {
+						System.out.println("test");
+					}
+					innerIterator = new IndexScan(new IndexType(indexType), relationName, indexFileName,
+							ProjectUtils.getNodeTableAttrType(), ProjectUtils.getNodeTableStringSizes(), 2, 2,
+							ProjectUtils.getProjections(), RightFilter, 2, indexOnly);
 				} catch (Exception e) {
 					throw new NestedLoopException(e, "openScan failed");
 				}
@@ -267,6 +273,14 @@ public class NestedLoopsJoins  extends Iterator
 				inner_tuple = innerIterator.get_nextInterval();
 			} else {
 				inner_tuple = innerIterator.get_next();
+			}
+			
+			if(outer_tuple != null && outer_tuple.getStrFld(2).equals("root")) {
+			//	System.out.println("test");
+			}
+			
+			if(inner_tuple != null&& inner_tuple.getIntervalField(1).s == 10094) {
+			//	System.out.println("Here inner");
 			}
 			while (inner_tuple != null) {
 				//System.out.println(i++);
@@ -288,7 +302,7 @@ public class NestedLoopsJoins  extends Iterator
 			// There has been no match. (otherwise, we would have
 			// returned from t//he while loop. Hence, inner is
 			// exhausted, => set get_from_outer = TRUE, go to top of loop
-
+			innerIterator.close();
 			get_from_outer = true; // Loop back to top and get next outer tuple.
 		} while (true);
 	}

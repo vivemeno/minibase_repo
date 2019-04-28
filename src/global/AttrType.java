@@ -13,6 +13,8 @@ public class AttrType {
   public static final int attrSymbol  = 3;
   public static final int attrNull    = 4;
   public static final int attrInterval = 5;
+  public static final int attrComposite = 6;
+  
   
   public int attrType;
 

@@ -43,51 +43,49 @@ public class BTFileScan  extends IndexFileScan
    */
   public KeyDataEntry get_next() 
     throws ScanIteratorException
-    {
+	{
 
-    KeyDataEntry entry;
-    PageId nextpage;
-    try {
-      if (leafPage == null)
-        return null;
-      
-      if ((deletedcurrent && didfirst) || (!deletedcurrent && !didfirst)) {
-         didfirst = true;
-         deletedcurrent = false;
-         entry=leafPage.getCurrent(curRid);
-      }
-      else {
-         entry = leafPage.getNext(curRid);
-      }
+		KeyDataEntry entry;
+		PageId nextpage;
+		try {
+			if (leafPage == null)
+				return null;
 
-      while ( entry == null ) {
-         nextpage = leafPage.getNextPage();
-         SystemDefs.JavabaseBM.unpinPage(leafPage.getCurPage(), true);
-	 if (nextpage.pid == INVALID_PAGE) {
-	    leafPage = null;
-	    return null;
-	 }
+			if ((deletedcurrent && didfirst) || (!deletedcurrent && !didfirst)) {
+				didfirst = true;
+				deletedcurrent = false;
+				entry = leafPage.getCurrent(curRid);
+			} else {
+				entry = leafPage.getNext(curRid);
+			}
 
-         leafPage=new BTLeafPage(nextpage, keyType);
-	 	
-	 entry=leafPage.getFirst(curRid);
-      }
+			while (entry == null) {
+				nextpage = leafPage.getNextPage();
+				SystemDefs.JavabaseBM.unpinPage(leafPage.getCurPage(), true);
+				if (nextpage.pid == INVALID_PAGE) {
+					leafPage = null;
+					return null;
+				}
 
-      if (endkey != null)  
-        if ( BT.keyCompare(entry.key, endkey)  > 0) {
-            // went past right end of scan 
-	    SystemDefs.JavabaseBM.unpinPage(leafPage.getCurPage(), false);
-            leafPage=null;
-	    return null;
-        }
+				leafPage = new BTLeafPage(nextpage, keyType);
 
-      return entry;
-    }
-    catch ( Exception e) {
-         e.printStackTrace();
-         throw new ScanIteratorException();
-    }
-  }
+				entry = leafPage.getFirst(curRid);
+			}
+
+			if (endkey != null)
+				if (BT.keyCompare(entry.key, endkey) > 0) {
+					// went past right end of scan
+					SystemDefs.JavabaseBM.unpinPage(leafPage.getCurPage(), false);
+					leafPage = null;
+					return null;
+				}
+
+			return entry;
+		} catch (Exception e) {
+			e.printStackTrace();
+			throw new ScanIteratorException();
+		}
+	}
 
 
   /**

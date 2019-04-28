@@ -490,6 +490,10 @@ public class Tuple implements GlobalConst {
 		case AttrType.attrInterval:
 			incr = (short) GlobalConst.INTERVAL_LEN;
 			break;
+			
+		case AttrType.attrComposite:
+			incr = (short) GlobalConst.COMPOSITE_KEY_LEN;
+			break;
 
 		case AttrType.attrString:
 			incr = (short) (strSizes[strCount] + 2); // strlen in bytes = strlen +2

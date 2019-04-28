@@ -22,7 +22,7 @@ import org.w3c.dom.Attr;
 import java.util.concurrent.locks.Condition;
 
 public class ProjectUtils {
-    public static final int STR_KEY_SIZE = 7;
+    public static final int STR_KEY_SIZE = 10;
     public static final int STR_FIELD_INDEX = 2;
     public static final int INTERVAL_FIELD_INDEX = 1;
 
@@ -71,7 +71,18 @@ public class ProjectUtils {
             }
 
             try {
-                btf.insert(new StringKey(key), rid);
+				if (key.equals("Entry")) {
+					System.out.println(t.getIntervalField(1).s + " " + t.getIntervalField(1).e + " " + rid.slotNo + " "
+							+ rid.pageNo.pid);
+				}
+				if(t.getIntervalField(1).s == 6620) {
+					System.out.println(" ");
+				}
+				
+				if(t.getIntervalField(1).s == 179062) {
+					System.out.println(" ");
+				}
+				btf.insert(new StringKey(key), rid);
             }
             catch (Exception e) {
                 e.printStackTrace();
@@ -133,7 +144,7 @@ public class ProjectUtils {
 
     public static short[] getNodeTableStringSizes() {
         short[] nodeTableStringSizes = new short[2];
-        nodeTableStringSizes[0] = STR_KEY_SIZE;
+        nodeTableStringSizes[0] = GlobalConst.STR_LEN;
         return nodeTableStringSizes;
     }
 

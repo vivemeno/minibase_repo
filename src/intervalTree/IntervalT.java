@@ -43,7 +43,7 @@ public class IntervalT implements GlobalConst {
 //	    }
 //	      else
 	    	  if ( key instanceof IntervalKey)
-		return GlobalConst.INTERVAL_LEN;
+		return GlobalConst.COMPOSITE_KEY_LEN;
 	      else throw new KeyNotMatchException(null, "key types do not match intervalType"); 
 	    }
 	

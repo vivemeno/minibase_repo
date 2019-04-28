@@ -59,7 +59,7 @@ class Rule {
 }
 
 public class Phase1 {
-	public static final int NUMBUF = 10000;
+	public static final int NUMBUF = 1000;
 	public static final int TAG_LENGTH = 5;
 	private boolean OK = true;
 	private boolean FAIL = false;
@@ -92,7 +92,7 @@ public class Phase1 {
 			System.err.println("" + e);
 		}
 
-		SystemDefs sysdef = new SystemDefs(dbpath, 10000, NUMBUF, "Clock");
+		SystemDefs sysdef = new SystemDefs(dbpath, 30000, NUMBUF, "Clock");
 
 		// creating the node table relation
 		Tuple t = new Tuple();
@@ -116,7 +116,7 @@ public class Phase1 {
 		
 		int numnodes = nodes.size();
 		for (int i = 0; i < numnodes; i++) {
-			System.out.println(i);
+			//System.out.println(i);
 			try {
 				IntervalType interval = ((NodeTable) nodes.elementAt(i)).interval;
 				String nodeName = ((NodeTable) nodes.elementAt(i)).nodename;
@@ -129,6 +129,9 @@ public class Phase1 {
 				} else {
 					currStatistics = new Statistics(1, interval.e - interval.s);
 					tagStatistics.put(nodeName, currStatistics);
+				}
+				if(nodeName.equals("Entry")) {
+					System.out.println(interval.s + " " + interval.e);
 				}
 				t.setIntervalFld(1, interval);
 				t.setStrFld(2, nodeName);
@@ -148,7 +151,7 @@ public class Phase1 {
 				e.printStackTrace();
 			}
 		}
-
+		System.out.println("Heap File created");
 		ProjectUtils.createIndex(f, "nodeIndex.in");
 	//	ProjectUtils.testScan("nodes.in", "nodeIndex.in");
 		System.out.println("BTreeIndex created successfully.\n");

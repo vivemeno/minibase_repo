@@ -78,7 +78,7 @@ public class IntervalTreeFile extends IndexFile implements GlobalConst {
 		  headerPage.set_magic0(MAGIC0);
 		  headerPage.set_rootId(new PageId(INVALID_PAGE));
 		  headerPage.set_keyType((short)AttrType.attrInterval);    
-		  headerPage.set_maxKeySize(GlobalConst.INTERVAL_LEN);
+		  headerPage.set_maxKeySize(GlobalConst.COMPOSITE_KEY_LEN);
 		  headerPage.set_deleteFashion( delete_fashion );
 		  headerPage.setType(NodeType.intervalTHEAD);
 		}

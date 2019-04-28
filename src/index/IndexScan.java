@@ -243,8 +243,18 @@ public class IndexScan extends Iterator {
 				} catch (Exception e) {
 					throw new IndexException(e, "IndexScan.java: Heapfile error");
 				}
-
+				
+				try {
+					if (Jtuple.getIntervalField(1).s == 6620) {
+						System.out.println("Test");
+					}
+					System.out.println(Jtuple.getIntervalField(1).s + " " + Jtuple.getIntervalField(1).e);
+				} catch (FieldNumberOutOfBoundException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
 				return Jtuple;
+				
 			}
 
 			try {
