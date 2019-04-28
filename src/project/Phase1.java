@@ -932,41 +932,46 @@ public class Phase1 {
 					while(complexLoopChoice != 0) {
 						physOp = 1;
 						System.out.println("Enter the operation");
-//						complexOperation = scanner.next();
+//						complexOperation = scanner.nextLine();
 //						complexOperation = "CP";
 //						complexOperation = "TJ 4 4";
 //						complexOperation = "NJ 4 4";
-						complexOperation = "SRT 4";
-//						complexOperation = "GRP 4";
+//						complexOperation = "SRT 4";
+						complexOperation = "GRP 4";
 						String[] chCOp = null;
 						
-						if(complexOperation.contains("CP")) {
-							taskutils.nestedLoop(it1);
-							
-						}else if(complexOperation.contains("TJ")) {
-							chCOp = complexOperation.split(" ");
-							int i = Integer.parseInt(chCOp[1]);
-							int j = Integer.parseInt(chCOp[2]);
-							taskutils.nestedLoopNJOrTJ(it1, i, j, "TJ");
-							
-						}else if(complexOperation.contains("NJ")) {
-							chCOp = complexOperation.split(" ");
-							int i = Integer.parseInt(chCOp[1]);
-							int j = Integer.parseInt(chCOp[2]);
-							taskutils.nestedLoopNJOrTJ(it1, i, j, "NJ");
-							
-						}else if(complexOperation.contains("SRT")) {
-							chCOp = complexOperation.split(" ");
-							int i = Integer.parseInt(chCOp[1]);
-							taskutils.sortPhysOP(it1, i);
-							
-						}else if(complexOperation.contains("GRP")) {
-							chCOp = complexOperation.split(" ");
-							int i = Integer.parseInt(chCOp[1]);
-							taskutils.grpPhysOP(it1, i);
-							Tuple jtup = null;
-							while((jtup = taskutils.get_next_GRP(i))!=null) {}
+						try {
+							if(complexOperation.contains("CP")) {
+								taskutils.nestedLoop(it1);
+								
+							}else if(complexOperation.contains("TJ")) {
+								chCOp = complexOperation.split(" ");
+								int i = Integer.parseInt(chCOp[1]);
+								int j = Integer.parseInt(chCOp[2]);
+								taskutils.nestedLoopNJOrTJ(it1, i, j, "TJ");
+								
+							}else if(complexOperation.contains("NJ")) {
+								chCOp = complexOperation.split(" ");
+								int i = Integer.parseInt(chCOp[1]);
+								int j = Integer.parseInt(chCOp[2]);
+								taskutils.nestedLoopNJOrTJ(it1, i, j, "NJ");
+								
+							}else if(complexOperation.contains("SRT")) {
+								chCOp = complexOperation.split(" ");
+								int i = Integer.parseInt(chCOp[1]);
+								taskutils.sortPhysOP(it1, i);
+								
+							}else if(complexOperation.contains("GRP")) {
+								chCOp = complexOperation.split(" ");
+								int i = Integer.parseInt(chCOp[1]);
+								taskutils.grpPhysOP(it1, i);
+								Tuple jtup = null;
+								while((jtup = taskutils.get_next_GRP(i))!=null) {}
+							}
+						}catch(Exception e) {
+							e.printStackTrace();
 						}
+						complexLoopChoice = 0;
 						System.out.println("Press 1 to consider another complex pattern on the same pattern tree results");
 						complexLoopChoice = scanner.nextInt();
 					}
@@ -1093,6 +1098,12 @@ public class Phase1 {
 //		phase1.input();
 		
 		phase1.complexPattern();
+		
+//		System.out.println("enter");
+//		Scanner sc = new Scanner(System.in);
+//		String s = sc.nextLine();
+//		String arr[]  = s.split(" ");
+//		System.out.println(Integer.parseInt(arr[1]) + "asd");
 		
 		//phase1.compute();
 		//phase1.computeSM();

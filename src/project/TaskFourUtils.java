@@ -329,7 +329,7 @@ Iterator  p_i2 = null;
 		
 		try {
 			p_i2 = new Sort(baseTableAttrTypes, (short)wt1NoOfFlds, Ssizes, am, (nodeNo*2)-1,
-					ascending, 5, 10 / 2);
+					ascending, 5, 1000);
 		}catch(Exception e){
 			throw new SortException (e, "Sort failed");
 		}
@@ -363,14 +363,10 @@ Iterator  p_i2 = null;
 			String pastTupleTag  = null;
 			if(grpTuple2 != null) {
 				pastTupleTag = grpTuple2.getStrFld((nodeNo*2)-1);
-				asdsfd = grpTuple2.getStrFld(7);
 			}
 			while ((finalTuple = grpSortIterator.get_next()) != null) {
 				//System.out.println("Result in GRP" + count++ + ":");
 				currTag = finalTuple.getStrFld((nodeNo*2)-1);
-				if(grpTuple2 != null) {
-					asdsfd = grpTuple2.getStrFld(7);
-				}
 				if(count == 0) {
 					singleTreeTuplesCount = finalTuple.noOfFlds();
 					//setting header to that of each tuple
@@ -410,9 +406,7 @@ Iterator  p_i2 = null;
 					insertTup = new Tuple();
 					insertTup.setHdr((short) singleTreeTuplesCount, eachTuple_attrs, eachTuple_str_sizes);
 					insertTup.tupleCopy(finalTuple);
-					io_buf1.Put(insertTup);
-//					finalTuple.print(eachTuple_attrs);
-					
+					io_buf1.Put(insertTup);					
 					prevTag =  currTag;
 				}else {
 					insertTup = new Tuple();
@@ -444,13 +438,13 @@ Iterator  p_i2 = null;
 			}
 		}
 		for (int i = 0; i < (totalTupWithoutHeader)/2 +2; i++) {
-			if(i == 0) {
-				res_str_sizes[i] = 5;
-			}else{
-				res_str_sizes[i] = 5;
-			}
+			res_str_sizes[i] = 5;
 		}
 		
+		Jtuple = new Tuple();
+		if(totalTupWithoutHeader > 500) {
+			System.out.println();
+		}
 		Jtuple.setHdr((short) (totalTupWithoutHeader + 2), res_attrs, res_str_sizes);
 		
 		Jtuple.setStrFld(1, "groot");
@@ -465,14 +459,14 @@ Iterator  p_i2 = null;
 					}
 				}
 			}
-			
-		System.out.println("Result in GRP : " + ++count);	
+	
+		System.out.println("Result in GRP : " + ++grpTupleCOunt);	
 		Jtuple.printTreeFormatGRP(res_attrs, totalTupWithoutHeader + 2, nodeNo);
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		
+		io_buf1 = null;
 		
 		
 		return Jtuple;
