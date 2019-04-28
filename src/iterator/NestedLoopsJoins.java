@@ -245,12 +245,20 @@ public class NestedLoopsJoins  extends Iterator
 				try {
 					int indexType = IndexType.B_Index;
 					boolean indexOnly = false;
-					if(indexFileName.equals("IntervalIndex.in")) {
-						RightFilter = ProjectUtils.setIntervalIndexCond(outer_tuple.getIntervalField(perm_mat[this.intervalOffset].offset));
+					if (indexFileName.equals("IntervalIndex.in")) {
+						CondExpr[] indexFilter = ProjectUtils.setIntervalIndexCond(
+								outer_tuple.getIntervalField(perm_mat[this.intervalOffset].offset));
 						indexType = IndexType.interval_Index;
 						indexOnly = true;
+						innerIterator = new IndexScan(new IndexType(indexType), relationName, indexFileName,
+								ProjectUtils.getNodeTableAttrType(), ProjectUtils.getNodeTableStringSizes(), 2, 2,
+								ProjectUtils.getProjections(), indexFilter, 2, indexOnly);		
+					} else {
+					innerIterator = new IndexScan(new IndexType(indexType), relationName, indexFileName,
+							ProjectUtils.getNodeTableAttrType(), ProjectUtils.getNodeTableStringSizes(), 2, 2,
+							ProjectUtils.getProjections(), RightFilter, 2, indexOnly);
+					RightFilter = null;
 					}
-					innerIterator = new IndexScan(new IndexType(indexType), relationName, indexFileName, ProjectUtils.getNodeTableAttrType(), ProjectUtils.getNodeTableStringSizes(), 2, 2, ProjectUtils.getProjections(), RightFilter, 2, indexOnly);
 				} catch (Exception e) {
 					throw new NestedLoopException(e, "openScan failed");
 				}
