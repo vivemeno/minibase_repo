@@ -364,6 +364,7 @@ public class Heapfile implements Filetype,  GlobalConst {
    *
    * @return the rid of the record
    */
+  HFPage nextFreeDirPage = null;
   public RID insertRecord(byte[] recPtr) 
     throws InvalidSlotNumberException,  
 	   InvalidTupleSizeException,
@@ -393,6 +394,9 @@ public class Heapfile implements Filetype,  GlobalConst {
       while (found == false)
 	{ //Start While01
 	  // look for suitable dpinfo-struct
+    	  if(nextFreeDirPage != null) {
+    		  currentDirPage = nextFreeDirPage;
+    	  }
 	  for (currentDataPageRid = currentDirPage.firstRecord();
 	       currentDataPageRid != null;
 	       currentDataPageRid = 
@@ -422,7 +426,7 @@ public class Heapfile implements Filetype,  GlobalConst {
 	  if(found == false)
 	    { //Start IF01
 	      // case (2)
-	      
+		  nextFreeDirPage = null;
 	      //System.out.println("no datapagerecord on the current directory is OK");
 	      //System.out.println("dirpage availspace "+currentDirPage.available_space());
 	      
@@ -473,6 +477,7 @@ public class Heapfile implements Filetype,  GlobalConst {
 		  // the heapfile; the new datapage has enough space for the
 		  // record which the user wants to insert
 		  
+		  nextFreeDirPage = currentDirPage;
 		  found = true;
 		  
 		} //end of IF02
@@ -533,6 +538,7 @@ public class Heapfile implements Filetype,  GlobalConst {
 		      // newly created directory page.
 		      
 		    } //End of else03
+		  nextFreeDirPage = currentDirPage;
 		} // End of else02
 	      // ASSERTIONS:
 	      // - if found == true: search will end and see assertions below
@@ -552,6 +558,7 @@ public class Heapfile implements Filetype,  GlobalConst {
 	      // System.out.println("find the dirpagerecord on current page");
 	      
 	      pinPage(dpinfo.pageId, currentDataPage, false);
+	      nextFreeDirPage = currentDirPage;
 	      //currentDataPage.openHFpage(pageinbuffer);
 	      
 	      

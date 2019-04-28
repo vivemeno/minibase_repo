@@ -114,8 +114,8 @@ public class PredEval
 						tuple2 = t2;
 					break;
 				case AttrType.attrInterval:
-					str_size[0] = (short) (GlobalConst.INTERVAL_LEN + 1);
-					value.setHdr((short) 1, val_type, str_size);
+					//str_size[0] = (short) (GlobalConst.COMPOSITE_KEY_LEN + 1);
+					value.setHdr((short) 1, val_type, null);
 					value.setIntervalFld(1, temp_ptr.operand2.interval);
 					tuple2 = value;
 					break;

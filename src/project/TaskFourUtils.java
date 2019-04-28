@@ -77,9 +77,10 @@ public class TaskFourUtils {
 			}
 		}
 		
-		AttrType[] JJtype =  new AttrType[wt1NoOfFlds + wt2NoOfFlds];
-		System.arraycopy(baseTableAttrTypes, 0, JJtype, 0, wt1NoOfFlds);
-		System.arraycopy(Rtypes, 0, JJtype, wt1NoOfFlds, wt2NoOfFlds);
+		AttrType[] JJtype =  new AttrType[wt1NoOfFlds + wt2NoOfFlds + 1];
+		JJtype[0] = new AttrType(AttrType.attrString);
+		System.arraycopy(baseTableAttrTypes, 0, JJtype, 1, wt1NoOfFlds);
+		System.arraycopy(Rtypes, 0, JJtype, wt1NoOfFlds+1, wt2NoOfFlds);
 		
 		short[] baseTableStringLengths = new short[1];
 		baseTableStringLengths[0] = 5;
@@ -112,13 +113,27 @@ public class TaskFourUtils {
 			Runtime.getRuntime().exit(1);
 		}
 		
-		
+		//setting attributes for updating tuple header
+		short[] tsizes = new short[k/2 + 1];
+		for(int i =0; i< tsizes.length; i++) tsizes[i] = 5;
+		AttrType[] ttypes = new AttrType[k+1];
+		for (int i = 0; i <  k+1; i++) {
+			if(i ==0 ) {
+				ttypes[i] = new AttrType(AttrType.attrString);
+			}else if (i % 2 != 0) {
+				ttypes[i] = new AttrType(AttrType.attrString);
+			} else {
+				ttypes[i] = new AttrType(AttrType.attrInterval);
+			}
+		}
+		currIterator.updateJTUple((short)(k+1), tsizes, ttypes);
 		
 		try {
 			int count = 1;
 			while ((finalTuple = currIterator.get_next(1)) != null) {
 				System.out.println("Result in CP" + count++ + ":");
 				finalTuple.printTreeFormat(JJtype, wt1NoOfFlds);
+//				finalTuple.print(JJtype);
 			}
 		} catch (Exception e) {
 			System.err.println("*** Error preparing for get_next tuple");
@@ -157,9 +172,10 @@ public class TaskFourUtils {
 			}
 		}
 		
-		AttrType[] JJtype =  new AttrType[wt1NoOfFlds + wt2NoOfFlds];
-		System.arraycopy(baseTableAttrTypes, 0, JJtype, 0, wt1NoOfFlds);
-		System.arraycopy(Rtypes, 0, JJtype, wt1NoOfFlds, wt2NoOfFlds);
+		AttrType[] JJtype =  new AttrType[wt1NoOfFlds + wt2NoOfFlds + 1];
+		JJtype[0] = new AttrType(AttrType.attrString);
+		System.arraycopy(baseTableAttrTypes, 0, JJtype, 1, wt1NoOfFlds);
+		System.arraycopy(Rtypes, 0, JJtype, wt1NoOfFlds+1, wt2NoOfFlds);
 		
 		short[] baseTableStringLengths = new short[1];
 		baseTableStringLengths[0] = 5;
@@ -205,12 +221,25 @@ public class TaskFourUtils {
 			Runtime.getRuntime().exit(1);
 		}
 		
-		
+		//setting attributes for updating tuple header
+		short[] tsizes = new short[k/2 + 1];
+		for(int i =0; i< tsizes.length; i++) tsizes[i] = 5;
+		AttrType[] ttypes = new AttrType[k+1];
+		for (int i = 0; i <  k+1; i++) {
+			if(i ==0 ) {
+				ttypes[i] = new AttrType(AttrType.attrString);
+			}else if (i % 2 != 0) {
+				ttypes[i] = new AttrType(AttrType.attrString);
+			} else {
+				ttypes[i] = new AttrType(AttrType.attrInterval);
+			}
+		}
+		currIterator.updateJTUple((short)(k+1), tsizes, ttypes);
 		
 		try {
 			int count = 1;
 			while ((finalTuple = currIterator.get_next(2)) != null) {
-				System.out.println("Result in NJ/TJ" + count++ + ":");
+				System.out.println("Result in NJ/TJ : " + (count++));
 				finalTuple.printTreeFormat(JJtype, wt1NoOfFlds);
 			}
 		} catch (Exception e) {
@@ -259,8 +288,8 @@ Iterator  p_i2 = null;
 		try {
 			int count = 1;
 			while ((finalTuple = p_i2.get_next()) != null) {
-				System.out.println("Result in SRT" + count++ + ":");
-				finalTuple.printTreeFormat(baseTableAttrTypes, wt1NoOfFlds);
+				System.out.println("Result in SRT : " + count++ + ":");
+				finalTuple.printTreeFormatSRT(baseTableAttrTypes, wt1NoOfFlds);
 			}
 		} catch (Exception e) {
 			System.err.println("*** Error preparing for get_next tuple");
@@ -300,16 +329,19 @@ Iterator  p_i2 = null;
 		
 		try {
 			p_i2 = new Sort(baseTableAttrTypes, (short)wt1NoOfFlds, Ssizes, am, (nodeNo*2)-1,
-					ascending, 5, 10 / 2);
+					ascending, 5, 1000);
 		}catch(Exception e){
 			throw new SortException (e, "Sort failed");
 		}
 		
 		grpSortIterator = p_i2;
+		grpTupleCOunt = 0;
 	}
 	
 	public Tuple grpTuple2 = null;
+	int grpTupleCOunt = 0;
 	public Tuple get_next_GRP(int nodeNo) {
+		
 		Tuple Jtuple = new Tuple();
 		Tuple finalTuple = new Tuple();
 		String prevTag = "", currTag = "";
@@ -331,14 +363,10 @@ Iterator  p_i2 = null;
 			String pastTupleTag  = null;
 			if(grpTuple2 != null) {
 				pastTupleTag = grpTuple2.getStrFld((nodeNo*2)-1);
-				asdsfd = grpTuple2.getStrFld(7);
 			}
 			while ((finalTuple = grpSortIterator.get_next()) != null) {
 				//System.out.println("Result in GRP" + count++ + ":");
 				currTag = finalTuple.getStrFld((nodeNo*2)-1);
-				if(grpTuple2 != null) {
-					asdsfd = grpTuple2.getStrFld(7);
-				}
 				if(count == 0) {
 					singleTreeTuplesCount = finalTuple.noOfFlds();
 					//setting header to that of each tuple
@@ -378,9 +406,7 @@ Iterator  p_i2 = null;
 					insertTup = new Tuple();
 					insertTup.setHdr((short) singleTreeTuplesCount, eachTuple_attrs, eachTuple_str_sizes);
 					insertTup.tupleCopy(finalTuple);
-					io_buf1.Put(insertTup);
-//					finalTuple.print(eachTuple_attrs);
-					
+					io_buf1.Put(insertTup);					
 					prevTag =  currTag;
 				}else {
 					insertTup = new Tuple();
@@ -412,13 +438,13 @@ Iterator  p_i2 = null;
 			}
 		}
 		for (int i = 0; i < (totalTupWithoutHeader)/2 +2; i++) {
-			if(i == 0) {
-				res_str_sizes[i] = 5;
-			}else{
-				res_str_sizes[i] = 5;
-			}
+			res_str_sizes[i] = 5;
 		}
 		
+		Jtuple = new Tuple();
+		if(totalTupWithoutHeader > 500) {
+			System.out.println();
+		}
 		Jtuple.setHdr((short) (totalTupWithoutHeader + 2), res_attrs, res_str_sizes);
 		
 		Jtuple.setStrFld(1, "groot");
@@ -433,13 +459,14 @@ Iterator  p_i2 = null;
 					}
 				}
 			}
-			
+	
+		System.out.println("Result in GRP : " + ++grpTupleCOunt);	
 		Jtuple.printTreeFormatGRP(res_attrs, totalTupWithoutHeader + 2, nodeNo);
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		
+		io_buf1 = null;
 		
 		
 		return Jtuple;
