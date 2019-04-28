@@ -650,6 +650,7 @@ public class Phase1 {
 				new FldSpec(new RelSpec(RelSpec.innerRel), 2), new FldSpec(new RelSpec(RelSpec.innerRel), 1)};
 		List<NestedLoopsJoins> listNLJ = new LinkedList<>();
 		boolean isFirstRule = true;
+		findIndex(rules.get(0));
 		//takes ordered rules one by one perform nested loop join
 		for (Rule rule : rules) {
 			try {
