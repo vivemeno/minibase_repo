@@ -210,11 +210,11 @@ public class Convert{
 		int startInterval;
 		int endInterval;
 		int level;
-		byte tmp[] = new byte[GlobalConst.INTERVAL_LEN];
+		byte tmp[] = new byte[GlobalConst.COMPOSITE_KEY_LEN];
 		int c = data.length;
 
 		// copy the value from data array out to a tmp byte array
-		System.arraycopy(data, position, tmp, 0, GlobalConst.INTERVAL_LEN);
+		System.arraycopy(data, position, tmp, 0, GlobalConst.COMPOSITE_KEY_LEN);
 
 		in = new ByteArrayInputStream(tmp);
 		instr = new DataInputStream(in);

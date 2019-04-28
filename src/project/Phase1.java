@@ -59,13 +59,13 @@ class Rule {
 }
 
 public class Phase1 {
-	public static final int NUMBUF = 10000;
+	public static final int NUMBUF = 100;
 	public static final int TAG_LENGTH = 5;
 	private boolean OK = true;
 	private boolean FAIL = false;
 	public Vector<NodeTable> nodes;
 //	private String input_file_base = "/home/akhil/MS/DBMS/";
-	private String input_file_base = "/home/eldo/Documents/CSE510Candan/Project/";
+	private String input_file_base = "/home/akhil/MS/DBMS/";
 	private Map<String, String> tagMapping = new HashMap<>(); // contains id to tag name mapping
 	private Map<String, Statistics> tagStatistics = new HashMap<>();
 		

@@ -14,6 +14,7 @@ public class AttrType {
   public static final int attrNull    = 4;
   public static final int attrInterval = 5;
   
+  
   public int attrType;
 
   /** 
