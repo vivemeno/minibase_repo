@@ -389,6 +389,89 @@ public class NestedLoopsJoins  extends Iterator
 	closeFlag = true;
       }
     }
+  
+  
+  public Tuple get_next(int physOp)
+		    throws IOException,
+			   JoinsException ,
+			   IndexException,
+			   InvalidTupleSizeException,
+			   InvalidTypeException, 
+			   PageNotReadException,
+			   TupleUtilsException, 
+			   PredEvalException,
+			   SortException,
+			   LowMemException,
+			   UnknowAttrType,
+			   UnknownKeyTypeException,
+			   Exception
+			{
+				// This is a DUMBEST form of a join, not making use of any key information...
+
+				if (done)
+					return null;
+
+				do {
+					// If get_from_outer is true, Get a tuple from the outer, delete
+					// an existing scan on the file, and reopen a new scan on the file.
+					// If a get_next on the outer returns DONE?, then the nested loops
+					// join is done too.
+
+					if (get_from_outer == true) {
+						get_from_outer = false;
+						if (inner != null) // If this not the first time,
+						{
+							// close scan
+							inner = null;
+						}
+
+						try {
+							inner = hf.openScan();
+						} catch (Exception e) {
+							throw new NestedLoopException(e, "openScan failed");
+						}
+
+						if ((outer_tuple = outer.get_next()) == null) {
+							done = true;
+							if (inner != null) {
+
+								inner = null;
+							}
+
+							return null;
+						}
+					} // ENDS: if (get_from_outer == TRUE)
+
+					// The next step is to get a tuple from the inner,
+					// while the inner is not completely scanned && there
+					// is no match (with pred),get a tuple from the inner.
+
+					RID rid = new RID();
+					while ((inner_tuple = inner.getNext(rid)) != null) {
+						inner_tuple.setHdr((short) in2_len, _in2, t2_str_sizescopy);
+						if(physOp == 2) {
+							if(TupleUtils.CompareTupleWithTuple(outer_tuple, RightFilter[0].operand1.integer, inner_tuple, RightFilter[0].operand2.integer) == 0) {
+								Projection.Join(outer_tuple, _in1, inner_tuple, _in2, Jtuple, perm_mat, nOutFlds);
+								return Jtuple;
+							}
+							continue;
+						}
+						if (PredEval.Eval(RightFilter, inner_tuple, null, _in2, null) == true || physOp == 1) {
+							if (PredEval.Eval(OutputFilter, outer_tuple, inner_tuple, _in1, _in2) == true || physOp == 1 ) {
+								// Apply a projection on the outer and inner tuples.
+								Projection.Join(outer_tuple, _in1, inner_tuple, _in2, Jtuple, perm_mat, nOutFlds);
+								return Jtuple;
+							}
+						}
+					}
+
+					// There has been no match. (otherwise, we would have
+					// returned from t//he while loop. Hence, inner is
+					// exhausted, => set get_from_outer = TRUE, go to top of loop
+
+					get_from_outer = true; // Loop back to top and get next outer tuple.
+				} while (true);
+			}
 }
 
 

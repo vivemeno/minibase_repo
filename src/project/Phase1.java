@@ -17,8 +17,6 @@ import intervalTree.IntervalKey;
 import intervalTree.IntervalTreeFile;
 import iterator.*;
 import iterator.Iterator;
-import iterator.NestedLoopsJoins; 
-import iterator.RelSpec;
 import xmlparser.XMLToIntervalTable;
 
 
@@ -64,8 +62,8 @@ public class Phase1 {
 	private boolean OK = true;
 	private boolean FAIL = false;
 	public Vector<NodeTable> nodes;
+	private String input_file_base = "/home/renil/github/dbmsi/input/";
 //	private String input_file_base = "/home/akhil/MS/DBMS/";
-	private String input_file_base = "/home/akhil/MS/DBMS/";
 	private Map<String, String> tagMapping = new HashMap<>(); // contains id to tag name mapping
 	private Map<String, Statistics> tagStatistics = new HashMap<>();
 		
@@ -585,12 +583,42 @@ public class Phase1 {
 			}
 		}
 
+		RID rid;
+		Heapfile f = null;
+		Tuple tup = null;
+		try {
+			f = new Heapfile("witness.in");
+		} catch (Exception e) {
+			System.err.println("*** error in Heapfile constructor ***");
+			status = FAIL;
+			e.printStackTrace();
+		}
 		try {
 			int count = 1;
+			if(queryPlanNumber == 1) {
+				it1 = currIterator;
+				if(wt1NoOfFlds == -1 )wt1NoOfFlds = currIterator.get_next().noOfFlds();
+				return; // since preserving the iterator
+			}
 			while ((finalTuple = currIterator.get_next()) != null) {
 				System.out.println("Result " + count++ + ":");
 				finalTuple.print(finalTupleAttrTypes);
+				//complex query part
+				if(wt2NoOfFlds ==0 )wt2NoOfFlds = finalTuple.noOfFlds();
+				if(queryPlanNumber == 2) {
+					try {
+						int b = finalTuple.getLength();
+						tup = new Tuple(b);
+						tup.tupleCopy(finalTuple);
+						rid = f.insertRecord(tup.returnTupleByteArray());
+					} catch (Exception e) {
+						System.err.println("*** error in Heapfile.insertRecord() ***");
+						status = FAIL;
+						e.printStackTrace();
+					}
+				}
 			}
+			if(queryPlanNumber == 2) queryPlanNumber = 1;
 		} catch (Exception e) {
 			System.err.println("*** Error preparing for get_next tuple");
 			System.err.println("" + e);
@@ -809,6 +837,136 @@ public class Phase1 {
 		Integer root = getRoot(rankIndex);
 		return getRulesInOrder(root, ruleMap);
 	}
+	
+	int queryPlanNumber = 1; 
+	Iterator it1 = null;
+	Iterator it2 = null;
+	String ruleFile1 = "temp1.in";
+	String ruleFile2 = "temp2.in";
+	String ruleFile  = "temp.in";
+	int physOp = 0; // 1 for cp
+	int wt2NoOfFlds = 0;
+	int wt1NoOfFlds = -1;
+	Tuple firstTmpTuple = null;
+	
+	private void complexPattern() {
+		
+		String choice = "Y";
+		System.out.println("Number of page accessed = " + BufMgr.page_access_counter);
+		Scanner scanner = null;
+		
+			while (!choice.equals("N") && !choice.equals("n")) {
+				// SystemDefs sysdef = new SystemDefs(dbpath, 1000, NUMBUF, "Clock");
+				BufMgr.page_access_counter = 0;
+
+				int bufSize = 1000; //default
+				System.out.println("Enter the buffer size");
+//				bufSize = scanner.nextInt();
+				bufSize = 1000;
+				try {
+					String complexOperation = "";
+					
+					System.out.println("Enter first input filename for query");
+					scanner = new Scanner(System.in);
+//					String file1 = scanner.next();
+//					String file1 = "query.txt";
+					String file1 = "q6.txt";
+					String[] file_contents1 = readFile(input_file_base + file1);
+					List<Rule> rules1 = getRuleList(file_contents1);
+					queryPlanNumber = 1;
+					createQueryHeapFile("nodes.in", rules1 );
+					
+					queryPlanNumber = 1;
+					System.out.println("pattern tree 1 processing");
+					List<Rule> rules1Copy = copyRules(rules1);
+					compute(rules1Copy);
+					compute(rules1);
+					System.out.println("Number of page accessed = " + BufMgr.page_access_counter);
+					
+					System.out.println("Enter second input filename for query");
+//					String file2 = scanner.next();
+					String file2 = "query1.txt";
+//					String file2 = "query3.txt";
+					String[] file_contents2 = readFile(input_file_base + file2);
+					queryPlanNumber = 2;
+					List<Rule> rules2 = getRuleList(file_contents2);
+					createQueryHeapFile("nodes.in", rules2);			
+					
+					queryPlanNumber = 2;
+					System.out.println("pattern tree 1 processing");
+					compute(rules2);
+					System.out.println("Number of page accessed = " + BufMgr.page_access_counter);
+					
+					TaskFourUtils taskutils = new TaskFourUtils(wt1NoOfFlds, wt2NoOfFlds);
+					int complexLoopChoice= 1;
+					
+//					AttrType[] finalTupleAttrTypes = new AttrType[2 * 4];
+//
+//					for (int i = 0; i < 2 * 4; i++) {
+//						if (i % 2 == 0) {
+//							finalTupleAttrTypes[i] = new AttrType(AttrType.attrString);
+//						} else {
+//							finalTupleAttrTypes[i] = new AttrType(AttrType.attrInterval);
+//						}
+//					}
+//					Tuple finalTuple = new Tuple();
+//					while ((finalTuple = it1.get_next()) != null) {
+//						System.out.println("Result ");
+//						finalTuple.print(finalTupleAttrTypes);
+//					}
+					
+					while(complexLoopChoice != 0) {
+						physOp = 1;
+						System.out.println("Enter the operation");
+//						complexOperation = scanner.next();
+//						complexOperation = "CP";
+//						complexOperation = "TJ 5 5";
+						complexOperation = "NJ 4 4";
+//						complexOperation = "SRT 4";
+//						complexOperation = "GRP 4";
+						String[] chCOp = null;
+						
+						if(complexOperation.contains("CP")) {
+							taskutils.nestedLoop(it1);
+							
+						}else if(complexOperation.contains("TJ")) {
+							chCOp = complexOperation.split(" ");
+							int i = Integer.parseInt(chCOp[1]);
+							int j = Integer.parseInt(chCOp[2]);
+							taskutils.nestedLoopNJOrTJ(it1, i, j, "TJ");
+							
+						}else if(complexOperation.contains("NJ")) {
+							chCOp = complexOperation.split(" ");
+							int i = Integer.parseInt(chCOp[1]);
+							int j = Integer.parseInt(chCOp[2]);
+							taskutils.nestedLoopNJOrTJ(it1, i, j, "NJ");
+							
+						}else if(complexOperation.contains("SRT")) {
+							chCOp = complexOperation.split(" ");
+							int i = Integer.parseInt(chCOp[1]);
+							taskutils.sortPhysOP(it1, i);
+							
+						}else if(complexOperation.contains("GRP")) {
+							chCOp = complexOperation.split(" ");
+							int i = Integer.parseInt(chCOp[1]);
+							taskutils.grpPhysOP(it1, i);
+							Tuple jtup = null;
+							while((jtup = taskutils.get_next_GRP(i))!=null) {}
+						}
+						System.out.println("Press 1 to consider another complex pattern on the same pattern tree results");
+						complexLoopChoice = scanner.nextInt();
+					}
+					
+					System.out.println("Press N to stop , Y to consider another pattern tree");
+					choice = scanner.next();
+					
+					}
+				catch(Exception e) {
+					scanner.close();
+					e.printStackTrace();
+				}
+			}
+	}
 
 	private void input() {
 		String choice = "Y";
@@ -881,11 +1039,17 @@ public class Phase1 {
 		rules.add(rule3);
 		return rules;
 
-
-
-
 	}
 
+	public static List<Rule> copyRules(List<Rule> rule){
+		List<Rule> resultRules = new ArrayList<>();
+		
+		for(Rule r : rule) {
+			Rule newRule = new Rule(r.outerTag, r.innerTag, r.ruleType);
+			resultRules.add(newRule);
+		}
+		return resultRules;
+	}
 
 	private Integer getRoot(int[] rankIndex) {
 		for (int i = 0; i < rankIndex.length; i++)
@@ -908,7 +1072,10 @@ public class Phase1 {
 
 	public static void main(String[] args) {
 		Phase1 phase1 = new Phase1();
-		phase1.input();
+//		phase1.input();
+		
+		phase1.complexPattern();
+		
 		//phase1.compute();
 		//phase1.computeSM();
 	}
