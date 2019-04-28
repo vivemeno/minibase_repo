@@ -92,11 +92,13 @@ public class Phase1 {
 			System.err.println("" + e);
 		}
 
-		SystemDefs sysdef = new SystemDefs(dbpath, 30000, NUMBUF, "Clock");
+		SystemDefs sysdef = new SystemDefs(dbpath, 100000, NUMBUF, "Clock");
 
 		// creating the node table relation
 		Tuple t = new Tuple();
+		Tuple tForSortedFile = new Tuple();
 		ProjectUtils.setTupleHeader(t);
+		ProjectUtils.setTupleHeader(tForSortedFile);
 
 		int size = t.size();
 
@@ -110,10 +112,26 @@ public class Phase1 {
 			status = FAIL;
 			e.printStackTrace();
 		}
+		Heapfile hfSortedOnTag = null;
+		try {
+			hfSortedOnTag = new Heapfile("nodesSortedOnTag.in");
+		} catch (Exception e) {
+			System.err.println("*** error in Heapfile constructor ***");
+			status = FAIL;
+			e.printStackTrace();
+		}
 
 		t = new Tuple(size);
+		tForSortedFile = new Tuple(size);
 		ProjectUtils.setTupleHeader(t);
-		
+		ProjectUtils.setTupleHeader(tForSortedFile);
+		Vector<NodeTable> nodesSortedBasedOnTag = new Vector<>(nodes);
+		Collections.sort(nodesSortedBasedOnTag, new Comparator<NodeTable>() {
+			@Override
+			public int compare(NodeTable nodeTable, NodeTable t1) {
+				return nodeTable.nodename.compareTo(t1.nodename);
+			}
+		});
 		int numnodes = nodes.size();
 		for (int i = 0; i < numnodes; i++) {
 			System.out.println(i);
@@ -131,7 +149,9 @@ public class Phase1 {
 					tagStatistics.put(nodeName, currStatistics);
 				}
 				t.setIntervalFld(1, interval);
+				tForSortedFile.setIntervalFld(1, ((NodeTable) nodesSortedBasedOnTag.elementAt(i)).interval);
 				t.setStrFld(2, nodeName);
+				tForSortedFile.setStrFld(2, ((NodeTable) nodesSortedBasedOnTag.elementAt(i)).nodename);
 			} catch (Exception e) {
 				System.err.println("*** Heapfile error in Tuple.setStrFld() ***");
 				status = FAIL;
@@ -140,8 +160,10 @@ public class Phase1 {
 
 			try {
 				byte[] ba = t.returnTupleByteArray();
+				byte[] baForSortedFile = tForSortedFile.returnTupleByteArray();
 				int c = ba.length;
 				rid = f.insertRecord(ba);
+				hfSortedOnTag.insertRecord(baForSortedFile);
 			} catch (Exception e) {
 				System.err.println("*** error in Heapfile.insertRecord() ***");
 				status = FAIL;
@@ -149,7 +171,7 @@ public class Phase1 {
 			}
 		}
 
-		ProjectUtils.createIndex(f, "nodeIndex.in");
+		ProjectUtils.createIndex(hfSortedOnTag, "nodeIndex.in");
 	//	ProjectUtils.testScan("nodes.in", "nodeIndex.in");
 		System.out.println("BTreeIndex created successfully.\n");
 		if (status != OK) {
@@ -443,7 +465,7 @@ public class Phase1 {
 				new FldSpec(new RelSpec(RelSpec.outer), 2) };
 		try {
 
-			fileScanner = new IndexScan(new IndexType(IndexType.B_Index), "nodes.in", "nodeIndex.in",
+			fileScanner = new IndexScan(new IndexType(IndexType.B_Index), "nodesSortedOnTag.in", "nodeIndex.in",
 					ProjectUtils.getNodeTableAttrType(), ProjectUtils.getNodeTableStringSizes(), 2, 2,
 					ProjectUtils.getProjections(), innerRelFilterConditions, 2, false);	
 		} catch (Exception e) {
@@ -477,7 +499,7 @@ public class Phase1 {
 		NestedLoopsJoins currIterator = null;
 		try {
 			prevIterator = new NestedLoopsJoins(baseTableAttrTypes, 2, baseTableStringLengths, baseTableAttrTypes, 2,
-					baseTableStringLengths, 10, fileScanner, "nodes.in", filterConditions, innerRelFilterConditions, currProjection, 4, "nodeIndex.in", 0);
+					baseTableStringLengths, 10, fileScanner, "nodesSortedOnTag.in", filterConditions, innerRelFilterConditions, currProjection, 4, "nodeIndex.in", 0);
 		} catch (Exception e) {
 			System.err.println("*** Error preparing for nested_loop_join");
 			System.err.println("" + e);
@@ -614,7 +636,7 @@ public class Phase1 {
 				innerRelFilterConditions[0].operand2.string = tagMapping.get(rule.outerTag);
 
 				innerRelFilterConditions[1] = null;
-				fileScan = new IndexScan(new IndexType(IndexType.B_Index), "nodes.in", "nodeIndex.in",
+				fileScan = new IndexScan(new IndexType(IndexType.B_Index), "nodesSortedOnTag.in", "nodeIndex.in",
 						ProjectUtils.getNodeTableAttrType(), ProjectUtils.getNodeTableStringSizes(), 2, 2,
 						ProjectUtils.getProjections(), innerRelFilterConditions, 2, false);
 			} catch (Exception e) {
@@ -819,7 +841,7 @@ public class Phase1 {
 			//List<Rule> rules = getDemoRUles();
 		//	createQueryHeapFile("nodes.in", rules);
 			long start = System.currentTimeMillis();
-			//compute(rules);
+			compute(rules);
 			System.out.println("Number of page accessed = " + BufMgr.page_access_counter);
 			long timeTaken = (System.currentTimeMillis() - start)/1000;
 			System.out.println("Time taken = " + timeTaken);
@@ -902,7 +924,5 @@ public class Phase1 {
 	public static void main(String[] args) {
 		Phase1 phase1 = new Phase1();
 		phase1.input();
-		//phase1.compute();
-		//phase1.computeSM();
 	}
 }
