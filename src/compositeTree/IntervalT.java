@@ -1,4 +1,4 @@
-package intervalTree;
+package compositeTree;
 
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
@@ -52,9 +52,14 @@ public class IntervalT implements GlobalConst {
 	      if ((key1 instanceof IntervalKey) && (key2 instanceof IntervalKey) ) {
 	    	  IntervalKey k1 = (IntervalKey) key1;
 	    	  IntervalKey k2 = (IntervalKey) key2;
-	    	    
-	    	  return k1.getKey().s - k2.getKey().s;
-	    	  
+	    	  if(k1.name.compareTo(k2.name) > 0) {  
+	    		  return 1;
+	    	  }
+	    	  else if (k1.name.compareTo(k2.name) == 0) {
+	    		  return k1.key.s - k2.key.s;
+	    	  } else {
+	    		  return -1;
+	    	  }
 	      }
 	      
 	      else { throw new  KeyNotMatchException(null, "key types do not match");}

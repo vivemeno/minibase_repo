@@ -234,7 +234,39 @@ public class Convert{
 		return tb;
 	}
   
-  public static void setNodelValue (IntervalKey value, int position, byte []data)
+  public static void setNodelValue (intervalTree.IntervalKey value, int position, byte []data)
+          throws java.io.IOException
+  {
+      /* creates a new data output stream to write data to
+       * underlying output stream
+       */
+
+      OutputStream out = new ByteArrayOutputStream();
+      DataOutputStream outstr = new DataOutputStream (out);
+       
+      outstr.writeInt(value.key.s);
+      outstr.writeInt(value.key.e);
+      outstr.writeInt(value.key.l);
+      outstr.writeUTF(value.name);
+      
+      // write the value to the output stream
+     // outstr.writeObject(value);
+      // creates a byte array with this output stream size and the
+      // valid contents of the buffer have been copied into it
+      byte []B = ((ByteArrayOutputStream) out).toByteArray();
+      int a = B.length;
+      
+    //  int sz =((ByteArrayOutputStream) out).toByteArray().length;
+      // copies the contents of this byte array into data[]
+try {
+    System.arraycopy (B, 0, data, position, a);
+
+}catch(Exception e) {
+	System.out.println();
+}
+  }
+  
+  public static void setNodelValue (compositeTree.IntervalKey value, int position, byte []data)
           throws java.io.IOException
   {
       /* creates a new data output stream to write data to

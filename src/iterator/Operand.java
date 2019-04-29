@@ -1,4 +1,5 @@
 package iterator;
+import global.CompositeType;
 import global.IntervalType;
 
 public class Operand {
@@ -7,4 +8,5 @@ public class Operand {
   public  int      integer;
   public  float    real;
   public  IntervalType interval;
+  public CompositeType composite;
 }

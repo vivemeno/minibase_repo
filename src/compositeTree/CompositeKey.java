@@ -1,22 +1,18 @@
-package intervalTree;
+package compositeTree;
 
 import global.IntervalType;
 
-public class IntervalKey extends KeyClass {
+public class CompositeKey extends KeyClass {
 	
 	 public IntervalType key;
 	 public String name;
 	
-	public IntervalKey(IntervalType value) {
+	public CompositeKey(IntervalType value) {
 		key = new IntervalType(value.s, value.e, value.l);
+
 	}
 	
-	public IntervalKey(IntervalType value, String tagName, boolean flag) {
-		key = new IntervalType(value.s, value.e, value.l);
-		name = tagName;
-	}
-	
-	public IntervalKey(IntervalType value, String name) {
+	public CompositeKey(IntervalType value, String name) {
 		key = new IntervalType(value.s, value.e, value.l);
 		this.name = name;
 

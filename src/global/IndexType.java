@@ -11,6 +11,7 @@ public class IndexType {
   public static final int B_Index = 1;
   public static final int Hash    = 2;
   public static final int interval_Index = 3; 
+  public static final int composite_Index = 4;
 
   public int indexType;
 

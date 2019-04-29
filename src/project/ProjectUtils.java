@@ -4,6 +4,7 @@ import btree.BTreeFile;
 import btree.StringKey;
 import global.AttrOperator;
 import global.AttrType;
+import global.CompositeType;
 import global.GlobalConst;
 import global.IndexType;
 import global.IntervalType;
@@ -134,6 +135,27 @@ public class ProjectUtils {
 		expr[2] = null;
 		return expr;
     }
+    
+    public static CondExpr[] setCompositeIndexCond(IntervalType interval, String nodeName) {
+    	CondExpr[] expr = new CondExpr[3];
+		expr[0] = new CondExpr();
+		expr[0].op = new AttrOperator(AttrOperator.aopGE);
+		expr[0].type1 = new AttrType(AttrType.attrSymbol);
+		expr[0].type2 = new AttrType(AttrType.attrComposite);
+		expr[0].operand1.symbol = new FldSpec(new RelSpec(RelSpec.outer), 1);
+		expr[0].operand2.composite = new CompositeType(new IntervalType (interval.s, 0, 0), nodeName);
+		expr[0].next = null;
+
+		expr[1] = new CondExpr();
+		expr[1].op = new AttrOperator(AttrOperator.aopLE);
+		expr[1].type1 = new AttrType(AttrType.attrSymbol);
+		expr[1].type2 = new AttrType(AttrType.attrComposite);
+		expr[1].operand1.symbol = new FldSpec(new RelSpec(RelSpec.outer), 1);
+		expr[1].operand2.composite = new CompositeType(new IntervalType (interval.e, 0, 0), nodeName);
+		expr[1].next = null;
+		expr[2] = null;
+		return expr;
+    }
 
 
     public static short[] getNodeTableStringSizes() {
@@ -244,6 +266,81 @@ public class ProjectUtils {
 //				}
 //				System.out.println(c++);
 				btfInterval.insert(new IntervalKey(intervalType, s), rid);
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+
+			try {
+				temp = scan.getNext(rid);
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+
+		// close the file scan
+		scan.closescan();
+
+		System.out.println("BTreeIndex file insertion successfully completed.\n");
+    	
+    }
+    
+ public static void createCompositeIndex(Heapfile f, Tuple t) {
+    	
+    	// create an scan on the heapfile
+		Scan scan = null;Tuple temp = null;
+
+		// creating the node table relation
+		AttrType[] nodeTableAttrTypes = new AttrType[2];
+		nodeTableAttrTypes[0] = new AttrType(AttrType.attrInterval);
+		nodeTableAttrTypes[1] = new AttrType(AttrType.attrString);
+
+		short[] nodeTableStringSizes = new short[1];
+		nodeTableStringSizes[0] = 5;
+		
+		try {
+			scan = new Scan(f);
+		} catch (Exception e) {
+			e.printStackTrace();
+			Runtime.getRuntime().exit(1);
+		}
+
+		// create the index file on the integer field
+		compositeTree.IntervalTreeFile btfInterval = null;
+		try {
+			btfInterval = new compositeTree.IntervalTreeFile("CompositeIndex.in", 1/* delete */);
+		} catch (Exception e) {
+			e.printStackTrace();
+			Runtime.getRuntime().exit(1);
+		}
+
+		RID rid = new RID();
+		IntervalType intervalType = null;
+		String s = null;
+		temp = null;
+
+		try {
+			temp = scan.getNext(rid);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		int c =0 ;
+		while (temp != null) {
+			t.tupleCopy(temp);
+
+			try {
+
+				s = t.getStrFld(2);
+				intervalType = t.getIntervalField(1);
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+
+			try {
+//				if(s==null || c == 784) {
+//					System.out.println(s);
+//				}
+//				System.out.println(c++);
+				btfInterval.insert(new compositeTree.IntervalKey(intervalType, s), rid);
 			} catch (Exception e) {
 				e.printStackTrace();
 			}

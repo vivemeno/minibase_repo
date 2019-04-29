@@ -201,96 +201,186 @@ public class IndexUtils {
 		   PinPageException,
 		   IteratorException,
 		   ConstructPageException, KeyNotMatchException, IteratorException, ConstructPageException, PinPageException, UnpinPageException, intervalTree.KeyNotMatchException, intervalTree.IteratorException, intervalTree.ConstructPageException, intervalTree.PinPageException, intervalTree.UnpinPageException
-	    {
-	      intervalTree.IndexFileScan indScan;
+	{
+		intervalTree.IndexFileScan indScan;
 
-	      if (selects == null || selects[0] == null) {
-		indScan = ((IntervalTreeFile)indFile).new_scan(null, null, 7);
-		return indScan;
-	      }
-
-	      if (selects[1] == null) {
-		if (selects[0].type1.attrType != AttrType.attrSymbol && selects[0].type2.attrType != AttrType.attrSymbol) {
-		  throw new InvalidSelectionException("IndexUtils.java: Invalid selection condition");
+		if (selects == null || selects[0] == null) {
+			indScan = ((IntervalTreeFile) indFile).new_scan(null, null, 7);
+			return indScan;
 		}
 
-		intervalTree.KeyClass key;
+		if (selects[1] == null) {
+			if (selects[0].type1.attrType != AttrType.attrSymbol && selects[0].type2.attrType != AttrType.attrSymbol) {
+				throw new InvalidSelectionException("IndexUtils.java: Invalid selection condition");
+			}
 
-		// symbol = value
-		if (selects[0].op.attrOperator == AttrOperator.aopEQ) {
-		  if (selects[0].type1.attrType != AttrType.attrSymbol) {
-		    key = getValueITree(selects[0], selects[0].type1, 1);
-		    indScan = ((IntervalTreeFile)indFile).new_scan(key, null, 7); //7 - means contains
-		  }
-		  else {
-		    key = getValueITree(selects[0], selects[0].type2, 2);
-		    indScan = ((IntervalTreeFile)indFile).new_scan(key, null,  7);
-		  }
-		  return indScan;
+			intervalTree.KeyClass key;
+
+			// symbol = value
+			if (selects[0].op.attrOperator == AttrOperator.aopEQ) {
+				if (selects[0].type1.attrType != AttrType.attrSymbol) {
+					key = getValueITree(selects[0], selects[0].type1, 1);
+					indScan = ((IntervalTreeFile) indFile).new_scan(key, null, 7); // 7 - means contains
+				} else {
+					key = getValueITree(selects[0], selects[0].type2, 2);
+					indScan = ((IntervalTreeFile) indFile).new_scan(key, null, 7);
+				}
+				return indScan;
+			}
+
+			// symbol > value or symbol >= value
+			if (selects[0].op.attrOperator == AttrOperator.aopGT || selects[0].op.attrOperator == AttrOperator.aopGE) {
+				if (selects[0].type1.attrType != AttrType.attrSymbol) {
+					key = getValueITree(selects[0], selects[0].type1, 1);
+					indScan = ((IntervalTreeFile) indFile).new_scan(key, null, 7);
+				} else {
+					key = getValueITree(selects[0], selects[0].type2, 2);
+					indScan = ((IntervalTreeFile) indFile).new_scan(key, null, 7);
+				}
+				return indScan;
+			}
+
+			// error if reached here
+			System.err.println("Error -- in IndexUtils.BTree_scan()");
+			return null;
+		} else {
+			// selects[1] != null, must be a range query
+			if (selects[0].type1.attrType != AttrType.attrSymbol && selects[0].type2.attrType != AttrType.attrSymbol) {
+				throw new InvalidSelectionException("IndexUtils.java: Invalid selection condition");
+			}
+			if (selects[1].type1.attrType != AttrType.attrSymbol && selects[1].type2.attrType != AttrType.attrSymbol) {
+				throw new InvalidSelectionException("IndexUtils.java: Invalid selection condition");
+			}
+
+			// which symbol is higher??
+			intervalTree.KeyClass key1, key2;
+			AttrType type;
+
+			if (selects[0].type1.attrType != AttrType.attrSymbol) {
+				key1 = getValueITree(selects[0], selects[0].type1, 1);
+				type = selects[0].type1;
+			} else {
+				key1 = getValueITree(selects[0], selects[0].type2, 2);
+				type = selects[0].type2;
+			}
+			if (selects[1].type1.attrType != AttrType.attrSymbol) {
+				key2 = getValueITree(selects[1], selects[1].type1, 1);
+			} else {
+				key2 = getValueITree(selects[1], selects[1].type2, 2);
+			}
+
+			switch (type.attrType) {
+			case AttrType.attrInterval:
+			case AttrType.attrComposite:
+				if (IntervalT.keyCompare(((IntervalKey) key1), ((IntervalKey) key2)) < 0) {
+					indScan = ((IntervalTreeFile) indFile).new_scan(key1, key2, 7);
+				} else {
+					indScan = ((IntervalTreeFile) indFile).new_scan(key2, key1, 7);
+				}
+				return indScan;
+
+			default:
+				// error condition
+				throw new UnknownKeyTypeException("IndexUtils.java: Only Integer and String keys are supported so far");
+			}
+		} // end of else
+
+	}
+  
+  public static compositeTree.IndexFileScan compositeTree_scan(CondExpr[] selects, compositeTree.IndexFile indFile)
+		  throws IOException,
+		   UnknownKeyTypeException,
+		   InvalidSelectionException,
+		   KeyNotMatchException,
+		   UnpinPageException,
+		   PinPageException,
+		   IteratorException,
+		   ConstructPageException, KeyNotMatchException, IteratorException, ConstructPageException, PinPageException, UnpinPageException, compositeTree.KeyNotMatchException, compositeTree.IteratorException, compositeTree.ConstructPageException, compositeTree.PinPageException, compositeTree.UnpinPageException
+	{
+	  compositeTree.IndexFileScan indScan;
+
+		if (selects == null || selects[0] == null) {
+			indScan = ((compositeTree.IntervalTreeFile) indFile).new_scan(null, null, 7);
+			return indScan;
 		}
 
-		// symbol > value or symbol >= value
-		if (selects[0].op.attrOperator == AttrOperator.aopGT || selects[0].op.attrOperator == AttrOperator.aopGE) {
-		  if (selects[0].type1.attrType != AttrType.attrSymbol) {
-		    key = getValueITree(selects[0], selects[0].type1, 1);
-		    indScan = ((IntervalTreeFile)indFile).new_scan(key, null, 7);
-		  }
-		  else {
-		    key = getValueITree(selects[0], selects[0].type2, 2);
-		    indScan = ((IntervalTreeFile)indFile).new_scan(key, null, 7);
-		  }
-		  return indScan;
-		}
+		if (selects[1] == null) {
+			if (selects[0].type1.attrType != AttrType.attrSymbol && selects[0].type2.attrType != AttrType.attrSymbol) {
+				throw new InvalidSelectionException("IndexUtils.java: Invalid selection condition");
+			}
 
-		// error if reached here
-		System.err.println("Error -- in IndexUtils.BTree_scan()");
-		return null;
-	      }
-	      else {
-		// selects[1] != null, must be a range query
-		if (selects[0].type1.attrType != AttrType.attrSymbol && selects[0].type2.attrType != AttrType.attrSymbol) {
-		  throw new InvalidSelectionException("IndexUtils.java: Invalid selection condition");
-		}
-		if (selects[1].type1.attrType != AttrType.attrSymbol && selects[1].type2.attrType != AttrType.attrSymbol) {
-		  throw new InvalidSelectionException("IndexUtils.java: Invalid selection condition");
-		}
+			compositeTree.KeyClass key;
 
-		// which symbol is higher??
-		intervalTree.KeyClass key1, key2;
-		AttrType type;
+			// symbol = value
+			if (selects[0].op.attrOperator == AttrOperator.aopEQ) {
+				if (selects[0].type1.attrType != AttrType.attrSymbol) {
+					key = getValueCTree(selects[0], selects[0].type1, 1);
+					indScan = ((compositeTree.IntervalTreeFile) indFile).new_scan(key, null, 7); // 7 - means contains
+				} else {
+					key = getValueCTree(selects[0], selects[0].type2, 2);
+					indScan = ((compositeTree.IntervalTreeFile) indFile).new_scan(key, null, 7);
+				}
+				return indScan;
+			}
 
-		if (selects[0].type1.attrType != AttrType.attrSymbol) {
-		  key1 = getValueITree(selects[0], selects[0].type1, 1);
-		  type = selects[0].type1;
-		}
-		else {
-		  key1 = getValueITree(selects[0], selects[0].type2, 2);
-		  type = selects[0].type2;
-		}
-		if (selects[1].type1.attrType != AttrType.attrSymbol) {
-		  key2 = getValueITree(selects[1], selects[1].type1, 1);
-		}
-		else {
-		  key2 = getValueITree(selects[1], selects[1].type2, 2);
-		}
+			// symbol > value or symbol >= value
+			if (selects[0].op.attrOperator == AttrOperator.aopGT || selects[0].op.attrOperator == AttrOperator.aopGE) {
+				if (selects[0].type1.attrType != AttrType.attrSymbol) {
+					key = getValueCTree(selects[0], selects[0].type1, 1);
+					indScan = ((compositeTree.IntervalTreeFile) indFile).new_scan(key, null, 7);
+				} else {
+					key = getValueCTree(selects[0], selects[0].type2, 2);
+					indScan = ((compositeTree.IntervalTreeFile) indFile).new_scan(key, null, 7);
+				}
+				return indScan;
+			}
 
-		switch (type.attrType) {
-		case AttrType.attrInterval:
-		  if (IntervalT.keyCompare(((IntervalKey)key1),((IntervalKey)key2) )  < 0) {
-		    indScan = ((IntervalTreeFile)indFile).new_scan(key1, key2, 7);
-		  }
-		  else {
-		    indScan = ((IntervalTreeFile)indFile).new_scan(key2, key1, 7);
-		  }
-		  return indScan;
+			// error if reached here
+			System.err.println("Error -- in IndexUtils.BTree_scan()");
+			return null;
+		} else {
+			// selects[1] != null, must be a range query
+			if (selects[0].type1.attrType != AttrType.attrSymbol && selects[0].type2.attrType != AttrType.attrSymbol) {
+				throw new InvalidSelectionException("IndexUtils.java: Invalid selection condition");
+			}
+			if (selects[1].type1.attrType != AttrType.attrSymbol && selects[1].type2.attrType != AttrType.attrSymbol) {
+				throw new InvalidSelectionException("IndexUtils.java: Invalid selection condition");
+			}
 
-		default:
-		  // error condition
-		  throw new UnknownKeyTypeException("IndexUtils.java: Only Integer and String keys are supported so far");
-		}
-	      } // end of else
+			// which symbol is higher??
+			compositeTree.KeyClass key1, key2;
+			AttrType type;
 
-	    }
+			if (selects[0].type1.attrType != AttrType.attrSymbol) {
+				key1 = getValueCTree(selects[0], selects[0].type1, 1);
+				type = selects[0].type1;
+			} else {
+				key1 = getValueCTree(selects[0], selects[0].type2, 2);
+				type = selects[0].type2;
+			}
+			if (selects[1].type1.attrType != AttrType.attrSymbol) {
+				key2 = getValueCTree(selects[1], selects[1].type1, 1);
+			} else {
+				key2 = getValueCTree(selects[1], selects[1].type2, 2);
+			}
+
+			switch (type.attrType) {
+			case AttrType.attrInterval:
+			case AttrType.attrComposite:
+				if (compositeTree.IntervalT.keyCompare(((compositeTree.IntervalKey) key1), ((compositeTree.IntervalKey) key2)) < 0) {
+					indScan = ((compositeTree.IntervalTreeFile) indFile).new_scan(key1, key2, 7);
+				} else {
+					indScan = ((compositeTree.IntervalTreeFile) indFile).new_scan(key2, key1, 7);
+				}
+				return indScan;
+
+			default:
+				// error condition
+				throw new UnknownKeyTypeException("IndexUtils.java: Only Integer and String keys are supported so far");
+			}
+		} // end of else
+
+	}
 
   private static intervalTree.KeyClass getValueITree(CondExpr cd, AttrType type, int choice)
 	       throws UnknownKeyTypeException
@@ -307,6 +397,33 @@ public class IndexUtils {
 	    case AttrType.attrInterval:
 	      if (choice == 1) return new IntervalKey(cd.operand1.interval);
 	      else return new IntervalKey(cd.operand2.interval);
+	    case AttrType.attrComposite:
+	      if (choice == 1) return new IntervalKey(cd.operand1.composite.interval, cd.operand1.composite.nodeVal);
+	      else return new IntervalKey(cd.operand2.composite.interval, cd.operand2.composite.nodeVal);
+	    default:
+		throw new UnknownKeyTypeException("IndexUtils.java: Only Integer and String keys are supported so far");
+	    }
+
+	  }
+  
+  private static compositeTree.KeyClass getValueCTree(CondExpr cd, AttrType type, int choice)
+	       throws UnknownKeyTypeException
+	  {
+	    // error checking
+	    if (cd == null) {
+	      return null;
+	    }
+	    if (choice < 1 || choice > 2) {
+	      return null;
+	    }
+
+	    switch (type.attrType) {
+	    case AttrType.attrInterval:
+	      if (choice == 1) return new compositeTree.IntervalKey(cd.operand1.interval);
+	      else return new compositeTree.IntervalKey(cd.operand2.interval);
+	    case AttrType.attrComposite:
+	      if (choice == 1) return new compositeTree.IntervalKey(cd.operand1.composite.interval, cd.operand1.composite.nodeVal);
+	      else return new compositeTree.IntervalKey(cd.operand2.composite.interval, cd.operand2.composite.nodeVal);
 	    default:
 		throw new UnknownKeyTypeException("IndexUtils.java: Only Integer and String keys are supported so far");
 	    }

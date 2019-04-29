@@ -133,6 +133,25 @@ public class IndexScan extends Iterator {
 		        }
 		      
 		    break;
+		case IndexType.composite_Index:
+	        // error check the select condition
+	        // must be of the type: value op symbol || symbol op value
+	        // but not symbol op symbol || value op value
+		        try {
+		  	CTIndexFile = new compositeTree.IntervalTreeFile(indName); 
+		        }
+		        catch (Exception e) {
+		  	throw new IndexException(e, "IndexScan.java: BTreeFile exceptions caught from BTreeFile constructor");
+		        }
+		        
+		        try {
+		  	CTIndexScan = (compositeTree.IntervalFileScan) IndexUtils.compositeTree_scan(selects, CTIndexFile);
+		        }
+		        catch (Exception e) {
+		  	throw new IndexException(e, "IndexScan.java: BTreeFile exceptions caught from IndexUtils.BTree_scan().");
+		        }
+		      
+		    break;
 		case IndexType.None:
 		default:
 			throw new UnknownIndexTypeException("Only BTree index is supported so far");
@@ -355,6 +374,105 @@ public class IndexScan extends Iterator {
 		return null;
 	}
   
+  
+  public Tuple get_nextComposite() throws IndexException, UnknownKeyTypeException 
+	{
+		RID rid;
+		int unused;
+		compositeTree.KeyDataEntry nextentry = null;
+
+		try {
+			nextentry = CTIndexScan.get_next();
+		} catch (Exception e) {
+			throw new IndexException(e, "IndexScan.java: BTree error");
+		}
+
+		while (nextentry != null) {
+			if (index_only) {
+				// only need to return the key
+
+				AttrType[] attrType = new AttrType[2];
+				short[] s_sizes = new short[1];
+				s_sizes[0] = 5;
+
+				attrType[0] = new AttrType(AttrType.attrInterval);
+				attrType[1] = new AttrType(AttrType.attrString);
+				try {
+					Jtuple.setHdr((short) 2, attrType, s_sizes);
+				} catch (Exception e) {
+					throw new IndexException(e, "IndexScan.java: Heapfile error");
+				}
+
+				try {
+					compositeTree.IntervalKey iKey = (compositeTree.IntervalKey) nextentry.key;
+					IntervalType interval = new IntervalType(iKey.key.s, iKey.key.e, iKey.key.l);
+					String tagName = iKey.name;
+					Jtuple.setIntervalFld(1, interval);
+					Jtuple.setStrFld(2, tagName);
+				} catch (Exception e) {
+					throw new IndexException(e, "IndexScan.java: Heapfile error");
+				}
+//				boolean eval;
+//				try {
+//					eval = PredEval.Eval(_selects, Jtuple, null, _types, null);
+//				} catch (Exception e) {
+//					throw new IndexException(e, "IndexScan.java: Heapfile error");
+//				}
+				
+				//if (eval) {
+					return Jtuple;
+			//	}
+				
+//				try {
+//					nextentry = ITIndexScan.get_next();
+//				} catch (Exception e) {
+//					throw new IndexException(e, "IndexScan.java: BTree error");
+//				}
+			}
+			// ****************************end of indexOnly if
+			// block******************************
+			// not index_only, need to return the whole tuple
+			rid = ((compositeTree.LeafData) nextentry.data).getData();
+			try {
+				tuple1 = f.getRecord(rid);
+			} catch (Exception e) {
+				throw new IndexException(e, "IndexScan.java: getRecord failed");
+			}
+
+			try {
+				tuple1.setHdr((short) _noInFlds, _types, _s_sizes);
+			} catch (Exception e) {
+				throw new IndexException(e, "IndexScan.java: Heapfile error");
+			}
+
+			boolean eval;
+			try {
+				eval = PredEval.Eval(_selects, tuple1, null, _types, null);
+			} catch (Exception e) {
+				throw new IndexException(e, "IndexScan.java: Heapfile error");
+			}
+
+			if (eval) {
+				// need projection.java
+				try {
+					Projection.Project(tuple1, _types, Jtuple, perm_mat, _noOutFlds);
+				} catch (Exception e) {
+					throw new IndexException(e, "IndexScan.java: Heapfile error");
+				}
+
+				return Jtuple;
+			}
+
+			try {
+				nextentry = CTIndexScan.get_next();
+			} catch (Exception e) {
+				throw new IndexException(e, "IndexScan.java: BTree error");
+			}
+		}
+
+		return null;
+	}
+  
   /**
    * Cleaning up the index scan, does not remove either the original
    * relation or the index from the database.
@@ -382,6 +500,8 @@ public class IndexScan extends Iterator {
   private IndexFileScan indScan;
   private intervalTree.IndexFile     ITIndexFile;
   private intervalTree.IndexFileScan ITIndexScan;
+  private compositeTree.IndexFile     CTIndexFile;
+  private compositeTree.IndexFileScan CTIndexScan;
   private AttrType[]    _types;
   private short[]       _s_sizes; 
   private CondExpr[]    _selects;

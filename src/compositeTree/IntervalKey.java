@@ -1,4 +1,4 @@
-package intervalTree;
+package compositeTree;
 
 import global.IntervalType;
 
@@ -9,11 +9,6 @@ public class IntervalKey extends KeyClass {
 	
 	public IntervalKey(IntervalType value) {
 		key = new IntervalType(value.s, value.e, value.l);
-	}
-	
-	public IntervalKey(IntervalType value, String tagName, boolean flag) {
-		key = new IntervalType(value.s, value.e, value.l);
-		name = tagName;
 	}
 	
 	public IntervalKey(IntervalType value, String name) {

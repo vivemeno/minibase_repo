@@ -134,4 +134,9 @@ public abstract class Iterator implements Flags {
   public Tuple get_nextInterval() throws IndexException, UnknownKeyTypeException {
 	  return null;
   }
+  
+  public Tuple  get_nextComposite() throws IndexException, UnknownKeyTypeException {
+	  return null;
+  }
+ 
 }

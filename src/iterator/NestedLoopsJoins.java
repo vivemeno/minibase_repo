@@ -245,21 +245,31 @@ public class NestedLoopsJoins  extends Iterator
 				try {
 					int indexType = IndexType.B_Index;
 					boolean indexOnly = false;
-					if (indexFileName.equals("IntervalIndex.in")) {
+					if (indexFileName.equals("CompositeIndex.in")) {
+						CondExpr[] indexFilter = ProjectUtils.setCompositeIndexCond(
+								outer_tuple.getIntervalField(perm_mat[this.intervalOffset].offset),
+								RightFilter[0].operand2.string);
+						indexType = IndexType.composite_Index;
+						indexOnly = true;
+						innerIterator = new IndexScan(new IndexType(indexType), relationName, indexFileName,
+								ProjectUtils.getNodeTableAttrType(), ProjectUtils.getNodeTableStringSizes(), 2, 2,
+								ProjectUtils.getProjections(), indexFilter, 2, indexOnly);
+					} else if (indexFileName.equals("IntervalIndex.in")) {
 						CondExpr[] indexFilter = ProjectUtils.setIntervalIndexCond(
 								outer_tuple.getIntervalField(perm_mat[this.intervalOffset].offset));
 						indexType = IndexType.interval_Index;
 						indexOnly = true;
 						innerIterator = new IndexScan(new IndexType(indexType), relationName, indexFileName,
 								ProjectUtils.getNodeTableAttrType(), ProjectUtils.getNodeTableStringSizes(), 2, 2,
-								ProjectUtils.getProjections(), indexFilter, 2, indexOnly);		
+								ProjectUtils.getProjections(), indexFilter, 2, indexOnly);
 					} else {
-					innerIterator = new IndexScan(new IndexType(indexType), relationName, indexFileName,
-							ProjectUtils.getNodeTableAttrType(), ProjectUtils.getNodeTableStringSizes(), 2, 2,
-							ProjectUtils.getProjections(), RightFilter, 2, indexOnly);
-					RightFilter = null;
+						innerIterator = new IndexScan(new IndexType(indexType), relationName, indexFileName,
+								ProjectUtils.getNodeTableAttrType(), ProjectUtils.getNodeTableStringSizes(), 2, 2,
+								ProjectUtils.getProjections(), RightFilter, 2, indexOnly);
+						RightFilter = null;
 					}
 				} catch (Exception e) {
+					//System.out.println(e.printStackTrace());
 					throw new NestedLoopException(e, "openScan failed");
 				}
 			} // ENDS: if (get_from_outer == TRUE)
@@ -273,9 +283,21 @@ public class NestedLoopsJoins  extends Iterator
 			//System.out.println();
 			if(indexFileName.equals("IntervalIndex.in")) {
 				inner_tuple = innerIterator.get_nextInterval();
-			} else {
-				inner_tuple = innerIterator.get_next();
+			} else if(indexFileName.equals("CompositeIndex.in")) {
+				inner_tuple = innerIterator.get_nextComposite();
+//				if (inner_tuple.getIntervalField(1).s == 81) {
+//					System.out.println("Test");
+//				}
+//				if (inner_tuple.getIntervalField(1).s == 10173) {
+//					System.out.println("Test");
+//				}
+//				if (inner_tuple.getIntervalField(1).s == 10174) {
+//					System.out.println("Test");
+//				}
 			}
+			else {
+				inner_tuple = innerIterator.get_next();
+			} 
 			while (inner_tuple != null) {
 				//System.out.println(i++);
 				inner_tuple.setHdr((short) in2_len, _in2, t2_str_sizescopy);
@@ -288,7 +310,9 @@ public class NestedLoopsJoins  extends Iterator
 				}
 				if(indexFileName.equals("IntervalIndex.in")) {
 					inner_tuple = innerIterator.get_nextInterval();
-				} else {
+				} else if(indexFileName.equals("CompositeIndex.in")) {
+					inner_tuple = innerIterator.get_nextComposite();
+				}else {
 					inner_tuple = innerIterator.get_next();
 				}
 			}
