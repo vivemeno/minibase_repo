@@ -612,6 +612,94 @@ public class Tuple implements GlobalConst {
 
 	}
 
+    /**
+     * Print out the tuple
+     *
+     * @param type
+     *            the types in the tuple
+     * @throws ClassNotFoundException
+     * @Exception IOException I/O exception
+     */
+    public String printandReturn(AttrType type[]) throws IOException, ClassNotFoundException {
+        int i, val;
+        float fval;
+        String sval;
+        IntervalType ival;
+        StringBuffer printVal = new StringBuffer();
+
+        System.out.print("[");
+        printVal.append("[");
+        for (i = 0; i < fldCnt - 1; i++) {
+            switch (type[i].attrType) {
+
+                case AttrType.attrInteger:
+                    val = Convert.getIntValue(fldOffset[i], data);
+                    printVal.append(val);
+                    System.out.print(val);
+                    break;
+
+                case AttrType.attrReal:
+                    fval = Convert.getFloValue(fldOffset[i], data);
+                    printVal.append(fval);
+                    System.out.print(fval);
+                    break;
+
+                case AttrType.attrString:
+                    sval = Convert.getStrValue(fldOffset[i], data, fldOffset[i + 1] - fldOffset[i]);
+                    System.out.print(sval);
+                    printVal.append(sval);
+                    break;
+
+                case AttrType.attrInterval:
+                    ival = Convert.getIntervalValue(fldOffset[i], data);
+                    printVal.append("[" + ival.s + " " + ival.e + "]");
+                    System.out.print("[" + ival.s + " " + ival.e + "]");
+                    break;
+
+                case AttrType.attrNull:
+                case AttrType.attrSymbol:
+                    break;
+            }
+
+            System.out.print(", ");
+        }
+
+        switch (type[fldCnt - 1].attrType) {
+
+            case AttrType.attrInteger:
+                val = Convert.getIntValue(fldOffset[i], data);
+                printVal.append(val);
+                System.out.print(val);
+                break;
+
+            case AttrType.attrReal:
+                fval = Convert.getFloValue(fldOffset[i], data);
+                System.out.print(fval);
+                printVal.append(fval);
+                break;
+
+            case AttrType.attrString:
+                sval = Convert.getStrValue(fldOffset[i], data, fldOffset[i + 1] - fldOffset[i]);
+                System.out.print(sval);
+                printVal.append(sval);
+                break;
+
+            case AttrType.attrInterval:
+                ival = Convert.getIntervalValue(fldOffset[i], data);
+                System.out.print("[" + ival.s + "  " + ival.e + "]");
+                printVal.append("[" + ival.s + "  " + ival.e + "]");
+                break;
+
+            case AttrType.attrNull:
+            case AttrType.attrSymbol:
+                break;
+        }
+        System.out.println("]");
+        printVal.append("]");
+        return printVal.toString();
+
+    }
+
 	/**
 	 * private method Padding must be used when storing different types.
 	 * 

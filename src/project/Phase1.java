@@ -1,9 +1,6 @@
 package project;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.*;
 
 import java.util.*;
 
@@ -64,7 +61,7 @@ public class Phase1 {
     public Vector<NodeTable> nodes;
     // private String input_file_base = "/home/renil/github/dbmsi/input/";
 // private String input_file_base = "/home/akhil/MS/DBMS/";
-    private String input_file_base = "/home/eldo/Documents/CSE510Candan/Project/";
+    private String input_file_base = "/home/vivemeno/DBMSI/input/";
     private Map<String, String> tagMapping = new HashMap<>(); // contains id to tag name mapping
     private Map<String, Statistics> tagStatistics = new HashMap<>();
 
@@ -251,6 +248,8 @@ public class Phase1 {
         OutFilter[0].flag =0;
 
     }
+
+
 
     private void checkNodeTree() {
         Map<String, Integer> countMap = new HashMap<>();
@@ -794,15 +793,45 @@ public class Phase1 {
 
         try {
             int count = 1;
+            print(prevSM, jtype, "SortMerge.txt");
+//            while ((t = prevSM.get_next()) != null) {
+//                System.out.println("Result " + count++ + ":");
+//                String val = t.printandReturn(jtype);
+//
+//            }
+        } catch (Exception e) {
+            System.err.println("*** Error preparing for get_next tuple");
+            System.err.println("" + e);
+            Runtime.getRuntime().exit(1);
+        }
+    }
+
+    private void print(Iterator prevSM, AttrType[] jtype, String fileName) {
+
+        BufferedWriter writer = null;
+        try {
+            writer = new BufferedWriter(new FileWriter(input_file_base + fileName));
+
+        try {
+            int count = 1;
+            Tuple t;
             while ((t = prevSM.get_next()) != null) {
                 System.out.println("Result " + count++ + ":");
-                t.print(jtype);
+                String val = t.printandReturn(jtype);
+                writer.write(val);
+                writer.newLine();
+
             }
         } catch (Exception e) {
             System.err.println("*** Error preparing for get_next tuple");
             System.err.println("" + e);
             Runtime.getRuntime().exit(1);
         }
+        writer.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
     }
 
 
@@ -1092,9 +1121,9 @@ public class Phase1 {
     public static void main(String[] args) {
         Phase1 phase1 = new Phase1();
 
-        //phase1.input();
+        phase1.input();
 
-        phase1.complexPattern();
+        //phase1.complexPattern();
 
         //phase1.compute();
         //phase1.computeSM();
