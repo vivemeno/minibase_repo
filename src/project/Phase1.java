@@ -62,9 +62,9 @@ public class Phase1 {
     private boolean OK = true;
     private boolean FAIL = false;
     public Vector<NodeTable> nodes;
-    // private String input_file_base = "/home/renil/github/dbmsi/input/";
+     private String input_file_base = "/home/renil/github/dbmsi/input/";
 // private String input_file_base = "/home/akhil/MS/DBMS/";
-    private String input_file_base = "/home/akhil/MS/DBMS/";
+//    private String input_file_base = "/home/akhil/MS/DBMS/";
     private Map<String, String> tagMapping = new HashMap<>(); // contains id to tag name mapping
     private Map<String, Statistics> tagStatistics = new HashMap<>();
 
@@ -785,14 +785,54 @@ public class Phase1 {
         }
 
         try {
+//            int count = 1;
+//            while ((t = prevSM.get_next()) != null) {
+//                System.out.println("Result " + count++ + ":");
+//                t.print(jtype);
+//            }
+            
+//            ***************************************************
             int count = 1;
-            while ((t = prevSM.get_next()) != null) {
-                System.out.println("Result " + count++ + ":");
-                t.print(jtype);
+            if(queryPlanNumber == 1) {
+            	it1 = prevSM;
+            	if(prevSM != null && wt1NoOfFlds == -1) {
+            		Tuple checktp = prevSM.get_next();
+            		if(checktp != null )wt1NoOfFlds = checktp.noOfFlds();
+            		return;
+            	}
+            	return;
             }
+            
+            RID rid;
+            Heapfile f = null;
+            Tuple tup = null;
+            Tuple finalTuple = new Tuple();
+            if(queryPlanNumber == 2)f = new Heapfile("witness.in");
+            
+                while ((finalTuple = prevSM.get_next()) != null) {
+                    System.out.println("Result " + count++ + ":");
+                    finalTuple.print(jtype);
+                    //complex query part
+                    if(queryPlanNumber == 2) {
+                    	if(wt2NoOfFlds ==0 )wt2NoOfFlds = finalTuple.noOfFlds();
+                        try {
+                            int b = finalTuple.getLength();
+                            tup = new Tuple(b);
+                            tup.tupleCopy(finalTuple);
+                            rid = f.insertRecord(tup.returnTupleByteArray());
+                        } catch (Exception e) {
+                            System.err.println("*** error in Heapfile.insertRecord() ***");
+                            status = FAIL;
+                            e.printStackTrace();
+                        }
+                    }
+                }
+                if(queryPlanNumber == 2) queryPlanNumber = 1;
+            
         } catch (Exception e) {
             System.err.println("*** Error preparing for get_next tuple");
             System.err.println("" + e);
+            e.printStackTrace();
             Runtime.getRuntime().exit(1);
         }
     }
@@ -857,52 +897,47 @@ public class Phase1 {
 
         String choice = "Y";
         System.out.println("Number of page accessed = " + BufMgr.page_access_counter);
-        Scanner scanner = null;
+        Scanner scanner = new Scanner(System.in);
 
         while (!choice.equals("N") && !choice.equals("n")) {
-            // SystemDefs sysdef = new SystemDefs(dbpath, 1000, NUMBUF, "Clock");
             BufMgr.page_access_counter = 0;
 
             int bufSize = 1000; //default
-            System.out.println("Enter the buffer size");
+//          System.out.println("Enter the buffer size");
 //          bufSize = scanner.nextInt();
             bufSize = 1000;
             try {
                 String complexOperation = "";
-
+                System.out.println("Enter the operation");
+                complexOperation = scanner.nextLine();
+                
                 System.out.println("Enter first input filename for query");
                 scanner = new Scanner(System.in);
                 String file1 = scanner.nextLine();
-//             String file1 = "query.txt";
-//            String file1 = "q6.txt";
                 String[] file_contents1 = readFile(input_file_base + file1);
                 List<Rule> rules1 = getRuleList(file_contents1);
                 queryPlanNumber = 1;
-//            createQueryHeapFile("nodes.in", rules1 );
-
-                queryPlanNumber = 1;
                 System.out.println("pattern tree 1 processing");
                 List<Rule> rules1Copy = copyRules(rules1);
-                compute(rules1Copy);
-                compute(rules1);
-                System.out.println("Number of page accessed = " + BufMgr.page_access_counter);
-
-                System.out.println("Enter second input filename for query");
-                String file2 = scanner.nextLine();
-//            String file2 = "query1.txt";
-//             String file2 = "query3.txt";
-                String[] file_contents2 = readFile(input_file_base + file2);
-                queryPlanNumber = 2;
-                List<Rule> rules2 = getRuleList(file_contents2);
-//            createQueryHeapFile("nodes.in", rules2);
-
-                queryPlanNumber = 2;
-                System.out.println("pattern tree 1 processing");
-                compute(rules2);
-                System.out.println("Number of page accessed = " + BufMgr.page_access_counter);
-
+//              compute(rules1Copy);
+//              compute(rules1);
+                computeSM(rules1Copy, new TupleOrder(TupleOrder.Ascending));
+                queryPlanNumber = 1;
+                computeSM(rules1, new TupleOrder(TupleOrder.Ascending));
+//              System.out.println("Number of page accessed = " + BufMgr.page_access_counter);
+                
+                if(!complexOperation.contains("SRT") && !complexOperation.contains("GRP")) {
+                	System.out.println("Enter second input filename for query");
+                    String file2 = scanner.nextLine();
+                    String[] file_contents2 = readFile(input_file_base + file2);
+                    List<Rule> rules2 = getRuleList(file_contents2);
+                    queryPlanNumber = 2;
+                    computeSM(rules2, new TupleOrder(TupleOrder.Ascending));
+                    System.out.println("pattern tree 2 processing");
+//                  compute(rules2);
+//                  System.out.println("Number of page accessed = " + BufMgr.page_access_counter);
+                }
                 TaskFourUtils taskutils = new TaskFourUtils(wt1NoOfFlds, wt2NoOfFlds);
-                int complexLoopChoice= 1;
 
 //             AttrType[] finalTupleAttrTypes = new AttrType[2 * 4];
 //
@@ -919,18 +954,11 @@ public class Phase1 {
 //                finalTuple.print(finalTupleAttrTypes);
 //             }
 
-                while(complexLoopChoice != 0) {
-                    physOp = 1;
-                    System.out.println("Enter the operation");
-                    complexOperation = scanner.nextLine();
-//                complexOperation = "CP";
-//                complexOperation = "TJ 4 4";
-//               complexOperation = "NJ 4 4";
-//                complexOperation = "SRT 4";
-//                complexOperation = "GRP 4";
-                    String[] chCOp = null;
+                   		physOp = 1;
 
-                    try {
+                    	String[] chCOp = null;
+                    	System.out.println("started processing complex query");
+
                         if(complexOperation.contains("CP")) {
                             taskutils.nestedLoop(it1);
 
@@ -949,73 +977,76 @@ public class Phase1 {
                         }else if(complexOperation.contains("SRT")) {
                             chCOp = complexOperation.split(" ");
                             int i = Integer.parseInt(chCOp[1]);
-                            taskutils.sortPhysOP(it1, i);
+                            System.out.println("Enter the buffer size");
+                            bufSize = scanner.nextInt();
+                            taskutils.sortPhysOP(it1, i, bufSize);
 
                         }else if(complexOperation.contains("GRP")) {
                             chCOp = complexOperation.split(" ");
                             int i = Integer.parseInt(chCOp[1]);
-                            taskutils.grpPhysOP(it1, i);
+                            System.out.println("Enter the buffer size");
+                            bufSize = scanner.nextInt();
+                            taskutils.grpPhysOP(it1, i, bufSize);
                             Tuple jtup = null;
                             while((jtup = taskutils.get_next_GRP(i))!=null) {}
                         }
-                    }catch(Exception e) {
-                        e.printStackTrace();
-                    }
-                    System.out.println("Press 1 to consider another complex pattern on the same pattern tree results");
-                    complexLoopChoice = scanner.nextInt();
-                }
-
-                System.out.println("Press N to stop , Y to consider another pattern tree");
-                choice = scanner.next();
-
-            }
-            catch(Exception e) {
-                scanner.close();
+            }catch(Exception e) {
                 e.printStackTrace();
             }
+            System.out.println("Press N to stop , Y to consider another pattern tree");
+            choice = scanner.nextLine();
         }
+        scanner.close();
     }
 
-    private void input() {
-        String choice = "Y";
+    private void input() {String choice = "Y";
+    System.out.println("Number of page accessed = " + BufMgr.page_access_counter);
+    while (!choice.equals("N") && !choice.equals("n")) {
+        ProjectUtils.resetPageCounter();
+
+        String[] file_contents = null;
+        String file = null;
+        Scanner scanner = new Scanner(System.in);
+        do {
+            System.out.println("Enter input filename for query");
+            file = scanner.next();
+            file_contents = readFile(input_file_base + file);
+        }while(file_contents.length==1 && "".equals(file_contents[0]));
+
+        List<Rule> rules = getRuleList(file_contents);
+        //List<Rule> rules = getDemoRUles();
+        // createQueryHeapFile("nodes.in", rules);
+        long start = System.currentTimeMillis();
+        Phase3 phase3 = new Phase3();
+        System.out.println("Query Plan 1");
+        phase3.IndexJoinWithTagIndex(tagMapping, rules);
         System.out.println("Number of page accessed = " + BufMgr.page_access_counter);
-        while (!choice.equals("N") && !choice.equals("n")) {
-            BufMgr.page_access_counter = 0;
+        long timeTaken = (System.currentTimeMillis() - start)/1000;
+        System.out.println("Time taken = " + timeTaken);
+        start = System.currentTimeMillis();
+        ProjectUtils.resetPageCounter();
 
-            String[] file_contents = null;
-            String file = null;
-            Scanner scanner = new Scanner(System.in);
-            do {
-                System.out.println("Enter input filename for query");
-                file = scanner.next();
-                file_contents = readFile(input_file_base + file);
-            }while(file_contents.length==1 && "".equals(file_contents[0]));
+        System.out.println("Query Plan 2");
+//        compute(rules);
+        System.out.println("Number of page accessed = " + BufMgr.page_access_counter);
+        ProjectUtils.resetPageCounter();
+        timeTaken = (System.currentTimeMillis() - start)/1000;
+        System.out.println("Time taken = " + timeTaken);
+        start = System.currentTimeMillis();
 
-            List<Rule> rules = getRuleList(file_contents);
-            //List<Rule> rules = getDemoRUles();
-            // createQueryHeapFile("nodes.in", rules);
-            long start = System.currentTimeMillis();
-            Phase3 phase3 = new Phase3();
-            System.out.println("Query Plan 1");         
-            phase3.IndexJoinWithTagIndex(tagMapping, rules);
-            System.out.println("Number of page accessed = " + BufMgr.page_access_counter);
-            System.out.println("Query Plan 2");
-            compute(rules);
-            System.out.println("Number of page accessed = " + BufMgr.page_access_counter);
-            long timeTaken = (System.currentTimeMillis() - start)/1000;
-            System.out.println("Time taken = " + timeTaken);
-            System.out.println("Sort Merge");
-            start = System.currentTimeMillis();
-            BufMgr.page_access_counter = 0;     
-            System.out.println("Number of page accessed = " + BufMgr.page_access_counter);
-            computeSM(rules, new TupleOrder(TupleOrder.Ascending));
-            System.out.println("Time taken = " + (System.currentTimeMillis() - start)/1000);
-            System.out.println("Press N to stop");
-            choice = scanner.next();
-            System.out.print(choice);
-        }
-        System.out.println("OVERR!!!");
+        System.out.println("Query Plan 3 (Sort Merge)");
+        computeSM(rules, new TupleOrder(TupleOrder.Ascending));
+        System.out.println("Number of page accessed = " + BufMgr.page_access_counter);
+        ProjectUtils.resetPageCounter();
+        System.out.println("Time taken = " + (System.currentTimeMillis() - start)/1000);
+
+
+        System.out.println("Press N to stop");
+        choice = scanner.next();
+        System.out.print(choice);
     }
+    System.out.println("OVERR!!!");
+}
 
     private void printRules(List<Rule> rules) {
         System.out.print("Printing rules " + rules.size() );
@@ -1094,9 +1125,9 @@ public class Phase1 {
     public static void main(String[] args) {
         Phase1 phase1 = new Phase1();
 
-        phase1.input();
+//        phase1.input();
 
-        //phase1.complexPattern();
+        phase1.complexPattern();
 
         //phase1.compute();
         //phase1.computeSM();
