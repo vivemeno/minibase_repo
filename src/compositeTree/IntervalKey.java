@@ -12,7 +12,9 @@ public class IntervalKey extends KeyClass {
 	}
 	
 	public IntervalKey(IntervalType value, String name) {
-		key = new IntervalType(value.s, value.e, value.l);
+		if (value != null) {
+			key = new IntervalType(value.s, value.e, value.l);
+		}
 		this.name = name;
 
 	}

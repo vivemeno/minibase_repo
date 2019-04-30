@@ -35,41 +35,24 @@ public class Phase3 {
 		int nodeNumber = 1;
 		boolean status = GlobalProjectValues.OK;
 
-		Iterator fileScanner = null;
+		Iterator initialScanner = null;
 
 		AttrType[] baseTableAttrTypes = { new AttrType(AttrType.attrInterval), new AttrType(AttrType.attrString) };
 		short[] baseTableStringLengths = new short[1];
 		baseTableStringLengths[0] = GlobalProjectValues.TAG_LENGTH;
 
 		Rule firstRule = rules.get(0);
-
-		CondExpr[] innerRelFilterConditions = new CondExpr[3];
-		innerRelFilterConditions[0] = new CondExpr();
-		innerRelFilterConditions[1] = new CondExpr();
-		innerRelFilterConditions[2] = new CondExpr();
-
-		// Inner table comparison.
-		innerRelFilterConditions[0].next = null;
-		innerRelFilterConditions[0].op = new AttrOperator(AttrOperator.aopEQ);
-		innerRelFilterConditions[0].type1 = new AttrType(AttrType.attrSymbol);
-		innerRelFilterConditions[0].type2 = new AttrType(AttrType.attrString);
-		innerRelFilterConditions[0].operand1.symbol = new FldSpec(new RelSpec(RelSpec.outer), 2);
-		innerRelFilterConditions[0].operand2.string = tagMapping.get(firstRule.outerTag);
-
-		innerRelFilterConditions[1].next = null;
-		innerRelFilterConditions[1].op = new AttrOperator(AttrOperator.aopEQ);
-		innerRelFilterConditions[1].type1 = new AttrType(AttrType.attrSymbol);
-		innerRelFilterConditions[1].type2 = new AttrType(AttrType.attrString);
-		innerRelFilterConditions[1].operand1.symbol = new FldSpec(new RelSpec(RelSpec.outer), 2);
-		innerRelFilterConditions[1].operand2.string = tagMapping.get(firstRule.outerTag);
-
-		innerRelFilterConditions[2] = null;
+		CondExpr[] innerRelFilterConditions = ProjectUtils.getInitialCond(tagMapping.get(firstRule.outerTag));
 
 		FldSpec[] initialProjection = { new FldSpec(new RelSpec(RelSpec.outer), 1),
 				new FldSpec(new RelSpec(RelSpec.outer), 2) };
-		try {
 
-			fileScanner = new IndexScan(new IndexType(IndexType.B_Index), "nodesSortedOnTag.in", "nodeIndex.in",
+		try {
+			if (tagMapping.get(firstRule.outerTag).equals("*")) {
+				initialScanner = new FileScan("nodesSortedOnTag.in", baseTableAttrTypes, baseTableStringLengths,
+						(short) 2, (short) 2, initialProjection, null);
+			}
+			initialScanner = new IndexScan(new IndexType(IndexType.B_Index), "nodesSortedOnTag.in", "nodeIndex.in",
 					ProjectUtils.getNodeTableAttrType(), ProjectUtils.getNodeTableStringSizes(), 2, 2,
 					ProjectUtils.getProjections(), innerRelFilterConditions, 2, false);
 		} catch (Exception e) {
@@ -83,11 +66,10 @@ public class Phase3 {
 		ProjectUtils.populateNodeOffsetMap(tagOffsetMap, firstRule.innerTag, nodeNumber);
 		nodeNumber++;
 
-		CondExpr[] filterConditions = new CondExpr[4];
+		CondExpr[] filterConditions = new CondExpr[3];
 		filterConditions[0] = new CondExpr();
 		filterConditions[1] = new CondExpr();
 		filterConditions[2] = new CondExpr();
-		filterConditions[3] = new CondExpr();
 
 		innerRelFilterConditions = new CondExpr[2];
 		innerRelFilterConditions[0] = new CondExpr();
@@ -102,8 +84,9 @@ public class Phase3 {
 		NestedLoopsJoins currIterator = null;
 		try {
 			prevIterator = new NestedLoopsJoins(baseTableAttrTypes, 2, baseTableStringLengths, baseTableAttrTypes, 2,
-					baseTableStringLengths, 10, fileScanner, "nodesSortedOnTag.in", filterConditions,
-					innerRelFilterConditions, currProjection, 4, "CompositeIndex.in", 1);
+					baseTableStringLengths, 10, initialScanner, "nodesSortedOnTag.in", filterConditions,
+					innerRelFilterConditions, currProjection, 4,
+					firstRule.innerTag.equals("*") ? "IntervalIndex.in" : "CompositeIndex.in", 1);
 		} catch (Exception e) {
 			System.err.println("*** Error preparing for nested_loop_join");
 			System.err.println("" + e);
@@ -125,7 +108,7 @@ public class Phase3 {
 				nodeNumber++;
 			}
 
-			String indexName = "CompositeIndex.in";
+			String indexName = tagMapping.get(currRule.innerTag).equals("*") ? "IntervalIndex.in" : "CompositeIndex.in";
 
 			filterConditions = new CondExpr[4];
 			filterConditions[0] = new CondExpr();
@@ -306,15 +289,15 @@ public class Phase3 {
 //		}
 		
 		if (!tagMapping.get(rule.innerTag).equals("*")) {
-		//Inner table comparison.
-		rightFilter[0].next = null;
-		rightFilter[0].op = new AttrOperator(AttrOperator.aopEQ);
-		rightFilter[0].type1 = new AttrType(AttrType.attrSymbol);
-		rightFilter[0].type2 = new AttrType(AttrType.attrString);
-		rightFilter[0].operand1.symbol = new FldSpec(new RelSpec(RelSpec.outer), 2);
-		rightFilter[0].operand2.string = tagMapping.get(rule.innerTag);
-		
-		rightFilter[1] = null;
+			// Inner table comparison.
+			rightFilter[0].next = null;
+			rightFilter[0].op = new AttrOperator(AttrOperator.aopEQ);
+			rightFilter[0].type1 = new AttrType(AttrType.attrSymbol);
+			rightFilter[0].type2 = new AttrType(AttrType.attrString);
+			rightFilter[0].operand1.symbol = new FldSpec(new RelSpec(RelSpec.outer), 2);
+			rightFilter[0].operand2.string = tagMapping.get(rule.innerTag);
+
+			rightFilter[1] = null;
 		} else { 
 			rightFilter[0] = null;
 		}
