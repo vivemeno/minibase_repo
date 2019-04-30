@@ -283,7 +283,7 @@ public class Phase1 {
         } else {
             outerTagNameColNo = offset - 1;
         }
-
+        
         //Join Condition
         outFilter[0].next = null;
         outFilter[0].op = new AttrOperator(AttrOperator.aopEQ);
@@ -297,27 +297,16 @@ public class Phase1 {
             outFilter[0].flag = CondExpr.FLAG_AD_CHECK;
         }
 
-        //Outer table comparison. For eg: If rule is A B PC, this condition will return
-        //results for outer table where tag name equals to A.
-
-        outFilter[1].next = null;
-        outFilter[1].op = new AttrOperator(AttrOperator.aopEQ);
-        outFilter[1].type1 = new AttrType(AttrType.attrSymbol);
-        outFilter[1].operand1.symbol = new FldSpec(new RelSpec(RelSpec.outer), outerTagNameColNo);
-        outFilter[1].type2 = new AttrType(AttrType.attrString);
-        outFilter[1].operand2.string = tagMapping.get(rule.outerTag);
-
-        if (!tagMapping.get(rule.innerTag).equals("*")) {
-            outFilter[2].next = null;
-            outFilter[2].op = new AttrOperator(AttrOperator.aopEQ);
-            outFilter[2].type1 = new AttrType(AttrType.attrSymbol);
-            outFilter[2].type2 = new AttrType(AttrType.attrString);
-            outFilter[2].operand1.symbol = new FldSpec(new RelSpec(RelSpec.innerRel), 2);
-            outFilter[2].operand2.string = tagMapping.get(rule.innerTag);
-
-            outFilter[3] = null;
+        if (!tagMapping.get(rule.innerTag).equals("*")) {	
+            outFilter[1].next = null;
+            outFilter[1].op = new AttrOperator(AttrOperator.aopEQ);
+            outFilter[1].type1 = new AttrType(AttrType.attrSymbol);
+            outFilter[1].type2 = new AttrType(AttrType.attrString);
+            outFilter[1].operand1.symbol = new FldSpec(new RelSpec(RelSpec.innerRel), 2);
+            outFilter[1].operand2.string = tagMapping.get(rule.innerTag);
+            outFilter[2] = null;        
         } else {
-            outFilter[2] = null;
+            outFilter[1] = null;
         }
 
         if (!tagMapping.get(rule.innerTag).equals("*")) {
@@ -431,212 +420,213 @@ public class Phase1 {
         System.out.println("Created heap file for query");
 
     }
+    
+	public void compute(List<Rule> rules) {
+		// Map containing the corresponding column number for the
+		// given tag Id in the joined table.
 
-    public void compute(List<Rule> rules) {
-        // Map containing the corresponding column number for the
-        // given tag Id in the joined table.
+		HashMap<String, Integer> tagOffsetMap = new HashMap<>();
 
-        HashMap<String, Integer> tagOffsetMap = new HashMap<>();
+		int nodeNumber = 1;
+		boolean status = OK;
 
-        int nodeNumber = 1;
-        boolean status = OK;
+		Iterator initialScanner = null;
 
-        Iterator fileScanner = null;
+		AttrType[] baseTableAttrTypes = { new AttrType(AttrType.attrInterval), new AttrType(AttrType.attrString) };
+		short[] baseTableStringLengths = new short[1];
+		baseTableStringLengths[0] = TAG_LENGTH;
 
-        AttrType[] baseTableAttrTypes = { new AttrType(AttrType.attrInterval), new AttrType(AttrType.attrString) };
-        short[] baseTableStringLengths = new short[1];
-        baseTableStringLengths[0] = TAG_LENGTH;
+		Rule firstRule = rules.get(0);
+		CondExpr[] innerRelFilterConditions = ProjectUtils.getInitialCond(tagMapping.get(firstRule.outerTag));
 
-        Rule firstRule = rules.get(0);
+		FldSpec[] initialProjection = { new FldSpec(new RelSpec(RelSpec.outer), 1),
+				new FldSpec(new RelSpec(RelSpec.outer), 2) };
 
-        CondExpr[] innerRelFilterConditions = new CondExpr[2];
-        innerRelFilterConditions[0] = new CondExpr();
-        innerRelFilterConditions[1] = new CondExpr();
+		try {
+			if (tagMapping.get(firstRule.outerTag).equals("*")) {
+				initialScanner = new FileScan("nodesSortedOnTag.in", baseTableAttrTypes, baseTableStringLengths,
+						(short) 2, (short) 2, initialProjection, null);
+			}
+			initialScanner = new IndexScan(new IndexType(IndexType.B_Index), "nodesSortedOnTag.in", "nodeIndex.in",
+					ProjectUtils.getNodeTableAttrType(), ProjectUtils.getNodeTableStringSizes(), 2, 2,
+					ProjectUtils.getProjections(), innerRelFilterConditions, 2, false);
+		} catch (Exception e) {
+			status = FAIL;
+			System.err.println("" + e);
+			e.printStackTrace();
+		}
 
-        //Inner table comparison.
-        innerRelFilterConditions[0].next = null;
-        innerRelFilterConditions[0].op = new AttrOperator(AttrOperator.aopEQ);
-        innerRelFilterConditions[0].type1 = new AttrType(AttrType.attrSymbol);
-        innerRelFilterConditions[0].type2 = new AttrType(AttrType.attrString);
-        innerRelFilterConditions[0].operand1.symbol = new FldSpec(new RelSpec(RelSpec.outer), 2);
-        innerRelFilterConditions[0].operand2.string = tagMapping.get(firstRule.outerTag);
+		populateNodeOffsetMap(tagOffsetMap, firstRule.outerTag, nodeNumber);
+		nodeNumber++;
+		populateNodeOffsetMap(tagOffsetMap, firstRule.innerTag, nodeNumber);
+		nodeNumber++;
 
-        innerRelFilterConditions[1] = null;
+		CondExpr[] filterConditions = new CondExpr[3];
+		filterConditions[0] = new CondExpr();
+		filterConditions[1] = new CondExpr();
+		filterConditions[2] = new CondExpr();
 
-        FldSpec[] initialProjection = { new FldSpec(new RelSpec(RelSpec.outer), 1),
-                new FldSpec(new RelSpec(RelSpec.outer), 2) };
-        try {
+		innerRelFilterConditions = new CondExpr[2];
+		innerRelFilterConditions[0] = new CondExpr();
+		innerRelFilterConditions[1] = new CondExpr();
 
-            fileScanner = new IndexScan(new IndexType(IndexType.B_Index), "nodesSortedOnTag.in", "nodeIndex.in",
-                    ProjectUtils.getNodeTableAttrType(), ProjectUtils.getNodeTableStringSizes(), 2, 2,
-                    ProjectUtils.getProjections(), innerRelFilterConditions, 2, false);
-        } catch (Exception e) {
-            status = FAIL;
-            System.err.println("" + e);
-            e.printStackTrace();
-        }
+		setConditions(filterConditions, innerRelFilterConditions, firstRule, 1, true);
+		FldSpec[] currProjection = { new FldSpec(new RelSpec(RelSpec.outer), 2),
+				new FldSpec(new RelSpec(RelSpec.outer), 1), new FldSpec(new RelSpec(RelSpec.innerRel), 2),
+				new FldSpec(new RelSpec(RelSpec.innerRel), 1) };
 
+		NestedLoopsJoins prevIterator = null;
+		NestedLoopsJoins currIterator = null;
+		try {
+			prevIterator = new NestedLoopsJoins(baseTableAttrTypes, 2, baseTableStringLengths, baseTableAttrTypes, 2,
+					baseTableStringLengths, 10, initialScanner, "nodesSortedOnTag.in", filterConditions,
+					innerRelFilterConditions, currProjection, 4,
+					firstRule.outerTag.equals("*") ? "IntervalIndex.in" : "CompositeIndex.in", 1);
+		} catch (Exception e) {
+			System.err.println("*** Error preparing for nested_loop_join");
+			System.err.println("" + e);
+			e.printStackTrace();
+			Runtime.getRuntime().exit(1);
+		}
+		// Needs to iterate only from the second rule.
+		int ruleNumber = 2;
+		for (int x = 1; x < rules.size(); ++x) {
+			Rule currRule = rules.get(x);
+			if (!tagOffsetMap.containsKey(currRule.outerTag)) {
+				// Technically, this should never happen, since the input tree is connected.
+				populateNodeOffsetMap(tagOffsetMap, currRule.outerTag, nodeNumber);
+				nodeNumber++;
+			}
 
-        populateNodeOffsetMap(tagOffsetMap, firstRule.outerTag, nodeNumber);
-        nodeNumber++;
-        populateNodeOffsetMap(tagOffsetMap, firstRule.innerTag, nodeNumber);
-        nodeNumber++;
+			if (!tagOffsetMap.containsKey(currRule.innerTag)) {
+				populateNodeOffsetMap(tagOffsetMap, currRule.innerTag, nodeNumber);
+				nodeNumber++;
+			}
 
-        CondExpr[] filterConditions = new CondExpr[4];
-        filterConditions[0] = new CondExpr();
-        filterConditions[1] = new CondExpr();
-        filterConditions[2] = new CondExpr();
-        filterConditions[3] = new CondExpr();
+			String indexName = findIndex(currRule);
 
-        innerRelFilterConditions = new CondExpr[2];
-        innerRelFilterConditions[0] = new CondExpr();
-        innerRelFilterConditions[1] = new CondExpr();
+			filterConditions = new CondExpr[4];
+			filterConditions[0] = new CondExpr();
+			filterConditions[1] = new CondExpr();
+			filterConditions[2] = new CondExpr();
+			filterConditions[3] = new CondExpr();
 
-        setConditions(filterConditions, innerRelFilterConditions, firstRule, 1, true);
-        FldSpec[] currProjection = { new FldSpec(new RelSpec(RelSpec.outer), 2),
-                new FldSpec(new RelSpec(RelSpec.outer), 1), new FldSpec(new RelSpec(RelSpec.innerRel), 2),
-                new FldSpec(new RelSpec(RelSpec.innerRel), 1) };
+			innerRelFilterConditions = new CondExpr[2];
+			innerRelFilterConditions[0] = new CondExpr();
+			innerRelFilterConditions[1] = new CondExpr();
+			setConditions(filterConditions, innerRelFilterConditions, currRule, tagOffsetMap.get(currRule.outerTag),
+					false);
 
-        NestedLoopsJoins prevIterator = null;
-        NestedLoopsJoins currIterator = null;
-        try {
-            prevIterator = new NestedLoopsJoins(baseTableAttrTypes, 2, baseTableStringLengths, baseTableAttrTypes, 2,
-                    baseTableStringLengths, 10, fileScanner, "nodesSortedOnTag.in", filterConditions, innerRelFilterConditions, currProjection, 4, "nodeIndex.in", 0);
-        } catch (Exception e) {
-            System.err.println("*** Error preparing for nested_loop_join");
-            System.err.println("" + e);
-            e.printStackTrace();
-            Runtime.getRuntime().exit(1);
-        }
-        //Needs to iterate only from the second rule.
-        int ruleNumber = 2;
-        for (int x = 1; x < rules.size(); ++x) {
-            Rule currRule = rules.get(x);
-            if (!tagOffsetMap.containsKey(currRule.outerTag)) {
-                // Technically, this should never happen, since the input tree is connected.
-                populateNodeOffsetMap(tagOffsetMap, currRule.outerTag, nodeNumber);
-                nodeNumber++;
-            }
+			// After each rule the 2 more columns will be added.
+			AttrType[] joinedTableAttrTypes = new AttrType[2 * ruleNumber];
+			for (int i = 0; i < 2 * ruleNumber; i++) {
+				if (i % 2 == 0) {
+					joinedTableAttrTypes[i] = new AttrType(AttrType.attrString);
+				} else {
+					joinedTableAttrTypes[i] = new AttrType(AttrType.attrInterval);
+				}
+			}
+			short[] joinedTableStringLengths = new short[ruleNumber];
+			for (int i = 0; i < ruleNumber; i++) {
+				joinedTableStringLengths[i] = TAG_LENGTH;
+			}
 
-            if (!tagOffsetMap.containsKey(currRule.innerTag)) {
-                populateNodeOffsetMap(tagOffsetMap, currRule.innerTag, nodeNumber);
-                nodeNumber++;
-            }
+			// Projection size will also increase by 2 in every rule. Also, an additional 2
+			// more columns will
+			// be added after the join with the inner table. This additional 2 columns will
+			// be of the tag id
+			// which has not occurred before in any of the rules. We can be assured that the
+			// outer tag of a rule
+			// will always be new since we have ordered the rules in a level wise fashion
+			// and also because of
+			// the assumption that there are no rules with a circular relationship.
+			currProjection = new FldSpec[2 * ruleNumber + 2];
+			for (int i = 0; i < 2 * ruleNumber; i++) {
+				currProjection[i] = new FldSpec(new RelSpec(RelSpec.outer), i + 1);
+			}
+			currProjection[2 * ruleNumber] = new FldSpec(new RelSpec(RelSpec.innerRel), 2);
+			currProjection[2 * ruleNumber + 1] = new FldSpec(new RelSpec(RelSpec.innerRel), 1);
 
-            String indexName = findIndex(currRule);
+			try {
+				currIterator = new NestedLoopsJoins(joinedTableAttrTypes, 2 * ruleNumber, joinedTableStringLengths,
+						baseTableAttrTypes, 2, baseTableStringLengths, 10, prevIterator,
+						indexName.equals("nodeIndex.in") ? "nodesSortedOnTag.in" : "nodes.in", filterConditions,
+						innerRelFilterConditions, currProjection, 2 * ruleNumber + 2, indexName,
+						tagOffsetMap.get(currRule.outerTag) - 1);
+			} catch (Exception e) {
+				System.err.println("*** Error preparing for nested_loop_join");
+				System.err.println("" + e);
+				e.printStackTrace();
+				Runtime.getRuntime().exit(1);
+			}
+			prevIterator = currIterator;
+			ruleNumber++;
 
-            filterConditions = new CondExpr[4];
-            filterConditions[0] = new CondExpr();
-            filterConditions[1] = new CondExpr();
-            filterConditions[2] = new CondExpr();
-            filterConditions[3] = new CondExpr();
+		}
 
-            innerRelFilterConditions = new CondExpr[2];
-            innerRelFilterConditions[0] = new CondExpr();
-            innerRelFilterConditions[1] = new CondExpr();
-            setConditions(filterConditions, innerRelFilterConditions, currRule, tagOffsetMap.get(currRule.outerTag), false);
+		if (currIterator == null) {
+			currIterator = prevIterator;
+		}
+		Tuple finalTuple = new Tuple();
+		AttrType[] finalTupleAttrTypes = new AttrType[2 * ruleNumber];
 
-            //After each rule the 2 more columns will be added.
-            AttrType[] joinedTableAttrTypes = new AttrType[2 * ruleNumber];
-            for (int i = 0; i < 2 * ruleNumber; i++) {
-                if (i % 2 == 0) {
-                    joinedTableAttrTypes[i] = new AttrType(AttrType.attrString);
-                } else {
-                    joinedTableAttrTypes[i] = new AttrType(AttrType.attrInterval);
-                }
-            }
-            short[] joinedTableStringLengths = new short[ruleNumber];
-            for (int i = 0; i < ruleNumber; i++) {
-                joinedTableStringLengths[i] = TAG_LENGTH;
-            }
+		for (int i = 0; i < 2 * ruleNumber; i++) {
+			if (i % 2 == 0) {
+				finalTupleAttrTypes[i] = new AttrType(AttrType.attrString);
+			} else {
+				finalTupleAttrTypes[i] = new AttrType(AttrType.attrInterval);
+			}
+		}
 
-            //Projection size will also increase by 2 in every rule. Also, an additional 2 more columns will
-            //be added after the join with the inner table. This additional 2 columns will be of the tag id
-            //which has not occurred before in any of the rules. We can be assured that the outer tag of a rule
-            //will always be new since we have ordered the rules in a level wise fashion and also because of
-            //the assumption that there are no rules with a circular relationship.
-            currProjection = new FldSpec[2 * ruleNumber + 2];
-            for (int i = 0; i < 2 * ruleNumber; i++) {
-                currProjection[i] = new FldSpec(new RelSpec(RelSpec.outer), i + 1);
-            }
-            currProjection[2 * ruleNumber] = new FldSpec(new RelSpec(RelSpec.innerRel), 2);
-            currProjection[2 * ruleNumber + 1] = new FldSpec(new RelSpec(RelSpec.innerRel), 1);
+		RID rid;
+		Heapfile f = null;
+		Tuple tup = null;
+		try {
+			f = new Heapfile("witness.in");
+		} catch (Exception e) {
+			System.err.println("*** error in Heapfile constructor ***");
+			status = FAIL;
+			e.printStackTrace();
+		}
+		try {
+			int count = 1;
+			if (queryPlanNumber == 1) {
+				it1 = currIterator;
+				if (wt1NoOfFlds == -1)
+					wt1NoOfFlds = currIterator.get_next().noOfFlds();
+				return; // since preserving the iterator
+			}
+			while ((finalTuple = currIterator.get_next()) != null) {
+				System.out.println("Result " + count++ + ":");
+				finalTuple.print(finalTupleAttrTypes);
+				// complex query part
+				if (wt2NoOfFlds == 0)
+					wt2NoOfFlds = finalTuple.noOfFlds();
+				if (queryPlanNumber == 2) {
+					try {
+						int b = finalTuple.getLength();
+						tup = new Tuple(b);
+						tup.tupleCopy(finalTuple);
+						rid = f.insertRecord(tup.returnTupleByteArray());
+					} catch (Exception e) {
+						System.err.println("*** error in Heapfile.insertRecord() ***");
+						status = FAIL;
+						e.printStackTrace();
+					}
+				}
+			}
+			if (queryPlanNumber == 2)
+				queryPlanNumber = 1;
+		} catch (Exception e) {
+			System.err.println("*** Error preparing for get_next tuple");
+			System.err.println("" + e);
+			Runtime.getRuntime().exit(1);
+		}
 
-            try {
-                currIterator = new NestedLoopsJoins(joinedTableAttrTypes, 2 * ruleNumber, joinedTableStringLengths, baseTableAttrTypes, 2,
-                        baseTableStringLengths, 10, prevIterator, indexName.equals("nodeIndex.in") ? "nodesSortedOnTag.in":"nodes.in", filterConditions, innerRelFilterConditions, currProjection,
-                        2 * ruleNumber + 2, indexName, tagOffsetMap.get(currRule.outerTag) - 1);
-            } catch (Exception e) {
-                System.err.println("*** Error preparing for nested_loop_join");
-                System.err.println("" + e);
-                e.printStackTrace();
-                Runtime.getRuntime().exit(1);
-            }
-            prevIterator = currIterator;
-            ruleNumber++;
-
-        }
-
-        if(currIterator == null) {
-            currIterator = prevIterator;
-        }
-        Tuple finalTuple = new Tuple();
-        AttrType[] finalTupleAttrTypes = new AttrType[2 * ruleNumber];
-
-        for (int i = 0; i < 2 * ruleNumber; i++) {
-            if (i % 2 == 0) {
-                finalTupleAttrTypes[i] = new AttrType(AttrType.attrString);
-            } else {
-                finalTupleAttrTypes[i] = new AttrType(AttrType.attrInterval);
-            }
-        }
-
-        RID rid;
-        Heapfile f = null;
-        Tuple tup = null;
-        try {
-            f = new Heapfile("witness.in");
-        } catch (Exception e) {
-            System.err.println("*** error in Heapfile constructor ***");
-            status = FAIL;
-            e.printStackTrace();
-        }
-        try {
-            int count = 1;
-            if(queryPlanNumber == 1) {
-                it1 = currIterator;
-                if(wt1NoOfFlds == -1 )wt1NoOfFlds = currIterator.get_next().noOfFlds();
-                return; // since preserving the iterator
-            }
-            while ((finalTuple = currIterator.get_next()) != null) {
-                System.out.println("Result " + count++ + ":");
-                finalTuple.print(finalTupleAttrTypes);
-                //complex query part
-                if(wt2NoOfFlds ==0 )wt2NoOfFlds = finalTuple.noOfFlds();
-                if(queryPlanNumber == 2) {
-                    try {
-                        int b = finalTuple.getLength();
-                        tup = new Tuple(b);
-                        tup.tupleCopy(finalTuple);
-                        rid = f.insertRecord(tup.returnTupleByteArray());
-                    } catch (Exception e) {
-                        System.err.println("*** error in Heapfile.insertRecord() ***");
-                        status = FAIL;
-                        e.printStackTrace();
-                    }
-                }
-            }
-            if(queryPlanNumber == 2) queryPlanNumber = 1;
-        } catch (Exception e) {
-            System.err.println("*** Error preparing for get_next tuple");
-            System.err.println("" + e);
-            Runtime.getRuntime().exit(1);
-        }
-
-        if (status != OK) {
-            System.out.println(" Error Occured !!");
-        }
-    }
+		if (status != OK) {
+			System.out.println(" Error Occured !!");
+		}
+	}
 
     public void computeSM(List<Rule> rules, TupleOrder order) {
         Map<String, Integer> nodeOffsetMap = new HashMap<>();
@@ -1006,21 +996,19 @@ public class Phase1 {
             // createQueryHeapFile("nodes.in", rules);
             long start = System.currentTimeMillis();
             Phase3 phase3 = new Phase3();
-            System.out.println("Query Plan 1");
+            System.out.println("Query Plan 1");         
             phase3.IndexJoinWithTagIndex(tagMapping, rules);
             System.out.println("Number of page accessed = " + BufMgr.page_access_counter);
             System.out.println("Query Plan 2");
-//            compute(rules);
-           // System.out.println("Number of page accessed = " + BufMgr.page_access_counter);
+            compute(rules);
+            System.out.println("Number of page accessed = " + BufMgr.page_access_counter);
             long timeTaken = (System.currentTimeMillis() - start)/1000;
             System.out.println("Time taken = " + timeTaken);
             System.out.println("Sort Merge");
             start = System.currentTimeMillis();
-            BufMgr.page_access_counter = 0;
-            computeSM(rules, new TupleOrder(TupleOrder.Ascending));
-            
+            BufMgr.page_access_counter = 0;     
             System.out.println("Number of page accessed = " + BufMgr.page_access_counter);
-            
+            computeSM(rules, new TupleOrder(TupleOrder.Ascending));
             System.out.println("Time taken = " + (System.currentTimeMillis() - start)/1000);
             System.out.println("Press N to stop");
             choice = scanner.next();
@@ -1093,6 +1081,9 @@ public class Phase1 {
         Statistics statsInner = tagStatistics.get(rule.innerTag);
         if (statsInner == null || statsOuter == null) {
             return "nodeIndex.in";
+        }
+        if (tagStatistics.get(rule.innerTag).equals("*")) {
+        	return "IntervalIndex.in";
         }
         if (statsOuter.intervalRange < statsInner.totalCount) {
             return "IntervalIndex.in";

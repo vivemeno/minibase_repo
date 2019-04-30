@@ -56,6 +56,9 @@ public class IntervalT implements GlobalConst {
 	    		  return 1;
 	    	  }
 	    	  else if (k1.name.compareTo(k2.name) == 0) {
+	    		  if (k1.key == null) {
+	    			  return 0;
+	    		  }
 	    		  return k1.key.s - k2.key.s;
 	    	  } else {
 	    		  return -1;

@@ -106,12 +106,32 @@ public class ProjectUtils {
             e.printStackTrace();
         }
     }
-
+    
     public static AttrType[] getNodeTableAttrType() {
         AttrType[] nodeTableAttrTypes = new AttrType[2];
         nodeTableAttrTypes[0] = new AttrType(AttrType.attrInterval);
         nodeTableAttrTypes[1] = new AttrType(AttrType.attrString);
         return nodeTableAttrTypes;
+    }
+    
+    public static CondExpr[] getInitialCond(String rule) {
+    	CondExpr[] innerRelFilterConditions = null;
+ 		if (!rule.equals("*")) {
+ 			innerRelFilterConditions = new CondExpr[2];
+ 			innerRelFilterConditions[0] = new CondExpr();
+ 			innerRelFilterConditions[1] = new CondExpr();
+
+ 			// Inner table comparison.
+ 			innerRelFilterConditions[0].next = null;
+ 			innerRelFilterConditions[0].op = new AttrOperator(AttrOperator.aopEQ);
+ 			innerRelFilterConditions[0].type1 = new AttrType(AttrType.attrSymbol);
+ 			innerRelFilterConditions[0].type2 = new AttrType(AttrType.attrString);
+ 			innerRelFilterConditions[0].operand1.symbol = new FldSpec(new RelSpec(RelSpec.outer), 2);
+ 			innerRelFilterConditions[0].operand2.string = rule;
+
+ 			innerRelFilterConditions[1] = null;
+ 		}
+ 		return innerRelFilterConditions;
     }
     
     public static CondExpr[] setIntervalIndexCond(IntervalType interval) {
@@ -133,7 +153,7 @@ public class ProjectUtils {
 		expr[1].operand2.interval = new IntervalType(interval.e, interval.e, 2);
 		expr[1].next = null;
 		expr[2] = null;
-		return expr;
+		return expr;	
     }
     
     public static CondExpr[] setCompositeIndexCond(IntervalType interval, String nodeName) {
