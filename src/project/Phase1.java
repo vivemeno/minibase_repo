@@ -71,7 +71,6 @@ public class Phase1 {
 //    private String input_file_base = "/home/akhil/MS/DBMS/";
     private Map<String, String> tagMapping = new HashMap<>(); // contains id to tag name mapping
     private Map<String, Statistics> tagStatistics = new HashMap<>();
-
     public Phase1() {
 
         //createDemoNodes();
@@ -671,11 +670,12 @@ public class Phase1 {
 						fileScan = new FileScan("nodesSortedOnTag.in", ProjectUtils.getNodeTableAttrType(),
 								ProjectUtils.getNodeTableStringSizes(), (short) 2, (short) 2,
 								ProjectUtils.getProjections(), null);
+					} else {
+						fileScan = new IndexScan(new IndexType(IndexType.composite_Index), "nodesSortedOnTag.in",
+								"CompositeIndex.in", ProjectUtils.getNodeTableAttrType(),
+								ProjectUtils.getNodeTableStringSizes(), 2, 2, ProjectUtils.getProjections(),
+								innerRelFilterConditions, 2, true);
 					}
-					fileScan = new IndexScan(new IndexType(IndexType.composite_Index), "nodesSortedOnTag.in",
-							"CompositeIndex.in", ProjectUtils.getNodeTableAttrType(),
-							ProjectUtils.getNodeTableStringSizes(), 2, 2, ProjectUtils.getProjections(),
-							innerRelFilterConditions, 2, true);
 				} catch (Exception e) {
 					status = GlobalProjectValues.FAIL;
 					System.err.println("" + e);
@@ -885,28 +885,47 @@ public class Phase1 {
         return stringBuffer.toString().split("\n");
     }
 
-    private List<Rule> getRuleList(String[] file_contents) {
-        int n = Integer.parseInt(file_contents[0]);
-        int index = 0;
-        int[] rankIndex = new int[n];
-        tagMapping.clear();
-        Map<Integer, List<Rule>> ruleMap = new HashMap<>();
-        for (String line : file_contents) {
-            if (index > 0 && index <= n) {
-                ruleMap.put(index, new ArrayList<>());
-                tagMapping.put(Integer.toString(index), XMLToIntervalTable.trimCharTags(line));
-            }
+	private List<Rule> getRuleList(String[] file_contents) {
+		int n = Integer.parseInt(file_contents[0]);
+		int index = 0;
+		int[] rankIndex = new int[n];
+		tagMapping.clear();
+		Map<Integer, List<Rule>> ruleMap = new HashMap<>();
+		for (String line : file_contents) {
+			if (index > 0 && index <= n) {
+				ruleMap.put(index, new ArrayList<>());
+				tagMapping.put(Integer.toString(index), XMLToIntervalTable.trimCharTags(line));
+			}
 
-            if (index > n) {
-                String[] rule_components = line.split(" ");
-                int relation = rule_components[2].equals("PC") ? Rule.RULE_TYPE_PARENT_CHILD : Rule.RULE_TYPE_ANCESTRAL_DESCENDENT;
-                rankIndex[Integer.parseInt(rule_components[1]) - 1]++;
-                ruleMap.get(Integer.parseInt(rule_components[0])).add(new Rule(rule_components[0], rule_components[1], relation));
-            }
-            index++;
+			if (index > n) {
+				String[] rule_components = line.split(" ");
+				int relation = rule_components[2].equals("PC") ? Rule.RULE_TYPE_PARENT_CHILD
+						: Rule.RULE_TYPE_ANCESTRAL_DESCENDENT;
+				rankIndex[Integer.parseInt(rule_components[1]) - 1]++;
+				ruleMap.get(Integer.parseInt(rule_components[0]))
+						.add(new Rule(rule_components[0], rule_components[1], relation));
+			}
+			index++;
+		}
+		Integer root = getRoot(rankIndex);
+		return getRulesDFS(root, ruleMap);
+	}
+    
+    List<Rule> getRulesDFS(Integer root, Map<Integer, List<Rule>> ruleMap) {
+        List<Rule>  orderedRules = new ArrayList<>();
+        List<Rule> childRules = ruleMap.get(root);
+        if (childRules != null) {
+            getRulesDFSRec(childRules, ruleMap, orderedRules);
         }
-        Integer root = getRoot(rankIndex);
-        return getRulesInOrder(root, ruleMap);
+        return orderedRules;
+    }
+
+    void getRulesDFSRec(List<Rule> rules, Map<Integer, List<Rule>> ruleMap,  List<Rule> orderedRules) {
+        if(rules.size() == 0) return;
+        for(Rule rule: rules) {
+            orderedRules.add(rule);
+            getRulesDFSRec(ruleMap.get(Integer.parseInt(rule.innerTag)), ruleMap, orderedRules);
+        }
     }
 
     int queryPlanNumber = 0;
@@ -1047,7 +1066,7 @@ public class Phase1 {
             long start = System.currentTimeMillis();
             Phase3 phase3 = new Phase3();
             System.out.println("Query Plan 1");
-            phase3.IndexJoinWithTagIndex(tagMapping, rules);
+         //   phase3.IndexJoinWithTagIndex(tagMapping, rules);
             System.out.println("Number of page accessed = " + BufMgr.page_access_counter);
             long timeTaken = (System.currentTimeMillis() - start)/1000;
             System.out.println("Time taken = " + timeTaken);
@@ -1055,7 +1074,7 @@ public class Phase1 {
             ProjectUtils.resetPageCounter();
 
             System.out.println("Query Plan 2");
-            compute(rules);
+           // compute(rules);
             System.out.println("Number of page accessed = " + BufMgr.page_access_counter);
             ProjectUtils.resetPageCounter();
             timeTaken = (System.currentTimeMillis() - start)/1000;
