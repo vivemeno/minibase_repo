@@ -64,7 +64,7 @@ class Rule {
 }
 
 public class Phase1 {
-    public static final int NUMBUF = 100000;
+    public static final int NUMBUF = 5000;
     public static final int TAG_LENGTH = 5;
     private boolean OK = true;
     private boolean FAIL = false;
@@ -628,6 +628,8 @@ public class Phase1 {
 			}
 			if (queryPlanNumber == 2)
 				queryPlanNumber = 1;
+			currIterator.close();
+			prevIterator.close();
 		} catch (Exception e) {
 			System.err.println("*** Error preparing for get_next tuple");
 			System.err.println("" + e);
@@ -864,7 +866,7 @@ public class Phase1 {
                     }
                 }
                 if(queryPlanNumber == 2) queryPlanNumber = 1;
-            
+                prevSM.close();
         } catch (Exception e) {
             System.err.println("*** Error preparing for get_next tuple");
             System.err.println("" + e);
@@ -1086,7 +1088,7 @@ public class Phase1 {
             long start = System.currentTimeMillis();
             Phase3 phase3 = new Phase3();
             System.out.println("Query Plan 1");
-         //   phase3.IndexJoinWithTagIndex(tagMapping, rules);
+            phase3.IndexJoinWithTagIndex(tagMapping, rules);
             System.out.println("Number of page accessed = " + BufMgr.page_access_counter);
             long timeTaken = (System.currentTimeMillis() - start)/1000;
             System.out.println("Time taken = " + timeTaken);
@@ -1094,7 +1096,7 @@ public class Phase1 {
             ProjectUtils.resetPageCounter();
 
             System.out.println("Query Plan 2");
-           // compute(rules);
+            compute(rules);
             System.out.println("Number of page accessed = " + BufMgr.page_access_counter);
             ProjectUtils.resetPageCounter();
             timeTaken = (System.currentTimeMillis() - start)/1000;

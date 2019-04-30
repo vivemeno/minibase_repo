@@ -722,6 +722,11 @@ public class Sort extends Iterator implements GlobalConst
         if (!closeFlag) {
 
             try {
+            	if (i_buf != null) {
+            		for(int i =0 ; i<i_buf.length; i++) {
+            			i_buf[i].close();
+            		}
+            	}
                 _am.close();
             }
             catch (Exception e) {

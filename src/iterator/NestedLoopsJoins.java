@@ -330,7 +330,7 @@ public class NestedLoopsJoins  extends Iterator
 			// There has been no match. (otherwise, we would have
 			// returned from t//he while loop. Hence, inner is
 			// exhausted, => set get_from_outer = TRUE, go to top of loop
-
+			innerIterator.close();
 			get_from_outer = true; // Loop back to top and get next outer tuple.
 		} while (true);
 	}

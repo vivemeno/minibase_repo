@@ -1,5 +1,6 @@
 package iterator;
 import heap.*;
+import index.IndexException;
 import global.*;
 import bufmgr.*;
 import diskmgr.*;
@@ -82,6 +83,18 @@ public class OBuf implements GlobalConst{
       
       return tuple_ptr;
     }
+  
+  public void close() throws JoinsException, IOException,IndexException 
+  {
+	try {
+			if (_temp_fd!=null) {
+				_temp_fd.deleteFile();
+			}
+	}catch (Exception e) {
+	  throw new JoinsException(e, "NestedLoopsJoin.java: error in closing iterator.");
+	}
+
+  }
   
   /**
    * returns the # of tuples written.

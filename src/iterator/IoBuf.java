@@ -1,6 +1,7 @@
 
 package iterator;
 import heap.*;
+import index.IndexException;
 import global.*;
 import diskmgr.*;
 import bufmgr.*;
@@ -192,6 +193,21 @@ public class IoBuf implements GlobalConst{
     }
     public void setDone(boolean flag) {
         done = flag;
+    }
+	    
+    public void close() throws JoinsException, IOException,IndexException 
+    {
+  	try {
+  			if (i_buf != null) {
+  				i_buf.close();
+  			}
+  			if (_temp_fd != null) {
+  				_temp_fd.deleteFile();
+  			}
+  	}catch (Exception e) {
+  	  throw new JoinsException(e, "NestedLoopsJoin.java: error in closing iterator.");
+  	}
+
     }
 
     public static final int WRITE_BUFFER =0;

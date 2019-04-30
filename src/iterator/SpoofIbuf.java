@@ -1,6 +1,7 @@
 package iterator;
 
-import heap.*;          
+import heap.*;
+import index.IndexException;
 import global.*;
 import diskmgr.*;
 import bufmgr.*;
@@ -143,6 +144,21 @@ public class SpoofIbuf implements GlobalConst  {
 	}
       return tot_read;
     }
+  
+  public void close() throws JoinsException, IOException,IndexException 
+  {
+	try {
+			if (hf_scan != null) {
+				hf_scan.closescan();
+			}
+			if (_fd!=null) {
+				_fd.deleteFile();
+			}
+	}catch (Exception e) {
+	  throw new JoinsException(e, "NestedLoopsJoin.java: error in closing iterator.");
+	}
+
+  }
   
   
   private  byte[][] _bufs;
