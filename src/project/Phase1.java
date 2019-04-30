@@ -62,7 +62,11 @@ public class Phase1 {
     private boolean OK = true;
     private boolean FAIL = false;
     public Vector<NodeTable> nodes;
+
      private String input_file_base = "/home/akhil/MS/DBMS/";
+
+     //private String input_file_base = "/home/vivemeno/DBMSI/input/";
+
 // private String input_file_base = "/home/akhil/MS/DBMS/";
 //    private String input_file_base = "/home/akhil/MS/DBMS/";
     private Map<String, String> tagMapping = new HashMap<>(); // contains id to tag name mapping
@@ -1023,54 +1027,53 @@ public class Phase1 {
         scanner.close();
     }
 
-    private void input() {String choice = "Y";
-    System.out.println("Number of page accessed = " + BufMgr.page_access_counter);
-    while (!choice.equals("N") && !choice.equals("n")) {
-        ProjectUtils.resetPageCounter();
+        private void input() {       String choice = "Y";
 
-        String[] file_contents = null;
-        String file = null;
-        Scanner scanner = new Scanner(System.in);
-        do {
-            System.out.println("Enter input filename for query");
-            file = scanner.next();
-            file_contents = readFile(input_file_base + file);
-        }while(file_contents.length==1 && "".equals(file_contents[0]));
+        while (!choice.equals("N") && !choice.equals("n")) {
+            ProjectUtils.resetPageCounter();
 
-        List<Rule> rules = getRuleList(file_contents);
-        //List<Rule> rules = getDemoRUles();
-        // createQueryHeapFile("nodes.in", rules);
-        long start = System.currentTimeMillis();
-        Phase3 phase3 = new Phase3();
-        System.out.println("Query Plan 1");
-        phase3.IndexJoinWithTagIndex(tagMapping, rules);
-        System.out.println("Number of page accessed = " + BufMgr.page_access_counter);
-        long timeTaken = (System.currentTimeMillis() - start)/1000;
-        System.out.println("Time taken = " + timeTaken);
-        start = System.currentTimeMillis();
-        ProjectUtils.resetPageCounter();
+            String[] file_contents = null;
+            String file = null;
+            Scanner scanner = new Scanner(System.in);
+            do {
+                System.out.println("Enter input filename for query");
+                file = scanner.next();
+                file_contents = readFile(input_file_base + file);
+            }while(file_contents.length==1 && "".equals(file_contents[0]));
 
-        System.out.println("Query Plan 2");
-        compute(rules);
-        System.out.println("Number of page accessed = " + BufMgr.page_access_counter);
-        ProjectUtils.resetPageCounter();
-        timeTaken = (System.currentTimeMillis() - start)/1000;
-        System.out.println("Time taken = " + timeTaken);
-        start = System.currentTimeMillis();
+            List<Rule> rules = getRuleList(file_contents);
+            //List<Rule> rules = getDemoRUles();
+            // createQueryHeapFile("nodes.in", rules);
+            long start = System.currentTimeMillis();
+            Phase3 phase3 = new Phase3();
+            System.out.println("Query Plan 1");
+            phase3.IndexJoinWithTagIndex(tagMapping, rules);
+            System.out.println("Number of page accessed = " + BufMgr.page_access_counter);
+            long timeTaken = (System.currentTimeMillis() - start)/1000;
+            System.out.println("Time taken = " + timeTaken);
+            start = System.currentTimeMillis();
+            ProjectUtils.resetPageCounter();
 
-        System.out.println("Query Plan 3 (Sort Merge)");
-        computeSM(rules, new TupleOrder(TupleOrder.Ascending));
-        System.out.println("Number of page accessed = " + BufMgr.page_access_counter);
-        ProjectUtils.resetPageCounter();
-        System.out.println("Time taken = " + (System.currentTimeMillis() - start)/1000);
+            System.out.println("Query Plan 2");
+            compute(rules);
+            System.out.println("Number of page accessed = " + BufMgr.page_access_counter);
+            ProjectUtils.resetPageCounter();
+            timeTaken = (System.currentTimeMillis() - start)/1000;
+            System.out.println("Time taken = " + timeTaken);
+            start = System.currentTimeMillis();
+
+            System.out.println("Query Plan 3 (Sort Merge)");
+            computeSM(rules, new TupleOrder(TupleOrder.Ascending));
+            System.out.println("Number of page accessed = " + BufMgr.page_access_counter);
+            ProjectUtils.resetPageCounter();
+            System.out.println("Time taken = " + (System.currentTimeMillis() - start)/1000);
 
 
-        System.out.println("Press N to stop");
-        choice = scanner.next();
-        System.out.print(choice);
-    }
-    System.out.println("OVERR!!!");
-}
+            System.out.println("Press N to stop");
+            choice = scanner.next();
+            System.out.print(choice);
+        }
+        System.out.println("OVERR!!!");}
 
     private void printRules(List<Rule> rules) {
         System.out.print("Printing rules " + rules.size() );
@@ -1146,12 +1149,30 @@ public class Phase1 {
         return "nodeIndex.in";
     }
 
+    public void getMenu() {
+
+//        phase1.input();
+        Scanner scanner = new Scanner(System.in);
+        String choice = "Y";
+        while (!choice.equals("N") && !choice.equals("n")) {
+            System.out.println("Enter 1. Query Plans 2. Complex Queries");
+            int option = scanner.nextInt();
+            scanner.nextLine();
+            if (option == 1)
+                input();
+            else {
+                complexPattern();
+            }
+            System.out.println("Press N to exit.");
+            choice = scanner.nextLine();
+        }
+    }
+
     public static void main(String[] args) {
         Phase1 phase1 = new Phase1();
 
         phase1.input();
-
-      //  phase1.complexPattern();
+        phase1.getMenu();
 
         //phase1.compute();
         //phase1.computeSM();
