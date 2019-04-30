@@ -239,7 +239,7 @@ public class TaskFourUtils {
 		try {
 			int count = 1;
 			while ((finalTuple = currIterator.get_next(2)) != null) {
-				System.out.println("Result in NJ/TJ : " + (count++));
+				System.out.println("Result in "+ op + " : " + (count++));
 				finalTuple.printTreeFormat(JJtype, wt1NoOfFlds);
 			}
 		} catch (Exception e) {
@@ -251,7 +251,7 @@ public class TaskFourUtils {
 		
 	}
 	
-	public void sortPhysOP(Iterator am, int nodeNo) throws SortException {
+	public void sortPhysOP(Iterator am, int nodeNo, int bufsize) throws SortException {
 Iterator  p_i2 = null;
 		
 		short[] Ssizes = new short[wt1NoOfFlds/2];
@@ -279,9 +279,14 @@ Iterator  p_i2 = null;
 		
 		try {
 			p_i2 = new Sort(baseTableAttrTypes, (short)wt1NoOfFlds, Ssizes, am, (nodeNo*2)-1,
+<<<<<<< HEAD
 					ascending, 5, 10000);
+=======
+					ascending, 5, bufsize);
+>>>>>>> 35e512331590f283fb48df7ef5454c983f8f0258
 		}catch(Exception e){
-			throw new SortException (e, "Sort failed");
+			e.printStackTrace();
+			return;
 		}
 		
 		
@@ -301,7 +306,7 @@ Iterator  p_i2 = null;
 	
 	
 	public Iterator grpSortIterator = null;
-	public void grpPhysOP(Iterator am, int nodeNo) throws SortException {
+	public void grpPhysOP(Iterator am, int nodeNo, int bufsize) throws SortException {
 		Iterator  p_i2 = null;
 		
 		short[] Ssizes = new short[wt1NoOfFlds/2];
@@ -329,9 +334,14 @@ Iterator  p_i2 = null;
 		
 		try {
 			p_i2 = new Sort(baseTableAttrTypes, (short)wt1NoOfFlds, Ssizes, am, (nodeNo*2)-1,
+<<<<<<< HEAD
 					ascending, 5, 10000);
+=======
+					ascending, 5, bufsize);
+>>>>>>> 35e512331590f283fb48df7ef5454c983f8f0258
 		}catch(Exception e){
-			throw new SortException (e, "Sort failed");
+			e.printStackTrace();
+			return;
 		}
 		
 		grpSortIterator = p_i2;
