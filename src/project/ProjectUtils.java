@@ -139,6 +139,33 @@ public class ProjectUtils {
  		return innerRelFilterConditions;
     }
     
+	public static CondExpr[] getInitialCompositeCond(String rule) {
+		CondExpr[] expr = null;
+		if (!rule.equals("*")) {
+
+			expr = new CondExpr[3];
+			expr[0] = new CondExpr();
+			expr[0].op = new AttrOperator(AttrOperator.aopGE);
+			expr[0].type1 = new AttrType(AttrType.attrSymbol);
+			expr[0].type2 = new AttrType(AttrType.attrComposite);
+			expr[0].operand1.symbol = new FldSpec(new RelSpec(RelSpec.outer), 1);
+			expr[0].operand2.composite = new CompositeType(null, rule);
+			expr[0].next = null;
+
+			expr[1] = new CondExpr();
+			expr[1].op = new AttrOperator(AttrOperator.aopLE);
+			expr[1].type1 = new AttrType(AttrType.attrSymbol);
+			expr[1].type2 = new AttrType(AttrType.attrComposite);
+			expr[1].operand1.symbol = new FldSpec(new RelSpec(RelSpec.outer), 1);
+			expr[1].operand2.composite = new CompositeType(null, rule);
+			expr[1].next = null;
+			expr[2] = null;
+			return expr;
+
+		}
+		return expr;
+	}
+    
     public static CondExpr[] setIntervalIndexCond(IntervalType interval) {
     	CondExpr[] expr = new CondExpr[3];
 		expr[0] = new CondExpr();

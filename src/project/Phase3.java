@@ -85,7 +85,8 @@ public class Phase3 {
 		try {
 			prevIterator = new NestedLoopsJoins(baseTableAttrTypes, 2, baseTableStringLengths, baseTableAttrTypes, 2,
 					baseTableStringLengths, 10, initialScanner, "nodesSortedOnTag.in", filterConditions,
-					innerRelFilterConditions, currProjection, 4, firstRule.innerTag.equals("*") ? "IntervalIndex.in" : "CompositeIndex.in", 1);
+					innerRelFilterConditions, currProjection, 4,
+					firstRule.innerTag.equals("*") ? "IntervalIndex.in" : "CompositeIndex.in", 1);
 		} catch (Exception e) {
 			System.err.println("*** Error preparing for nested_loop_join");
 			System.err.println("" + e);
@@ -107,7 +108,7 @@ public class Phase3 {
 				nodeNumber++;
 			}
 
-			String indexName = currRule.innerTag.equals("*") ? "IntervalIndex.in" : "CompositeIndex.in";
+			String indexName = tagMapping.get(currRule.innerTag).equals("*") ? "IntervalIndex.in" : "CompositeIndex.in";
 
 			filterConditions = new CondExpr[4];
 			filterConditions[0] = new CondExpr();

@@ -43,6 +43,7 @@ public class NestedLoopsJoins  extends Iterator
   private String indexFileName;
   private String relationName;
   private int intervalOffset;
+  public boolean isOuterCompositeIndex;
   
   
   /**constructor
@@ -231,41 +232,50 @@ public class NestedLoopsJoins  extends Iterator
 					// close scan
 					inner = null;
 				}
+				
+				if (isOuterCompositeIndex) {
+					if ((outer_tuple = outer.get_nextComposite()) == null) {
+						done = true;
+						if (inner != null) {
 
-				if ((outer_tuple = outer.get_next()) == null) {
-					done = true;
-					if (inner != null) {
+							inner = null;
+						}
 
-						inner = null;
+						return null;
 					}
+				} else {
+					if ((outer_tuple = outer.get_next()) == null) {
+						done = true;
+						if (inner != null) {
 
-					return null;
+							inner = null;
+						}
+
+						return null;
+					}
 				}
 				
 				try {
 					int indexType = IndexType.B_Index;
-					boolean indexOnly = false;
 					if (indexFileName.equals("CompositeIndex.in")) {
 						CondExpr[] indexFilter = ProjectUtils.setCompositeIndexCond(
 								outer_tuple.getIntervalField(perm_mat[this.intervalOffset].offset),
 								RightFilter[0].operand2.string);
-						indexType = IndexType.composite_Index;
-						indexOnly = true;
+						indexType = IndexType.composite_Index;	
 						innerIterator = new IndexScan(new IndexType(indexType), relationName, indexFileName,
 								ProjectUtils.getNodeTableAttrType(), ProjectUtils.getNodeTableStringSizes(), 2, 2,
-								ProjectUtils.getProjections(), indexFilter, 2, indexOnly);
+								ProjectUtils.getProjections(), indexFilter, 2, true);
 					} else if (indexFileName.equals("IntervalIndex.in")) {
 						CondExpr[] indexFilter = ProjectUtils.setIntervalIndexCond(
 								outer_tuple.getIntervalField(perm_mat[this.intervalOffset].offset));
 						indexType = IndexType.interval_Index;
-						indexOnly = true;
 						innerIterator = new IndexScan(new IndexType(indexType), relationName, indexFileName,
 								ProjectUtils.getNodeTableAttrType(), ProjectUtils.getNodeTableStringSizes(), 2, 2,
-								ProjectUtils.getProjections(), indexFilter, 2, indexOnly);
+								ProjectUtils.getProjections(), indexFilter, 2, true);
 					} else {
 						innerIterator = new IndexScan(new IndexType(indexType), relationName, indexFileName,
 								ProjectUtils.getNodeTableAttrType(), ProjectUtils.getNodeTableStringSizes(), 2, 2,
-								ProjectUtils.getProjections(), RightFilter, 2, indexOnly);
+								ProjectUtils.getProjections(), RightFilter, 2, false);
 						RightFilter = null;
 					}
 				} catch (Exception e) {

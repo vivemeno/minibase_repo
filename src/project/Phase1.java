@@ -62,7 +62,7 @@ public class Phase1 {
     private boolean OK = true;
     private boolean FAIL = false;
     public Vector<NodeTable> nodes;
-     private String input_file_base = "/home/renil/github/dbmsi/input/";
+     private String input_file_base = "/home/akhil/MS/DBMS/";
 // private String input_file_base = "/home/akhil/MS/DBMS/";
 //    private String input_file_base = "/home/akhil/MS/DBMS/";
     private Map<String, String> tagMapping = new HashMap<>(); // contains id to tag name mapping
@@ -481,7 +481,7 @@ public class Phase1 {
 			prevIterator = new NestedLoopsJoins(baseTableAttrTypes, 2, baseTableStringLengths, baseTableAttrTypes, 2,
 					baseTableStringLengths, 10, initialScanner, "nodesSortedOnTag.in", filterConditions,
 					innerRelFilterConditions, currProjection, 4,
-					firstRule.outerTag.equals("*") ? "IntervalIndex.in" : "CompositeIndex.in", 1);
+					tagMapping.get(firstRule.outerTag).equals("*") ? "IntervalIndex.in" : "CompositeIndex.in", 1);
 		} catch (Exception e) {
 			System.err.println("*** Error preparing for nested_loop_join");
 			System.err.println("" + e);
@@ -644,43 +644,67 @@ public class Phase1 {
         boolean isFirstRule = true;
         //takes ordered rules one by one perform nested loop join
         for (Rule rule : rules) {
-            try {
-                CondExpr[] innerRelFilterConditions = new CondExpr[2];
-                innerRelFilterConditions[0] = new CondExpr();
-                innerRelFilterConditions[1] = new CondExpr();
-
-                //inner filter conditions to restrict scan to evaluate with only filtered nodes
-                innerRelFilterConditions[0].next = null;
-                innerRelFilterConditions[0].op = new AttrOperator(AttrOperator.aopEQ);
-                innerRelFilterConditions[0].type1 = new AttrType(AttrType.attrSymbol);
-                innerRelFilterConditions[0].type2 = new AttrType(AttrType.attrString);
-                innerRelFilterConditions[0].operand1.symbol = new FldSpec(new RelSpec(RelSpec.outer), 2);
-                innerRelFilterConditions[0].operand2.string = tagMapping.get(rule.outerTag);
-
-                innerRelFilterConditions[1] = null;
-                fileScan = new FileScan("nodes.in", Ntypes, Nsizes, (short) 2, (short) 2, Nprojection, innerRelFilterConditions);
-            } catch (Exception e) {
+			try {
+				// CondExpr[] innerRelFilterConditions = new CondExpr[2];
+				// innerRelFilterConditions[0] = new CondExpr();
+				// innerRelFilterConditions[1] = new CondExpr();
+				//
+				// //inner filter conditions to restrict scan to evaluate with only filtered
+				// nodes
+				// innerRelFilterConditions[0].next = null;
+				// innerRelFilterConditions[0].op = new AttrOperator(AttrOperator.aopEQ);
+				// innerRelFilterConditions[0].type1 = new AttrType(AttrType.attrSymbol);
+				// innerRelFilterConditions[0].type2 = new AttrType(AttrType.attrString);
+				// innerRelFilterConditions[0].operand1.symbol = new FldSpec(new
+				// RelSpec(RelSpec.outer), 2);
+				// innerRelFilterConditions[0].operand2.string = tagMapping.get(rule.outerTag);
+				//
+				// innerRelFilterConditions[1] = null;
+				CondExpr[] innerRelFilterConditions = ProjectUtils
+						.getInitialCompositeCond(tagMapping.get(rule.outerTag));
+				try {
+					if (tagMapping.get(rule.outerTag).equals("*")) {
+						fileScan = new FileScan("nodesSortedOnTag.in", ProjectUtils.getNodeTableAttrType(),
+								ProjectUtils.getNodeTableStringSizes(), (short) 2, (short) 2,
+								ProjectUtils.getProjections(), null);
+					}
+					fileScan = new IndexScan(new IndexType(IndexType.composite_Index), "nodesSortedOnTag.in",
+							"CompositeIndex.in", ProjectUtils.getNodeTableAttrType(),
+							ProjectUtils.getNodeTableStringSizes(), 2, 2, ProjectUtils.getProjections(),
+							innerRelFilterConditions, 2, true);
+				} catch (Exception e) {
+					status = GlobalProjectValues.FAIL;
+					System.err.println("" + e);
+					e.printStackTrace();
+				}
+				// fileScan = new FileScan("nodes.in", Ntypes, Nsizes, (short) 2, (short) 2,
+				// Nprojection, innerRelFilterConditions);
+			} catch (Exception e) {
                 status = FAIL;
                 System.err.println("" + e);
                 e.printStackTrace();
             }
             NestedLoopsJoins inl = null;
-            try {
-                CondExpr[] outFilter = new CondExpr[4];
-                outFilter[0] = new CondExpr();
-                outFilter[1] = new CondExpr();
-                outFilter[2] = new CondExpr();
-                outFilter[3] = new CondExpr();
+			try {
+				CondExpr[] outFilter = new CondExpr[4];
+				outFilter[0] = new CondExpr();
+				outFilter[1] = new CondExpr();
+				outFilter[2] = new CondExpr();
+				outFilter[3] = new CondExpr();
 
-                CondExpr[] innerRelFilterConditions = new CondExpr[2];
-                innerRelFilterConditions[0] = new CondExpr();
-                innerRelFilterConditions[1] = new CondExpr();
-                setConditions(outFilter,innerRelFilterConditions, rule, 1, true);
-                inl = new NestedLoopsJoins(Ntypes, 2, Nsizes, Ntypes, 2,
-                        Nsizes, 10, fileScan, "nodes.in", outFilter, innerRelFilterConditions, nljOutProj, 4, "IntervalIndex.in", 1);
-                isFirstRule = false;
-                listNLJ.add(inl);
-            } catch (Exception e) {
+				CondExpr[] innerRelFilterConditions = new CondExpr[2];
+				innerRelFilterConditions[0] = new CondExpr();
+				innerRelFilterConditions[1] = new CondExpr();
+				setConditions(outFilter, innerRelFilterConditions, rule, 1, true);
+				inl = new NestedLoopsJoins(Ntypes, 2, Nsizes, Ntypes, 2, Nsizes, 10, fileScan, "nodesSortedOnTag.in",
+						outFilter, innerRelFilterConditions, nljOutProj, 4,
+						tagMapping.get(rule.innerTag).equals("*") ? "IntervalIndex.in" : "CompositeIndex.in", 1);
+				if (!tagMapping.get(rule.outerTag).equals("*")) {
+					inl.isOuterCompositeIndex = true;
+				}
+				isFirstRule = false;
+				listNLJ.add(inl);
+			} catch (Exception e) {
                 System.err.println("*** Error preparing for nested_loop_join");
                 System.err.println("" + e);
                 e.printStackTrace();
@@ -1027,7 +1051,7 @@ public class Phase1 {
         ProjectUtils.resetPageCounter();
 
         System.out.println("Query Plan 2");
-//        compute(rules);
+        compute(rules);
         System.out.println("Number of page accessed = " + BufMgr.page_access_counter);
         ProjectUtils.resetPageCounter();
         timeTaken = (System.currentTimeMillis() - start)/1000;
@@ -1125,9 +1149,9 @@ public class Phase1 {
     public static void main(String[] args) {
         Phase1 phase1 = new Phase1();
 
-//        phase1.input();
+        phase1.input();
 
-        phase1.complexPattern();
+      //  phase1.complexPattern();
 
         //phase1.compute();
         //phase1.computeSM();
