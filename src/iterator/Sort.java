@@ -681,7 +681,9 @@ public class Sort extends Iterator implements GlobalConst
         if (first_time) {
             // first get_next call to the sort routine
             first_time = false;
-
+            
+            long startTime = System.currentTimeMillis();
+            
             // generate runs
             Nruns = generate_runs(max_elems_in_heap, _in[_sort_fld-1], sortFldLen);
             //      System.out.println("Generated " + Nruns + " runs");
@@ -689,6 +691,9 @@ public class Sort extends Iterator implements GlobalConst
             // setup state to perform merge of runs.
             // Open input buffers for all the input file
             setup_for_merge(tuple_size, Nruns);
+            
+            long endTime = System.currentTimeMillis();
+            System.out.println("Took "+(endTime - startTime) + " ms"); 
         }
 
         if (Q.empty()) {

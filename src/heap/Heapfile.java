@@ -364,6 +364,9 @@ public class Heapfile implements Filetype,  GlobalConst {
    *
    * @return the rid of the record
    */
+  public void freeNextFreeDirPage() {
+	  nextFreeDirPage = null;
+  }
   HFPage nextFreeDirPage = null;
   public RID insertRecord(byte[] recPtr) 
     throws InvalidSlotNumberException,  
@@ -936,6 +939,7 @@ public class Heapfile implements Filetype,  GlobalConst {
 	  // - we have freePage()'d all data pages referenced by
 	  // the current directory page.
 	  
+	  unpinPage(currentDirPageId, false);
 	  nextDirPageId = currentDirPage.getNextPage();
 	  freePage(currentDirPageId);
 	  

@@ -507,7 +507,11 @@ public class Tuple implements GlobalConst {
 		tuple_length = fldOffset[numFlds] - tuple_offset;
 
 		if (tuple_length > max_size)
+		{
+			System.out.println("tuple length :" + tuple_length);
+			System.out.println("numFlds : "+ numFlds);
 			throw new InvalidTupleSizeException(null, "TUPLE: TUPLE_TOOBIG_ERROR");
+		}
 	}
 
 	/**
