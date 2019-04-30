@@ -279,11 +279,7 @@ Iterator  p_i2 = null;
 		
 		try {
 			p_i2 = new Sort(baseTableAttrTypes, (short)wt1NoOfFlds, Ssizes, am, (nodeNo*2)-1,
-<<<<<<< HEAD
-					ascending, 5, 10000);
-=======
 					ascending, 5, bufsize);
->>>>>>> 35e512331590f283fb48df7ef5454c983f8f0258
 		}catch(Exception e){
 			e.printStackTrace();
 			return;
@@ -334,11 +330,7 @@ Iterator  p_i2 = null;
 		
 		try {
 			p_i2 = new Sort(baseTableAttrTypes, (short)wt1NoOfFlds, Ssizes, am, (nodeNo*2)-1,
-<<<<<<< HEAD
-					ascending, 5, 10000);
-=======
 					ascending, 5, bufsize);
->>>>>>> 35e512331590f283fb48df7ef5454c983f8f0258
 		}catch(Exception e){
 			e.printStackTrace();
 			return;
