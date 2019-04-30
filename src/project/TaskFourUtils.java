@@ -1,5 +1,6 @@
 package project;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -8,6 +9,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Stack;
 import java.util.Vector;
+import java.util.concurrent.TimeUnit;
 
 import bufmgr.BufMgr;
 import global.AttrOperator;
@@ -19,11 +21,13 @@ import global.RID;
 import global.TupleOrder;
 import heap.Heapfile;
 import heap.Tuple;
+import index.IndexException;
 import iterator.CondExpr;
 import iterator.FileScan;
 import iterator.FldSpec;
 import iterator.IoBuf;
 import iterator.Iterator;
+import iterator.JoinsException;
 import iterator.NestedLoopsJoins;
 import iterator.RelSpec;
 import iterator.Sort;
@@ -45,6 +49,11 @@ public class TaskFourUtils {
 	public TaskFourUtils() {}
 	
 	public TaskFourUtils(int wt1NoOfFlds, int wt2NoOfFlds) {
+		this.wt2NoOfFlds = wt2NoOfFlds;
+		this.wt1NoOfFlds = wt1NoOfFlds;
+	}
+	
+	public void init(int wt1NoOfFlds, int wt2NoOfFlds) {
 		this.wt2NoOfFlds = wt2NoOfFlds;
 		this.wt1NoOfFlds = wt1NoOfFlds;
 	}
@@ -110,7 +119,7 @@ public class TaskFourUtils {
 			System.err.println("*** Error preparing for nested_loop_join");
 			System.err.println("" + e);
 			e.printStackTrace();
-			Runtime.getRuntime().exit(1);
+//			Runtime.getRuntime().exit(1);
 		}
 		
 		//setting attributes for updating tuple header
@@ -139,9 +148,15 @@ public class TaskFourUtils {
 			System.err.println("*** Error preparing for get_next tuple");
 			System.err.println("" + e);
 			e.printStackTrace();
-			Runtime.getRuntime().exit(1);
+//			Runtime.getRuntime().exit(1);
 		}
-		
+		try {
+			if(currIterator != null)currIterator.close();
+		} catch (JoinsException | IndexException | IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		currIterator = null;
 	}
 	
 	public void nestedLoopNJOrTJ(Iterator am, int leftNodeNo, int rightNodeNo, String op) {
@@ -218,7 +233,13 @@ public class TaskFourUtils {
 			System.err.println("*** Error preparing for nested_loop_join");
 			System.err.println("" + e);
 			e.printStackTrace();
-			Runtime.getRuntime().exit(1);
+			try {
+				if(currIterator != null)currIterator.close();
+			} catch (Exception e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
+			return;
 		}
 		
 		//setting attributes for updating tuple header
@@ -246,9 +267,14 @@ public class TaskFourUtils {
 			System.err.println("*** Error preparing for get_next tuple");
 			System.err.println("" + e);
 			e.printStackTrace();
-			Runtime.getRuntime().exit(1);
 		}
-		
+		try {
+			if(currIterator != null)currIterator.close();
+		} catch (JoinsException | IndexException | IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		currIterator = null;
 	}
 	
 	public void sortPhysOP(Iterator am, int nodeNo, int bufsize) throws SortException {
@@ -282,6 +308,12 @@ Iterator  p_i2 = null;
 					ascending, 5, bufsize);
 		}catch(Exception e){
 			e.printStackTrace();
+			try {
+				if(p_i2 != null)p_i2.close();
+			} catch (JoinsException | IndexException | IOException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
 			return;
 		}
 		
@@ -296,8 +328,21 @@ Iterator  p_i2 = null;
 			System.err.println("*** Error preparing for get_next tuple");
 			System.err.println("" + e);
 			e.printStackTrace();
-			Runtime.getRuntime().exit(1);
+			try {
+				TimeUnit.SECONDS.sleep(1);
+			} catch (InterruptedException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
+//			Runtime.getRuntime().exit(1);
 		}
+		try {
+			if(p_i2 != null)p_i2.close();
+		} catch (JoinsException | IndexException | IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		p_i2 = null;
 	}
 	
 	
@@ -333,6 +378,18 @@ Iterator  p_i2 = null;
 					ascending, 5, bufsize);
 		}catch(Exception e){
 			e.printStackTrace();
+			try {
+				TimeUnit.SECONDS.sleep(1);
+			} catch (InterruptedException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
+			try {
+				if(p_i2 != null)p_i2.close();
+			} catch (JoinsException | IndexException | IOException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
 			return;
 		}
 		
@@ -349,7 +406,7 @@ Iterator  p_i2 = null;
 		String prevTag = "", currTag = "";
 		int fldno = 2;
 		AttrType[] baseTableAttrTypes = null;
-		int _n_pages = 4;
+		int _n_pages = 1;
 		byte[][] _bufs1 = new byte [_n_pages][GlobalConst.MINIBASE_PAGESIZE];
 		IoBuf io_buf1 = new IoBuf(); 
 		Heapfile temp_file_fd1 = null;
@@ -387,7 +444,7 @@ Iterator  p_i2 = null;
 						}
 					}
 					tempTuple.setHdr(finalTuple.noOfFlds(), eachTuple_attrs, eachTuple_str_sizes);
-					io_buf1.init(_bufs1, 4, finalTuple.size(), temp_file_fd1);
+					io_buf1.init(_bufs1, 1, finalTuple.size(), temp_file_fd1);
 					if(grpTuple2 != null && !currTag.equals(pastTupleTag)) {
 						count++;
 						prevTag = pastTupleTag;
@@ -428,7 +485,21 @@ Iterator  p_i2 = null;
 			System.err.println("*** Error preparing for get_next tuple");
 			System.err.println("" + e);
 			e.printStackTrace();
-			Runtime.getRuntime().exit(1);
+			try {
+				TimeUnit.SECONDS.sleep(1);
+			} catch (InterruptedException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
+			try {
+				if(grpSortIterator != null)grpSortIterator.close();
+			} catch (Exception e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
+			grpSortIterator = null;
+			io_buf1 = null;return null;
+//			Runtime.getRuntime().exit(1);
 		}
 		
 		if(count == 0 )return null;
@@ -468,11 +539,19 @@ Iterator  p_i2 = null;
 				}
 			}
 			
-		System.out.println("Result in GRP : " + ++count);	
+		System.out.println("Result in GRP : " + ++grpTupleCOunt);	
 		Jtuple.printTreeFormatGRP(res_attrs, totalTupWithoutHeader + 2, nodeNo);
+		io_buf1 = null;
 		} catch (Exception e) {
+			io_buf1 = null;
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+			try {
+				TimeUnit.SECONDS.sleep(1);
+			} catch (InterruptedException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
 		}
 		
 		

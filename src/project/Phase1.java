@@ -9,9 +9,16 @@ import java.util.*;
 
 import bufmgr.BufMgr;
 import global.*;
+import heap.FileAlreadyDeletedException;
+import heap.HFBufMgrException;
+import heap.HFDiskMgrException;
+import heap.HFException;
 import heap.Heapfile;
+import heap.InvalidSlotNumberException;
+import heap.InvalidTupleSizeException;
 import heap.Scan;
 import heap.Tuple;
+import index.IndexException;
 import index.IndexScan;
 import intervalTree.IntervalKey;
 import intervalTree.IntervalTreeFile;
@@ -172,6 +179,7 @@ public class Phase1 {
                 e.printStackTrace();
             }
         }
+        f.freeNextFreeDirPage();
 
         ProjectUtils.createIndex(hfSortedOnTag, "nodeIndex.in");
         // ProjectUtils.testScan("nodes.in", "nodeIndex.in");
@@ -943,29 +951,35 @@ public class Phase1 {
 
 
         String choice = "Y";
+        TaskFourUtils taskutils = null;
         System.out.println("Number of page accessed = " + BufMgr.page_access_counter);
         Scanner scanner = new Scanner(System.in);
+        List<Rule> rules1 = null;
+        List<Rule> rules1Copy = null; String[] file_contents1 = null; String file1 = null;
+        String file2 = null; String[] file_contents2 = null; List<Rule> rules2 = null;
+        String[] chCOp = null; Tuple jtup = null;
 
         while (!choice.equals("N") && !choice.equals("n")) {
+        	
+        	wt1NoOfFlds = -1;
+        	wt2NoOfFlds = 0;
+        	it1 = null;
             BufMgr.page_access_counter = 0;
 
+            if(scanner == null) scanner = new Scanner(System.in);
             int bufSize = 1000; //default
-//          System.out.println("Enter the buffer size");
-//          bufSize = scanner.nextInt();
-            bufSize = 1000;
             try {
                 String complexOperation = "";
                 System.out.println("Enter the operation");
                 complexOperation = scanner.nextLine();
                 
                 System.out.println("Enter first input filename for query");
-                scanner = new Scanner(System.in);
-                String file1 = scanner.nextLine();
-                String[] file_contents1 = readFile(input_file_base + file1);
-                List<Rule> rules1 = getRuleList(file_contents1);
+                file1 = scanner.nextLine();
+                file_contents1 = readFile(input_file_base + file1);
+                rules1 = getRuleList(file_contents1);
                 queryPlanNumber = 1;
                 System.out.println("pattern tree 1 processing");
-                List<Rule> rules1Copy = copyRules(rules1);
+                rules1Copy = copyRules(rules1);
 //              compute(rules1Copy);
 //              compute(rules1);
                 computeSM(rules1Copy, new TupleOrder(TupleOrder.Ascending));
@@ -975,35 +989,20 @@ public class Phase1 {
                 
                 if(!complexOperation.contains("SRT") && !complexOperation.contains("GRP")) {
                 	System.out.println("Enter second input filename for query");
-                    String file2 = scanner.nextLine();
-                    String[] file_contents2 = readFile(input_file_base + file2);
-                    List<Rule> rules2 = getRuleList(file_contents2);
+                    file2 = scanner.nextLine();
+                    file_contents2 = readFile(input_file_base + file2);
+                    rules2 = getRuleList(file_contents2);
                     queryPlanNumber = 2;
                     computeSM(rules2, new TupleOrder(TupleOrder.Ascending));
                     System.out.println("pattern tree 2 processing");
 //                  compute(rules2);
 //                  System.out.println("Number of page accessed = " + BufMgr.page_access_counter);
                 }
-                TaskFourUtils taskutils = new TaskFourUtils(wt1NoOfFlds, wt2NoOfFlds);
-
-//             AttrType[] finalTupleAttrTypes = new AttrType[2 * 4];
-//
-//             for (int i = 0; i < 2 * 4; i++) {
-//                if (i % 2 == 0) {
-//                   finalTupleAttrTypes[i] = new AttrType(AttrType.attrString);
-//                } else {
-//                   finalTupleAttrTypes[i] = new AttrType(AttrType.attrInterval);
-//                }
-//             }
-//             Tuple finalTuple = new Tuple();
-//             while ((finalTuple = it1.get_next()) != null) {
-//                System.out.println("Result ");
-//                finalTuple.print(finalTupleAttrTypes);
-//             }
+                	taskutils = new TaskFourUtils(wt1NoOfFlds, wt2NoOfFlds);
 
                    		physOp = 1;
 
-                    	String[] chCOp = null;
+                    	chCOp = null;
                     	System.out.println("started processing complex query");
 
                         if(complexOperation.contains("CP")) {
@@ -1034,14 +1033,35 @@ public class Phase1 {
                             System.out.println("Enter the buffer size");
                             bufSize = scanner.nextInt();
                             taskutils.grpPhysOP(it1, i, bufSize);
-                            Tuple jtup = null;
+                            jtup = null;
                             while((jtup = taskutils.get_next_GRP(i))!=null) {}
                         }
             }catch(Exception e) {
                 e.printStackTrace();
             }
+            finally {
+            	taskutils = null;
+			}
+            taskutils = null;
             System.out.println("Press N to stop , Y to consider another pattern tree");
             choice = scanner.nextLine();
+            try {
+            	Heapfile f = new Heapfile("witness.in");
+    			f.deleteFile();
+    		} catch (Exception e1) {
+    			// TODO Auto-generated catch block
+    			e1.printStackTrace();
+    		}
+            if(it1 != null)
+            {
+            	try {
+    				it1.close();
+    			} catch (Exception e) {
+    				// TODO Auto-generated catch block
+    				e.printStackTrace();
+    			}
+            	it1 = null;
+            }
         }
         scanner.close();
     }
