@@ -279,7 +279,7 @@ Iterator  p_i2 = null;
 		
 		try {
 			p_i2 = new Sort(baseTableAttrTypes, (short)wt1NoOfFlds, Ssizes, am, (nodeNo*2)-1,
-					ascending, 5, 10 / 2);
+					ascending, 5, 10000);
 		}catch(Exception e){
 			throw new SortException (e, "Sort failed");
 		}
@@ -329,7 +329,7 @@ Iterator  p_i2 = null;
 		
 		try {
 			p_i2 = new Sort(baseTableAttrTypes, (short)wt1NoOfFlds, Ssizes, am, (nodeNo*2)-1,
-					ascending, 5, 10 / 2);
+					ascending, 5, 10000);
 		}catch(Exception e){
 			throw new SortException (e, "Sort failed");
 		}

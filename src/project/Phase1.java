@@ -62,9 +62,9 @@ public class Phase1 {
     private boolean OK = true;
     private boolean FAIL = false;
     public Vector<NodeTable> nodes;
-    // private String input_file_base = "/home/renil/github/dbmsi/input/";
+     private String input_file_base = "/home/renil/github/dbmsi/input/";
 // private String input_file_base = "/home/akhil/MS/DBMS/";
-    private String input_file_base = "/home/akhil/MS/DBMS/";
+//    private String input_file_base = "/home/akhil/MS/DBMS/";
     private Map<String, String> tagMapping = new HashMap<>(); // contains id to tag name mapping
     private Map<String, Statistics> tagStatistics = new HashMap<>();
 
@@ -1103,9 +1103,9 @@ public class Phase1 {
     public static void main(String[] args) {
         Phase1 phase1 = new Phase1();
 
-        phase1.input();
+//        phase1.input();
 
-        //phase1.complexPattern();
+        phase1.complexPattern();
 
         //phase1.compute();
         //phase1.computeSM();
