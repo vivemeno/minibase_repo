@@ -64,13 +64,13 @@ class Rule {
 }
 
 public class Phase1 {
-    public static final int NUMBUF = 100000;
+    public static final int NUMBUF = 1000;
     public static final int TAG_LENGTH = 5;
     private boolean OK = true;
     private boolean FAIL = false;
     public Vector<NodeTable> nodes;
 
-     private String input_file_base = "/home/akhil/MS/DBMS/";
+     private String input_file_base = "/home/renil/github/dbmsi/input/";
 
      //private String input_file_base = "/home/vivemeno/DBMSI/input/";
 
@@ -834,6 +834,11 @@ public class Phase1 {
             	if(prevSM != null && wt1NoOfFlds == -1) {
             		Tuple checktp = prevSM.get_next();
             		if(checktp != null )wt1NoOfFlds = checktp.noOfFlds();
+            		try {
+            			if(prevSM != null)prevSM.close();
+            		}catch(Exception e){
+            			e.printStackTrace();
+            		}
             		return;
             	}
             	return;
@@ -1191,7 +1196,7 @@ public class Phase1 {
     public static void main(String[] args) {
         Phase1 phase1 = new Phase1();
 
-        phase1.input();
+//        phase1.input();
         phase1.getMenu();
 
         //phase1.compute();
