@@ -1013,7 +1013,7 @@ public class Phase1 {
         String choice = "Y";
         System.out.println("Number of page accessed = " + BufMgr.page_access_counter);
         while (!choice.equals("N") && !choice.equals("n")) {
-            BufMgr.page_access_counter = 0;
+            ProjectUtils.resetPageCounter();
 
             String[] file_contents = null;
             String file = null;
@@ -1032,19 +1032,26 @@ public class Phase1 {
             System.out.println("Query Plan 1");
             phase3.IndexJoinWithTagIndex(tagMapping, rules);
             System.out.println("Number of page accessed = " + BufMgr.page_access_counter);
-            System.out.println("Query Plan 2");
-//            compute(rules);
-           // System.out.println("Number of page accessed = " + BufMgr.page_access_counter);
             long timeTaken = (System.currentTimeMillis() - start)/1000;
             System.out.println("Time taken = " + timeTaken);
-            System.out.println("Sort Merge");
             start = System.currentTimeMillis();
-            BufMgr.page_access_counter = 0;
-            computeSM(rules, new TupleOrder(TupleOrder.Ascending));
-            
+            ProjectUtils.resetPageCounter();
+
+            System.out.println("Query Plan 2");
+//            compute(rules);
             System.out.println("Number of page accessed = " + BufMgr.page_access_counter);
-            
+            ProjectUtils.resetPageCounter();
+            timeTaken = (System.currentTimeMillis() - start)/1000;
+            System.out.println("Time taken = " + timeTaken);
+            start = System.currentTimeMillis();
+
+            System.out.println("Query Plan 3 (Sort Merge)");
+            computeSM(rules, new TupleOrder(TupleOrder.Ascending));
+            System.out.println("Number of page accessed = " + BufMgr.page_access_counter);
+            ProjectUtils.resetPageCounter();
             System.out.println("Time taken = " + (System.currentTimeMillis() - start)/1000);
+
+
             System.out.println("Press N to stop");
             choice = scanner.next();
             System.out.print(choice);

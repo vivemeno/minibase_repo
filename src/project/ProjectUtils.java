@@ -2,6 +2,7 @@ package project;
 
 import btree.BTreeFile;
 import btree.StringKey;
+import bufmgr.BufMgr;
 import global.AttrOperator;
 import global.AttrType;
 import global.CompositeType;
@@ -27,6 +28,10 @@ public class ProjectUtils {
     public static final int STR_KEY_SIZE = 7;
     public static final int STR_FIELD_INDEX = 2;
     public static final int INTERVAL_FIELD_INDEX = 1;
+
+    public static void resetPageCounter() {
+		BufMgr.page_access_counter = 0;
+	}
 
     public static void createIndex(Heapfile f, String fileName) {
         Scan scan = null;
